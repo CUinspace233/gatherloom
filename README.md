@@ -75,6 +75,7 @@ GATHERLOOM_TEST_DATABASE_URL=postgresql+psycopg://gatherloom:gatherloom-local@12
 
 ## 文档
 - [产品与技术方案](docs/product-plan.md)
+- [知识卡片与检索增强方案](docs/knowledge-cards-and-retrieval.md)
 - [分阶段开发路线](docs/roadmap.md)
 - [架构决策记录](docs/decisions/README.md)
 - [评测集](docs/evaluation/README.md)
