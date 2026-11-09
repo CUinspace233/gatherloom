@@ -85,13 +85,13 @@ struct OCRDetailView: View {
                 }
             }
             Section("统计") {
-                LabeledContent("行数", "\(result.lines.count)")
-                LabeledContent("耗时", "\(Int(result.elapsedMs)) ms")
-                LabeledContent("尺寸", "\(result.originalPixelWidth)×\(result.originalPixelHeight)")
-                LabeledContent("Vision revision", "\(result.revision)")
-                LabeledContent("支持 zh-Hans", result.supportedLanguages.contains("zh-Hans") ? "是" : "否")
+                LabeledContent("行数", value: "\(result.lines.count)")
+                LabeledContent("耗时", value: "\(Int(result.elapsedMs)) ms")
+                LabeledContent("尺寸", value: "\(result.originalPixelWidth)×\(result.originalPixelHeight)")
+                LabeledContent("Vision revision", value: "\(result.revision)")
+                LabeledContent("支持 zh-Hans", value: result.supportedLanguages.contains("zh-Hans") ? "是" : "否")
                 if let m = result.memory {
-                    LabeledContent("内存峰值", String(format: "%.1f MB", m.peakMB))
+                    LabeledContent("内存峰值", value: String(format: "%.1f MB", m.peakMB))
                 }
             }
             Section("全文") {

@@ -10,12 +10,12 @@ struct ProbeHomeView: View {
             List {
                 Section("环境") {
                     if let device {
-                        LabeledContent("设备", device.model)
-                        LabeledContent("系统", "\(device.systemName) \(device.systemVersion)")
-                        LabeledContent("Bundle ID", device.bundleID)
-                        LabeledContent("签名能力", device.entitlementsVariant)
-                        LabeledContent("App Group", device.appGroupID)
-                        LabeledContent("Keychain 组后缀", device.keychainGroupSuffix)
+                        LabeledContent("设备", value: device.model)
+                        LabeledContent("系统", value: "\(device.systemName) \(device.systemVersion)")
+                        LabeledContent("Bundle ID", value: device.bundleID)
+                        LabeledContent("签名能力", value: device.entitlementsVariant)
+                        LabeledContent("App Group", value: device.appGroupID)
+                        LabeledContent("Keychain 组后缀", value: device.keychainGroupSuffix)
                     }
                 }
 
