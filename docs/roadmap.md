@@ -23,12 +23,13 @@
 **目标**：把方案中"待实测"的关键假设变成结论，并建立可运行的空骨架。
 
 ### iOS 与签名（ADR 0003、0004、0008）
-- [ ] 记录 Mac、Xcode、测试 iPhone 的 iOS 版本，确认最低 iOS 17。
-- [ ] 免费团队签名下创建主 App + Share Extension，验证 App Group 共享目录读写。
-- [ ] 验证 Keychain 共享访问组：主 App 写入、扩展读取。
+- [x] 记录环境。macOS 27.2、Xcode 27.2、iPhone 16 Pro Max（iOS 27.2）。构建产物最低版本为 iOS 17.0。
+- [x] 免费团队签名下安装 Gatherloom Probe 和 Share Extension，主 App 写入 App Group 共享目录，扩展从 Safari 分享菜单读出相同测试码。
+- [x] 验证 Keychain 共享访问组。主 App 写入的测试码与扩展读出的值一致。
 - [ ] Vision OCR 原型：10 张真实中文截图，记录识别质量、耗时；与 Tesseract 对比。
 - [ ] Safari JS 预处理原型：公众号、知乎、普通博客各 3 篇，记录正文完整度、耗时、扩展内存。
-- [ ] 真机通过 HTTPS 请求服务器 `/healthz`。
+- [ ] 海外测试环境部署后，真机通过 HTTPS 请求服务器 `/healthz`。本地 S1 开发可先开始。
+- [x] 真机 Debug App 通过局域网 HTTP 请求 Mac 上的 `/healthz`，验证成功响应和连接超时提示。
 
 ### 服务端与模型（ADR 0001、0002、0005、0007）
 - [ ] 服务器清单：系统、CPU、内存、磁盘、Docker/Compose、域名、证书、备份目的地。
@@ -41,14 +42,14 @@
 
 ### 仓库骨架
 - [ ] 目录：`ios/`、`server/`、`deploy/`、`scripts/`（结构见 product-plan §13）。
-- [ ] `server/`：uv + `pyproject.toml` + 锁文件；FastAPI 空应用、`/healthz`；ruff、pytest、mypy 配置。
+- [x] `server/`：uv + `pyproject.toml` + 锁文件；FastAPI 空应用、`/healthz`；ruff、pytest、mypy 配置。
 - [ ] 锁定版本：FastAPI、SQLAlchemy、Alembic、LangGraph、checkpointer、pgvector、jieba。
 - [ ] `deploy/compose.yaml`：api、worker、scheduler（同镜像不同命令）、postgres（pgvector 镜像）。
 - [ ] `ios/`：Xcode 工程、App / ShareExtension / SharedCapture target、SPM 依赖锁定。
-- [ ] CI：服务端 lint + test。
+- [x] CI：服务端 lint + test 配置。
 
 **出口检查**
-- 真机可请求 HTTPS；一组中文材料能提取、OCR 与检索；配置清单（模型 ID、维度、预算、服务器）填写完整。
+- 本地真机可请求 API。一组中文材料能提取、OCR 与检索，配置清单（模型 ID、维度、预算、服务器）填写完整。
 - 每个 ADR 的"待验证（S0）"项均有结论；不通过的项已更新 ADR 或调整方案。
 
 **风险**：免费团队不支持 App Group → 按 ADR 0008 推迟扩展可靠队列验证；百炼国际站无该模型 → 更新 ADR 0001。
@@ -60,27 +61,27 @@
 **目标**：所有权与隔离先于任何资料 API。
 
 ### 服务端
-- [ ] Alembic 初始迁移：User（时区默认 Asia/Shanghai）、Session、InviteCode、Project、ProjectQuestion。
-- [ ] 所有用户资源表带 `owner_id`；关联表用 `(owner_id, id)` 复合外键模式（后续表沿用）。
-- [ ] 密码哈希（argon2）、访问令牌（短时）+ 刷新令牌（可撤销、轮换）。
-- [ ] `POST /v1/auth/register|login|refresh|logout`、`GET /v1/me`；登录限流。
-- [ ] `current_owner` 依赖：owner 只从会话取得；Repository 层所有查询强制带 owner 条件。
-- [ ] 项目 API：`GET/POST /v1/projects`、`GET/PATCH /v1/projects/{id}`（目标、active/archived）。
-- [ ] 问题 API：`GET/POST /v1/projects/{id}/questions`、`PATCH /v1/questions/{id}`。
-- [ ] 跨账号访问统一 404；游标分页工具。
-- [ ] OpenAPI 导出 + 契约测试骨架。
-- [ ] 运维命令：生成邀请码、重置密码。
-- [ ] 跨账号测试夹具：两个账号、每账号两个项目。
+- [x] 本地 Docker Compose 运行 PostgreSQL + pgvector，Alembic 创建 User、Session、InviteCode、Project、ProjectQuestion。用户时区默认 Asia/Shanghai。
+- [x] 用户资源表带 `owner_id`，问题与项目用 `(owner_id, id)` 复合外键。
+- [x] 使用 Argon2 哈希密码。访问令牌短时有效，刷新令牌可撤销和轮换。
+- [x] `POST /v1/auth/register|login|refresh|logout`、`GET /v1/me`。登录和注册按客户端地址限流。
+- [x] `current_owner` 从会话取得账号。项目和问题的查询与更新均约束 owner。
+- [x] 项目 API `GET/POST /v1/projects`、`GET/PATCH /v1/projects/{id}`，支持目标编辑与归档。
+- [x] 问题 API `GET/POST /v1/projects/{id}/questions`、`PATCH /v1/questions/{id}`。
+- [x] 跨账号访问统一返回 404。项目和问题列表支持游标分页。
+- [x] OpenAPI 导出和 PostgreSQL 契约测试。
+- [x] 运维命令支持生成邀请码和重置密码。
+- [x] 跨账号测试夹具包含两个账号，每账号两个项目。
 
 ### iOS
-- [ ] API 客户端（async/await、令牌刷新、错误映射）。
-- [ ] Keychain 按账号保存凭证（共享访问组）。
-- [ ] 登录 / 邀请注册页；四 Tab 导航（记录 / 收集箱 / 项目 / 搜索）+ 头像进入设置。
-- [ ] 项目列表、创建项目、项目详情占位（目标、待解问题增改与解决）。
+- [x] API 客户端支持 async/await、令牌刷新和错误提示。
+- [x] Keychain 在共享访问组内按服务地址和账号保存凭证。
+- [x] 登录和邀请码注册页，四 Tab 导航和账号设置。
+- [x] 项目列表、创建、详情、目标编辑和归档，支持添加、编辑、解决和重新打开问题。
 
 **出口检查**
-- 两个账号各自创建项目与问题，互不可见。
-- [T2] 账号 A 对 B 的项目、问题读取或修改全部返回 404（后续阶段对每类新资源扩展该测试）。
+- 本地真机已验证邀请码注册、密码登录、项目与问题创建、重启恢复会话、令牌过期后自动刷新以及退出。切换测试账号后，只显示当前账号的项目。
+- [T2] PostgreSQL 集成测试已验证两个账号的项目列表互不可见，跨账号项目和问题读写返回 404，数据库拒绝跨账号关联。后续阶段对每类新资源扩展测试。
 
 **风险**：令牌刷新与 Keychain 共享在扩展中的行为差异 → S2 前用 S0 原型复测。
 
@@ -89,6 +90,8 @@
 ## S2 可靠收集
 
 **目标**：本地已确认保存的内容不丢失、不重复、不串账号。
+
+- [x] 文字记录首段已实现。支持本机保存、收集箱或项目归属、前台重试，以及 `POST /v1/entries` 和按归属查询。服务端在同一事务内写入记录、正文版本和待处理任务。
 
 ### 服务端
 - [ ] 迁移：Entry、EntryRevision（原始文本/文件引用、备注、内容指纹）、Attachment、ProjectEntry、Job（先建表，S3 实现 Worker）。

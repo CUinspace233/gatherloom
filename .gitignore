@@ -1,0 +1,9 @@
+.DS_Store
+xcuserdata/
+/ios/DerivedData/
+/ios/Config/LocalSigning.xcconfig
+/server/.venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/

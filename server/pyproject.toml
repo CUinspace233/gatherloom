@@ -1,0 +1,30 @@
+[project]
+name = "gatherloom-server"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic",
+    "argon2-cffi",
+    "fastapi",
+    "psycopg[binary]",
+    "pydantic",
+    "sqlalchemy",
+    "uvicorn",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2",
+    "mypy",
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.mypy]
+strict = true

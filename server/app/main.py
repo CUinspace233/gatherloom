@@ -1,0 +1,50 @@
+from collections.abc import Awaitable, Callable
+from os import environ
+from typing import Literal
+
+from fastapi import FastAPI, Request, Response
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+
+from app.auth import router as auth_router
+from app.entries import router as entries_router
+from app.projects import router as projects_router
+
+app = FastAPI(title="Gatherloom API")
+app.include_router(auth_router)
+app.include_router(projects_router)
+app.include_router(entries_router)
+allowed_clients = frozenset(
+    address.strip() for address in environ.get("GATHERLOOM_DEV_CLIENTS", "").split(",") if address.strip()
+)
+
+
+@app.middleware("http")
+async def apply_response_policy(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+    response: Response
+    if allowed_clients and (request.client is None or request.client.host not in allowed_clients):
+        response = JSONResponse(status_code=403, content={"detail": "client is not allowed"})
+    else:
+        response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(
+    _request: Request, exc: RequestValidationError
+) -> JSONResponse:
+    detail = [
+        {key: error[key] for key in ("loc", "msg", "type")} for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": detail})
+
+
+class HealthStatus(BaseModel):
+    status: Literal["ok"]
+
+
+@app.get("/healthz")
+async def healthz() -> HealthStatus:
+    return HealthStatus(status="ok")
