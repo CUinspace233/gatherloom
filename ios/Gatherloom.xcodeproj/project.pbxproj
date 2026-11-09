@@ -1,0 +1,607 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0750961C1116F1F067C3C281 /* CaptureQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 537740B690D246447B2A231D /* CaptureQueue.swift */; };
+		0893DB30C36008837C0A9D80 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6B5D9FA5093B91E71AD294 /* APIClient.swift */; };
+		177956935A1E6CA1478DFC00 /* GatherloomShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		211B22132FB8AA4974338936 /* SharingProbeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */; };
+		2A66DF323D971ED90890460D /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD54551E3A4A47B4962C284 /* CredentialStore.swift */; };
+		387A8845F4476985B301FB43 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93430B4D552A53A2D7B1D758 /* SignInView.swift */; };
+		4218914B1876651A0FD68AD2 /* DebugConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2D8F744CE95E8AFDB666BA /* DebugConnectionView.swift */; };
+		6995C5F46A5D10B0B18984A0 /* GatherloomApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */; };
+		95C0B6390C869F6F868A9F60 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D891DA9D986D026F912EA22A /* ShareViewController.swift */; };
+		9DDFFB0BDA6975229DF0D25A /* SharingProbeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75DF2E7C4748D084501DE708 /* SharingProbeApp.swift */; };
+		B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04686A26FFB0C58713DFD4E /* ProjectsView.swift */; };
+		CA62833F72F45B530ACAAD2F /* SharingProbeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */; };
+		CAC54E8984BD9277A1E70332 /* CaptureViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A990189CE0ED3C67575111B6 /* CaptureViews.swift */; };
+		DEF6BA7AC032BF9B1C654C49 /* CaptureOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387836D787842285D9C89953 /* CaptureOutbox.swift */; };
+		EABA9D5D137C31C23EE28232 /* AccountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */; };
+		FD073E4375EEDEDE292B8073 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3953570FC516D9953B8F7E85 /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4ED24C0AFD46080DAA2CBBC2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8507C28021C7218DD60D3AA5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 21C2A3042662F7B88C8E5754;
+			remoteInfo = GatherloomShareExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F3765D1E2D5B6AA7D1CC3383 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				177956935A1E6CA1478DFC00 /* GatherloomShareExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = GatherloomShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		16E9D9BF72AE4EE4C79CF722 /* GatherloomSharingProbe.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GatherloomSharingProbe.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1BF905EE5E8E148602055A92 /* Gatherloom.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gatherloom.entitlements; sourceTree = "<group>"; };
+		24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatherloomApp.swift; sourceTree = "<group>"; };
+		387836D787842285D9C89953 /* CaptureOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureOutbox.swift; sourceTree = "<group>"; };
+		3953570FC516D9953B8F7E85 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3C6B5D9FA5093B91E71AD294 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		4C64ADF27B9E54421E1CDCAF /* Debug-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Debug-Info.plist"; sourceTree = "<group>"; };
+		537740B690D246447B2A231D /* CaptureQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQueue.swift; sourceTree = "<group>"; };
+		5AD54551E3A4A47B4962C284 /* CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialStore.swift; sourceTree = "<group>"; };
+		62E5C78AD0C829C5A38055A8 /* SharingProbe.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SharingProbe.entitlements; sourceTree = "<group>"; };
+		75DF2E7C4748D084501DE708 /* SharingProbeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingProbeApp.swift; sourceTree = "<group>"; };
+		77A5A5FE1A5B46381B06244F /* Host-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Host-Info.plist"; sourceTree = "<group>"; };
+		8E2D8F744CE95E8AFDB666BA /* DebugConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugConnectionView.swift; sourceTree = "<group>"; };
+		93430B4D552A53A2D7B1D758 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		A990189CE0ED3C67575111B6 /* CaptureViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureViews.swift; sourceTree = "<group>"; };
+		AEE40B2F4B96BDEB6F6BAEF8 /* Extension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Extension-Info.plist"; sourceTree = "<group>"; };
+		B04686A26FFB0C58713DFD4E /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		BD7BEF415A05B2388104C911 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		BF8AE52EB08AD6310F158FBF /* Gatherloom.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Gatherloom.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D891DA9D986D026F912EA22A /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSession.swift; sourceTree = "<group>"; };
+		FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingProbeStore.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		588F87AFE4F0B4A1CE08B671 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */,
+				3C6B5D9FA5093B91E71AD294 /* APIClient.swift */,
+				3953570FC516D9953B8F7E85 /* Assets.xcassets */,
+				387836D787842285D9C89953 /* CaptureOutbox.swift */,
+				537740B690D246447B2A231D /* CaptureQueue.swift */,
+				A990189CE0ED3C67575111B6 /* CaptureViews.swift */,
+				5AD54551E3A4A47B4962C284 /* CredentialStore.swift */,
+				8E2D8F744CE95E8AFDB666BA /* DebugConnectionView.swift */,
+				24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */,
+				B04686A26FFB0C58713DFD4E /* ProjectsView.swift */,
+				93430B4D552A53A2D7B1D758 /* SignInView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		59A6B7F4DC64B7E062F9856D /* SharingProbe */ = {
+			isa = PBXGroup;
+			children = (
+				AEE40B2F4B96BDEB6F6BAEF8 /* Extension-Info.plist */,
+				77A5A5FE1A5B46381B06244F /* Host-Info.plist */,
+				62E5C78AD0C829C5A38055A8 /* SharingProbe.entitlements */,
+			);
+			path = SharingProbe;
+			sourceTree = "<group>";
+		};
+		8EC5C6D97068D33296F8206C /* Extension */ = {
+			isa = PBXGroup;
+			children = (
+				D891DA9D986D026F912EA22A /* ShareViewController.swift */,
+			);
+			name = Extension;
+			path = SharingProbe/Extension;
+			sourceTree = "<group>";
+		};
+		B0B910414C88D89356CDF8DA /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */,
+			);
+			name = Shared;
+			path = SharingProbe/Shared;
+			sourceTree = "<group>";
+		};
+		CA857EF329451D594DF3440E /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				4C64ADF27B9E54421E1CDCAF /* Debug-Info.plist */,
+				1BF905EE5E8E148602055A92 /* Gatherloom.entitlements */,
+				BD7BEF415A05B2388104C911 /* Signing.xcconfig */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		E8428C2C7AFFEC717EB518F8 /* Host */ = {
+			isa = PBXGroup;
+			children = (
+				75DF2E7C4748D084501DE708 /* SharingProbeApp.swift */,
+			);
+			name = Host;
+			path = SharingProbe/Host;
+			sourceTree = "<group>";
+		};
+		ED15D7DB862D37275A3B2851 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BF8AE52EB08AD6310F158FBF /* Gatherloom.app */,
+				1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */,
+				16E9D9BF72AE4EE4C79CF722 /* GatherloomSharingProbe.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		EFAB8F3C384749A1BEB22A75 = {
+			isa = PBXGroup;
+			children = (
+				588F87AFE4F0B4A1CE08B671 /* App */,
+				CA857EF329451D594DF3440E /* Config */,
+				8EC5C6D97068D33296F8206C /* Extension */,
+				E8428C2C7AFFEC717EB518F8 /* Host */,
+				B0B910414C88D89356CDF8DA /* Shared */,
+				59A6B7F4DC64B7E062F9856D /* SharingProbe */,
+				ED15D7DB862D37275A3B2851 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		21C2A3042662F7B88C8E5754 /* GatherloomShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 477026F1EF594A42352F9FB7 /* Build configuration list for PBXNativeTarget "GatherloomShareExtension" */;
+			buildPhases = (
+				3390988F1B2BFC643F365DBF /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GatherloomShareExtension;
+			packageProductDependencies = (
+			);
+			productName = GatherloomShareExtension;
+			productReference = 1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C6CC40DD49E7A365A107BAB1 /* GatherloomSharingProbe */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5628AE9D4AFCB8E3161698BF /* Build configuration list for PBXNativeTarget "GatherloomSharingProbe" */;
+			buildPhases = (
+				1D7AE5129C6A70FCCF0EE228 /* Sources */,
+				F3765D1E2D5B6AA7D1CC3383 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9F9595A8B017148975B3879A /* PBXTargetDependency */,
+			);
+			name = GatherloomSharingProbe;
+			packageProductDependencies = (
+			);
+			productName = GatherloomSharingProbe;
+			productReference = 16E9D9BF72AE4EE4C79CF722 /* GatherloomSharingProbe.app */;
+			productType = "com.apple.product-type.application";
+		};
+		D22CCC96AF537287ADA4C4D6 /* Gatherloom */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7A7FE73B605F8950C600368A /* Build configuration list for PBXNativeTarget "Gatherloom" */;
+			buildPhases = (
+				354FA61DE88D38A4E8340219 /* Sources */,
+				B7A5756502E3302E0608828A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Gatherloom;
+			packageProductDependencies = (
+			);
+			productName = Gatherloom;
+			productReference = BF8AE52EB08AD6310F158FBF /* Gatherloom.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8507C28021C7218DD60D3AA5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					21C2A3042662F7B88C8E5754 = {
+						ProvisioningStyle = Automatic;
+					};
+					C6CC40DD49E7A365A107BAB1 = {
+						ProvisioningStyle = Automatic;
+					};
+					D22CCC96AF537287ADA4C4D6 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = F0402C6FD8D5BDB61E3794E4 /* Build configuration list for PBXProject "Gatherloom" */;
+			developmentRegion = "zh-Hans";
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = EFAB8F3C384749A1BEB22A75;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = ED15D7DB862D37275A3B2851 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D22CCC96AF537287ADA4C4D6 /* Gatherloom */,
+				C6CC40DD49E7A365A107BAB1 /* GatherloomSharingProbe */,
+				21C2A3042662F7B88C8E5754 /* GatherloomShareExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B7A5756502E3302E0608828A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FD073E4375EEDEDE292B8073 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		1D7AE5129C6A70FCCF0EE228 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9DDFFB0BDA6975229DF0D25A /* SharingProbeApp.swift in Sources */,
+				CA62833F72F45B530ACAAD2F /* SharingProbeStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3390988F1B2BFC643F365DBF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				95C0B6390C869F6F868A9F60 /* ShareViewController.swift in Sources */,
+				211B22132FB8AA4974338936 /* SharingProbeStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		354FA61DE88D38A4E8340219 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0893DB30C36008837C0A9D80 /* APIClient.swift in Sources */,
+				EABA9D5D137C31C23EE28232 /* AccountSession.swift in Sources */,
+				DEF6BA7AC032BF9B1C654C49 /* CaptureOutbox.swift in Sources */,
+				0750961C1116F1F067C3C281 /* CaptureQueue.swift in Sources */,
+				CAC54E8984BD9277A1E70332 /* CaptureViews.swift in Sources */,
+				2A66DF323D971ED90890460D /* CredentialStore.swift in Sources */,
+				4218914B1876651A0FD68AD2 /* DebugConnectionView.swift in Sources */,
+				6995C5F46A5D10B0B18984A0 /* GatherloomApp.swift in Sources */,
+				B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */,
+				387A8845F4476985B301FB43 /* SignInView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		9F9595A8B017148975B3879A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 21C2A3042662F7B88C8E5754 /* GatherloomShareExtension */;
+			targetProxy = 4ED24C0AFD46080DAA2CBBC2 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		043D234844D7BEC67826321D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
+				INFOPLIST_FILE = "SharingProbe/Extension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe.share;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		1488E99349FC13F847F35C13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BD7BEF415A05B2388104C911 /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		3FC645649D8712DF8D413CF7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "SharingProbe/Host-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gatherloom Probe";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		4D9F31509238EF2534982873 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BD7BEF415A05B2388104C911 /* Signing.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 0.1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		BC5E5272ED669E40ACFAD446 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "SharingProbe/Host-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Gatherloom Probe";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		DC08E071A0667461FD57C4F7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
+				INFOPLIST_FILE = "SharingProbe/Extension-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe.share;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		F76AC69D28AE0F8A2BCF4F1C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/Gatherloom.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_KEY_CFBundleDisplayName = Gatherloom;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		F82CC4041DF33A53921FE54F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/Gatherloom.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = "Config/Debug-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Gatherloom;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		477026F1EF594A42352F9FB7 /* Build configuration list for PBXNativeTarget "GatherloomShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				043D234844D7BEC67826321D /* Debug */,
+				DC08E071A0667461FD57C4F7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		5628AE9D4AFCB8E3161698BF /* Build configuration list for PBXNativeTarget "GatherloomSharingProbe" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				BC5E5272ED669E40ACFAD446 /* Debug */,
+				3FC645649D8712DF8D413CF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7A7FE73B605F8950C600368A /* Build configuration list for PBXNativeTarget "Gatherloom" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F82CC4041DF33A53921FE54F /* Debug */,
+				F76AC69D28AE0F8A2BCF4F1C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F0402C6FD8D5BDB61E3794E4 /* Build configuration list for PBXProject "Gatherloom" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1488E99349FC13F847F35C13 /* Debug */,
+				4D9F31509238EF2534982873 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 8507C28021C7218DD60D3AA5 /* Project object */;
+}

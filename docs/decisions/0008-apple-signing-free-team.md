@@ -16,5 +16,10 @@
 - 后台 URLSession 与扩展行为必须在真机验证，模拟器结果不作为出口依据。
 
 ## 待验证（S0）
-- [ ] 免费团队 App Group / Keychain 共享可用性。
-- [ ] 当前 Xcode 与设备 iOS 版本，确认最低支持 iOS 17。
+- [x] 当前免费团队的 App Group / Keychain 共享已通过真机读写验证。
+- [x] macOS 27.2、Xcode 27.2、iPhone 16 Pro Max（iOS 27.2）。构建产物最低版本为 iOS 17.0，已在上述设备启动。
+
+## S0 实测
+
+- 独立的 Gatherloom Probe 主 App 和分享扩展使用当前 Personal Team 签名。两个产物均带相同的 App Group 和 Keychain 访问组。
+- 探针主 App 在 iPhone 上向共享容器和 Keychain 写入同一个测试码。用户从 Safari 分享菜单打开扩展，两处均读到相同的值。
