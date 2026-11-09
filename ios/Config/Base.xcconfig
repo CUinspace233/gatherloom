@@ -1,0 +1,16 @@
+// 公共构建配置。个人签名信息写在 Local.xcconfig（不入库），参考 Local.xcconfig.example。
+
+// 反向域名前缀，必须全局唯一，例如 io.github.yourname
+BUNDLE_ID_PREFIX = com.example.change-me
+DEVELOPMENT_TEAM =
+
+// 签名能力组合（ADR 0008）：
+//   空                 App Group + Keychain 共享（目标配置）
+//   -KeychainOnly      免费团队不支持 App Group 时使用
+//   -None              两者都不可用时，仅验证 OCR、正文提取与 HTTPS
+ENTITLEMENTS_VARIANT =
+
+#include? "Local.xcconfig"
+
+APP_GROUP_ID = group.$(BUNDLE_ID_PREFIX).gatherloom
+KEYCHAIN_GROUP_SUFFIX = $(BUNDLE_ID_PREFIX).gatherloom.shared

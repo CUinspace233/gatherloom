@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>SwiftUI 状态管理实践 - 某技术博客</title>
+<link rel="canonical" href="https://blog.example.com/swiftui-state">
+<meta property="og:site_name" content="某技术博客"></head>
+<body>
+<nav><a href="/">首页</a> <a href="/tags">标签</a> <a href="/about">关于我们导航链接</a></nav>
+<aside class="sidebar"><h3>热门文章</h3><ul><li><a href="/a">侧边栏推荐一</a></li><li><a href="/b">侧边栏推荐二</a></li></ul></aside>
+<main><article>
+<h1>SwiftUI 状态管理实践</h1>
+<p class="byline">作者：张三</p>
+<p>在 iOS 17 中，Observation 框架带来了新的 @Observable 宏。它让视图只在读取到的属性变化时刷新，比 ObservableObject 更精细。本文结合一个知识库 App 的例子说明如何迁移。</p>
+<h2>为什么要迁移</h2>
+<p>ObservableObject 会在任何 @Published 属性变化时通知所有订阅视图，列表页面在数据量大时容易出现不必要的刷新。我们在真机上测量到滚动掉帧明显减少。</p>
+<ul><li>更少的视图刷新</li><li>不再需要 @Published 标注</li><li>与 SwiftData 配合更自然</li></ul>
+<h2>迁移步骤</h2>
+<p>首先把类标注为 @Observable，然后把视图中的 @ObservedObject 改为普通属性或 @Bindable。下面是一段示例代码：</p>
+<pre><code>@Observable
+final class CaptureModel {
+    var draft = ""
+    var isSaving = false
+}</code></pre>
+<p>需要注意，环境对象的注入方式也随之变化，应改用 .environment(model) 而不是 .environmentObject(model)。完成迁移后记得在真机上再次测量性能，确认改动带来了预期收益。</p>
+<p>结论：对于新项目，建议直接使用 Observation；对于旧项目，可以按页面逐步迁移，不必一次完成。</p>
+</article></main>
+<footer><p>版权所有 © 某技术博客 页脚文字</p></footer>
+</body></html>

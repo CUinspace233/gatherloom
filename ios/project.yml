@@ -1,0 +1,72 @@
+# XcodeGen 工程描述。生成工程：cd ios && xcodegen generate
+# 生成的 Gatherloom.xcodeproj 与 Info.plist 不入库，以本文件为准。
+name: Gatherloom
+options:
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    MARKETING_VERSION: "0.0.1"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1"
+targets:
+  Gatherloom:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+      - path: SharedCapture
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).gatherloom
+        CODE_SIGN_ENTITLEMENTS: App/Entitlements/Gatherloom$(ENTITLEMENTS_VARIANT).entitlements
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Gatherloom
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIFileSharingEnabled: true
+        LSSupportsOpeningDocumentsInPlace: true
+        AppGroupID: $(APP_GROUP_ID)
+        KeychainGroupSuffix: $(KEYCHAIN_GROUP_SUFFIX)
+        EntitlementsVariant: $(ENTITLEMENTS_VARIANT)
+    dependencies:
+      - target: ShareExtension
+  ShareExtension:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: ShareExtension
+        excludes:
+          - "Resources/**"
+      - path: ShareExtension/Resources
+        buildPhase: resources
+      - path: SharedCapture
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID_PREFIX).gatherloom.share
+        CODE_SIGN_ENTITLEMENTS: ShareExtension/Entitlements/ShareExtension$(ENTITLEMENTS_VARIANT).entitlements
+    info:
+      path: ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: Gatherloom
+        AppGroupID: $(APP_GROUP_ID)
+        KeychainGroupSuffix: $(KEYCHAIN_GROUP_SUFFIX)
+        EntitlementsVariant: $(ENTITLEMENTS_VARIANT)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionJavaScriptPreprocessingFile: GatherloomPreprocess
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsWebPageWithMaxCount: 1
+              NSExtensionActivationSupportsWebURLWithMaxCount: 1
+              NSExtensionActivationSupportsImageWithMaxCount: 1
+              NSExtensionActivationSupportsText: true

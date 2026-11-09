@@ -1,0 +1,58 @@
+name: iOS S0
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-s0.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+
+concurrency:
+  group: ios-s0-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preprocess-js:
+    name: Safari 预处理脚本
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 校验生成文件与源码一致
+        run: |
+          scripts/s0/build_preprocess_js.sh
+          git diff --exit-code ios/ShareExtension/Resources/GatherloomPreprocess.js
+      - name: 运行 Chromium 测试
+        run: |
+          npm install --no-save playwright@1.49.1
+          npx playwright install --with-deps chromium
+          node ios/Preprocess/test/run.js
+
+  build:
+    name: 模拟器编译（不签名）
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 XcodeGen 2.42.0
+        run: |
+          curl -fsSL -o xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/download/2.42.0/xcodegen.zip
+          unzip -q xcodegen.zip -d xcodegen
+          echo "$PWD/xcodegen/xcodegen/bin" >> "$GITHUB_PATH"
+      - name: 生成工程
+        working-directory: ios
+        run: xcodegen generate
+      - name: 编译
+        run: |
+          xcodebuild -version
+          xcodebuild build \
+            -project ios/Gatherloom.xcodeproj \
+            -target Gatherloom \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO

@@ -1,0 +1,8 @@
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+build/
+Config/Local.xcconfig
+App/Info.plist
+ShareExtension/Info.plist
