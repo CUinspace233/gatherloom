@@ -56,6 +56,8 @@ uv run --locked alembic upgrade head
 uv run --locked uvicorn app.main:app
 ```
 
+模型服务的 API key 和模型选择放在本机的 `server/.env`（已被 Git 忽略）：复制 `server/.env.example` 后填写，启动时改用 `uv run --locked --env-file .env uvicorn app.main:app`。不要把真实 key 提交到仓库。
+
 在另一个终端运行 `curl -fsS http://127.0.0.1:8000/healthz`。`GET /healthz` 返回 HTTP 200 和 `{"status":"ok"}`，用于确认 API 进程可达。
 
 截图等附件保存在 `GATHERLOOM_STORAGE_DIR`（默认 `server/var/storage`），单个文件最大 10 MiB。定期运行 `uv run --locked python -m app.admin cleanup-attachments`，删除 24 小时内未关联到记录的上传。
