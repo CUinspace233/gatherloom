@@ -24,7 +24,9 @@ dev = [
     "httpx2",
     "mypy",
     "pytest",
+    "pyyaml>=6.0.3",
     "ruff",
+    "types-pyyaml>=6.0.12.20261103",
 ]
 
 [tool.ruff.lint]

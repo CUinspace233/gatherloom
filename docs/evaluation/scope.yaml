@@ -1,0 +1,50 @@
+# Boundary checks for search and answers.
+# search: run as `account` with `scope`; none of `forbidden` may appear in the
+#   top 50, and `expected` (if any) must appear in the top 5.
+# answer: ask in `scope`; every citation must belong to that project, and at
+#   least one of `expected` should be cited.
+
+search:
+  - id: s01
+    account: eval_a
+    scope: global
+    query: SwiftUI 状态管理还在用 ObservableObject
+    expected: [a1-01]
+    forbidden: [b1-05]
+    tests: 另一个账号有几乎相同的内容 [T2]
+
+  - id: s02
+    account: eval_a
+    scope: A1
+    query: 一爆
+    forbidden: [a2-01, a2-02, a2-03]
+    tests: 项目范围排除同账号其他项目 [T3]
+
+  - id: s03
+    account: eval_b
+    scope: global
+    query: 离线优先 幂等键
+    forbidden: [a1-02]
+    tests: 账号 B 搜不到账号 A [T2]
+
+answer:
+  - id: q01
+    account: eval_a
+    scope: A2
+    query: 浅烘的豆子养几天比较好？
+    expected: [a2-05, a2-06]
+    tests: 矛盾观点应都被提到
+
+  - id: q02
+    account: eval_a
+    scope: A1
+    query: 我们的本地存储方案是怎么定的？
+    expected: [a1-05]
+    tests: 决定变化，应以更新后的决定为准
+
+  - id: q03
+    account: eval_a
+    scope: A1
+    query: 检索结果怎么融合？
+    expected: [a1-03, a1-07]
+    tests: 跨资料、观点不一致

@@ -97,7 +97,7 @@ Worker 需要 `server/.env` 中的百炼与 DeepSeek key，缺少时拒绝启动
 docker compose -f deploy/compose.yaml exec -T postgres createdb -U gatherloom gatherloom_test
 cd server
 uv run --locked ruff check .
-uv run --locked mypy app tests
+uv run --locked mypy app tests evaluation
 GATHERLOOM_TEST_DATABASE_URL=postgresql+psycopg://gatherloom:gatherloom-local@127.0.0.1:54329/gatherloom_test \
   uv run --locked python -m pytest
 ```

@@ -1,0 +1,145 @@
+# Retrieval questions. A question passes when any target appears in the top 5
+# entries. scope: a project key from materials.yaml, or "global" for the
+# whole account. Queries are phrased the way a user would ask, mostly not
+# reusing the material's own wording.
+
+questions:
+  - id: r01
+    account: eval_a
+    scope: A1
+    query: SwiftUI 状态管理用什么方案
+    targets: [a1-01]
+    tests: 想法，中英混合
+
+  - id: r02
+    account: eval_a
+    scope: A1
+    query: 上传失败重试会不会产生重复记录
+    targets: [a1-02]
+    tests: 长网页，语义改写（幂等键）
+
+  - id: r03
+    account: eval_a
+    scope: A1
+    query: 断网恢复后大量设备同时重连怎么避免压垮服务器
+    targets: [a1-02]
+    tests: 长网页中段（指数退避与抖动）
+
+  - id: r04
+    account: eval_a
+    scope: A1
+    query: RRF 的 k 一般取多少
+    targets: [a1-03]
+    tests: 关键词 + 长网页
+
+  - id: r05
+    account: eval_a
+    scope: A1
+    query: 中文全文检索怎么分词
+    targets: [a1-03, a1-09]
+    tests: 重复 URL，任一命中即可
+
+  - id: r06
+    account: eval_a
+    scope: A1
+    query: 资料最终存在手机上还是服务器上
+    targets: [a1-05, a1-04]
+    tests: 决定变化，新旧决定都应召回
+
+  - id: r07
+    account: eval_a
+    scope: A1
+    query: 向量模型多少钱
+    targets: [a1-06]
+    tests: 截图 OCR，口语化
+
+  - id: r08
+    account: eval_a
+    scope: A1
+    query: 有没有反对用倒数排名融合的意见
+    targets: [a1-07]
+    tests: 矛盾观点，同义改写（RRF ↔ 倒数排名融合）
+
+  - id: r09
+    account: eval_a
+    scope: A1
+    query: worker 崩溃之后怎么从中间继续
+    targets: [a1-08]
+    tests: 长网页，语义
+
+  - id: r10
+    account: eval_a
+    scope: A1
+    query: 多个进程抢同一个任务报锁错误
+    targets: [a1-10]
+    tests: 截图（错误日志）+ 用户文字
+
+  - id: r11
+    account: eval_a
+    scope: A1
+    query: RxJS 的 Observable
+    targets: [a1-11]
+    tests: 同名不同义
+
+  - id: r12
+    account: eval_a
+    scope: A1
+    query: 那篇讲要不要加重排模型的文章
+    targets: [a1-12]
+    tests: 资料级问题（卡片路）
+
+  - id: r13
+    account: eval_a
+    scope: A1
+    query: Embedding 一次最多传几条
+    targets: [a1-14, a1-06]
+    tests: 想法与截图都含答案
+
+  - id: r14
+    account: eval_a
+    scope: A1
+    query: 免费账号能不能用 TestFlight
+    targets: [a1-15]
+    tests: 截图 OCR
+
+  - id: r15
+    account: eval_a
+    scope: A1
+    query: 分块之间要不要重叠
+    targets: [a1-17]
+    tests: 长网页中段
+
+  - id: r16
+    account: eval_a
+    scope: A2
+    query: 一爆之后发展多久
+    targets: [a2-01, a2-02]
+    tests: 长网页 + 想法
+
+  - id: r17
+    account: eval_a
+    scope: A2
+    query: 豆子烘完要放几天再喝
+    targets: [a2-05, a2-06]
+    tests: 矛盾观点，两条都应召回
+
+  - id: r18
+    account: eval_a
+    scope: A2
+    query: 第 12 次烘焙几分钟下豆
+    targets: [a2-03]
+    tests: 截图 OCR，数字
+
+  - id: r19
+    account: eval_a
+    scope: global
+    query: 冷却豆子用什么风扇
+    targets: [a2-10]
+    tests: 全局搜索
+
+  - id: r20
+    account: eval_a
+    scope: global
+    query: 为什么换掉爆米花机
+    targets: [a2-07]
+    tests: 全局搜索，决定

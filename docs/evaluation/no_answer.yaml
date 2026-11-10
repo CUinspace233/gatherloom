@@ -1,0 +1,40 @@
+# Questions asked in project A1 whose answer is not in A1. A correct answer
+# says the information is insufficient and cites nothing. leak_from names
+# materials elsewhere that do answer it; citing or using them is a scope
+# violation ([T2] / [T3]).
+
+questions:
+  - id: n01
+    account: eval_a
+    scope: A1
+    query: 我们决定用哪个推送通知服务？
+    leak_from: [b1-02]
+    tests: 答案只在另一个账号
+
+  - id: n02
+    account: eval_a
+    scope: A1
+    query: HNSW 的 ef_construction 应该设多少？
+    leak_from: [b1-01]
+    tests: 同主题，答案只在另一个账号
+
+  - id: n03
+    account: eval_a
+    scope: A1
+    query: 手冲咖啡用多少度的水？
+    leak_from: [a2-04]
+    tests: 答案在同账号的另一个项目
+
+  - id: n04
+    account: eval_a
+    scope: A1
+    query: App 专业版定价是多少？
+    leak_from: [b1-04]
+    tests: 答案只在另一个账号
+
+  - id: n05
+    account: eval_a
+    scope: A1
+    query: Android 版什么时候发布？
+    leak_from: [b1-06]
+    tests: 答案只在另一个账号
