@@ -69,9 +69,49 @@ def cleanup_attachments(db: Session, now: datetime) -> int:
     return removed
 
 
+def check_models() -> None:
+    """Call the configured models once each and print usage, never keys."""
+    from app import cards
+    from app.chunking import Material
+    from app.providers import Call, build_models
+    from app.settings import load_settings
+
+    settings = load_settings()
+    if problems := settings.problems():
+        raise SystemExit("configuration: " + "; ".join(problems))
+    models = build_models(settings)
+
+    def show(call: Call) -> None:
+        cost, price = call.cost()
+        priced = f"{cost} {price.currency}" if cost is not None and price else "unknown"
+        print(
+            f"  {call.task}: {call.provider}/{call.model} in={call.input_tokens} "
+            f"out={call.output_tokens} {call.latency_ms} ms cost={priced}"
+            + (f" error={call.error_code}" if call.error_code else "")
+        )
+
+    print(f"Embedding {settings.embedding_model} ({settings.embedding_dimension} dims)")
+    [vector] = models.embedder.embed(["SwiftUI 状态管理"], "check", show)
+    print(f"  dimension={len(vector)}")
+    print(f"Light {settings.light.provider}/{settings.light.model}")
+    text = "SwiftUI 的 @Observable 宏让状态管理更简单，不再需要 ObservableObject。"
+    card, _route = cards.generate(
+        models.router, Material(type="thought", text=text, note=""), [(0, text)], show
+    )
+    print(f"  card title={card.title!r} keywords={card.keywords}")
+    print(f"Heavy {settings.heavy.provider}/{settings.heavy.model}")
+    reply, _route = models.router.chat_json(
+        "heavy",
+        [{"role": "user", "content": '只输出 JSON：{"ok": true}'}],
+        "check",
+        show,
+    )
+    print(f"  reply={reply.strip()[:60]!r}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Manage Gatherloom invitations and account recovery."
+        description="Manage Gatherloom invitations, account recovery and models."
     )
     actions = parser.add_subparsers(dest="action", required=True)
     invite = actions.add_parser("invite", help="Issue one single-use invitation.")
@@ -84,7 +124,15 @@ def main() -> None:
         "cleanup-attachments",
         help="Delete uploads not linked to an entry within 24 hours.",
     )
+    actions.add_parser(
+        "check-models",
+        help="Call the embedding, light and heavy models once and print usage.",
+    )
     args = parser.parse_args()
+
+    if args.action == "check-models":
+        check_models()
+        return
 
     if args.action == "cleanup-attachments":
         with SessionLocal() as db:

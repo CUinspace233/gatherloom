@@ -6,6 +6,7 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
+from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy import Connection, Engine, create_engine, delete, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -24,7 +25,7 @@ from app.models import (
     Run,
     User,
 )
-from app.worker import setup_checkpoints
+from app.worker import checkpointer, setup_checkpoints
 
 COMMITTED_PREFIX = "worker_"
 
@@ -116,3 +117,11 @@ def committed(test_engine: Engine) -> Iterator[sessionmaker[Session]]:
         yield sessions
     finally:
         purge_committed(sessions)
+
+
+@pytest.fixture
+def saver(
+    committed: sessionmaker[Session], test_engine: Engine
+) -> Iterator[PostgresSaver]:
+    with checkpointer(test_engine.url.render_as_string(hide_password=False)) as saver:
+        yield saver

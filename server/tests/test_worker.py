@@ -10,13 +10,12 @@ from uuid import UUID, uuid4
 
 import pytest
 from langgraph.checkpoint.postgres import PostgresSaver
-from sqlalchemy import Engine, func, select, text, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.orm import Session, sessionmaker
 
 from app import chunking, jobs
 from app.ingestion import Pipeline
 from app.models import Chunk, Entry, EntryRevision, Job, User
-from app.worker import checkpointer
 
 LONG_TEXT = "\n\n".join(
     "".join(f"第{p}段第{s}句记录了离线收集的可靠性要求。" for s in range(10))
@@ -112,12 +111,6 @@ def checkpoint_rows(sessions: sessionmaker[Session], claim: jobs.Claim) -> int:
             )
             or 0
         )
-
-
-@pytest.fixture
-def saver(test_engine: Engine) -> Iterator[PostgresSaver]:
-    with checkpointer(test_engine.url.render_as_string(hide_password=False)) as saver:
-        yield saver
 
 
 @contextmanager

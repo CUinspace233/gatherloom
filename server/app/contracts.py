@@ -241,7 +241,9 @@ class EntryView(BaseModel):
     text: str
     note: str
     source_url: str | None
-    title: str | None = Field(description="Page title captured by the client, if any.")
+    title: str | None = Field(
+        description="Page title captured by the client, else the knowledge card title."
+    )
     attachment: AttachmentView | None
     project_ids: list[UUID]
     possible_duplicate: bool
@@ -252,9 +254,23 @@ class EntryView(BaseModel):
     updated_at: datetime
 
 
+class CardView(BaseModel):
+    """AI-generated knowledge card. Navigation aid only, never cited as evidence."""
+
+    title: str
+    summary: str
+    key_points: list[str]
+    keywords: list[str]
+    model: str
+    created_at: datetime
+
+
 class EntryDetail(EntryView):
     ocr_text: str | None
     extract_text: str | None
+    card: CardView | None = Field(
+        description="Knowledge card for the current revision, once generated."
+    )
 
 
 class ProcessingView(BaseModel):

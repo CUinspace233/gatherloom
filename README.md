@@ -7,7 +7,7 @@
 A project-driven personal knowledge workspace with iOS capture, source-grounded answers, and continuous reflection.
 
 ## 状态
-Gatherloom 支持邀请码注册、项目与问题管理，以及离线保存的想法、链接和截图（含系统分享扩展与本机文字识别）。最低支持 iOS 17。
+Gatherloom 支持邀请码注册、项目与问题管理，以及离线保存的想法、链接和截图（含系统分享扩展与本机文字识别）。保存到服务器后，后台 Worker 自动分块、建立关键词与语义索引，并生成 AI 知识卡片。最低支持 iOS 17。
 
 ## iOS 开发
 
@@ -65,6 +65,31 @@ uv run --locked uvicorn app.main:app
 在 `server/` 目录运行 `uv run --locked python -m app.admin invite` 生成一个有效期 24 小时的单次邀请码。真机注册使用局域网启动方式，在登录页填入 Mac 的服务地址并选择「使用邀请码注册」。每个账号各用一个邀请码。账号恢复使用 `uv run --locked python -m app.admin reset-password <用户名>`，命令会提示输入密码并撤销该账号的所有会话。
 
 API 契约来自 FastAPI，可在本地 `/docs` 查看，或在 `server/` 运行 `uv run --locked python -m app.export_openapi` 导出 JSON。访问令牌有效期最长 15 分钟，刷新时轮换两个令牌，单个会话最长 30 天。登录和注册分别按客户端地址限流，每分钟最多 10 次。项目和问题列表用 `next_cursor` 翻页。
+
+### 后台整理（Worker）
+
+资料保存后由 Worker 整理：分块（每块索引时拼上标题与备注）→ jieba 关键词索引 → 百炼 Embedding（完成后「已可检索」）→ 千问生成知识卡片（标题、摘要、要点、关键词）→ 卡片入索引（「整理完成」）。在另一个终端启动：
+
+```sh
+cd server
+uv run --locked --env-file .env python -m app.worker
+```
+
+Worker 需要 `server/.env` 中的百炼与 DeepSeek key，缺少时拒绝启动。`uv run --locked --env-file .env python -m app.admin check-models` 会各调用一次 Embedding、light 与 heavy 模型，打印模型、用量与费用估算，用于检查配置。默认两个线程并发，同一账号同时只处理一条资料。任务按租约认领，Worker 崩溃或被杀后，租约过期（60 秒）即由其他 Worker 从检查点继续。可重试的错误（网络、限流、服务端错误）最多尝试 3 次。认证失败、余额不足、模型不可用或输出不合格不会自动重试。
+
+资料详情显示处理状态：
+
+| 状态 | 含义 |
+|---|---|
+| 已保存到服务器，正在整理 | 等待或正在建立索引 |
+| 已可检索 | 原文索引完成，知识卡片仍在生成 |
+| 整理完成 | 索引与知识卡片都已完成 |
+| 已保存，部分整理失败 | 原文可检索，知识卡片失败，可重试 |
+| 已保存，整理失败 | 索引失败，尚不可检索，可重试 |
+
+`GET /v1/entries/{id}/processing` 返回状态与失败步骤，`POST /v1/entries/{id}/retry` 只重做未完成的步骤。每次模型调用记录在 `runs` 表（模型、用量、带价格日期的费用估算）。知识卡片只用于展示和召回，不作为问答引用的证据。
+
+### 检查与测试
 
 从仓库根目录创建独立测试数据库，然后运行与 CI 相同的检查。测试数据库只需创建一次。
 
