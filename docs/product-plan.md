@@ -17,6 +17,7 @@
 | [0003](decisions/0003-ocr-on-device-vision.md) | 截图 OCR 以 iOS 端侧 Vision 为主，服务端 Tesseract 兜底 |
 | [0004](decisions/0004-web-extraction-safari-preprocessing.md) | 网页正文优先由 Safari 分享扩展 JS 预处理获取，服务端抓取补充 |
 | [0005](decisions/0005-chinese-keyword-search-jieba.md) | 中文关键词检索采用应用侧 jieba 分词 + `simple` tsvector |
+| [0009](decisions/0009-knowledge-card-retrieval-augmentation.md) | 知识卡片作为派生检索单元；上下文 chunk 头与卡片路默认启用，其余增强按评测启用 |
 | [0006](decisions/0006-orchestration-langgraph-checkpointer.md) | 保持 LangGraph + PostgreSQL checkpointer，删除流程显式清理检查点 |
 | [0007](decisions/0007-deployment-overseas-server.md) | 服务器位于海外/港澳，无需 ICP 备案 |
 | [0008](decisions/0008-apple-signing-free-team.md) | 暂用免费签名开发，内测前购买 Apple 开发者账号 |
@@ -183,7 +184,7 @@ Apple 的后台传输要求与共享容器机制见[官方说明](https://develo
 
 收集箱默认展示尚未关联任何项目、且未被用户归档的资料。分配到至少一个项目后退出默认列表；仍可在全局搜索中找回。
 
-资料详情展示：原始内容、来源 URL、收藏时间、个人备注、提取正文或 OCR 文本、AI 摘要、所属项目、关联建议、处理状态。
+资料详情展示：原始内容、来源 URL、收藏时间、个人备注、提取正文或 OCR 文本、知识卡片（AI 标题、摘要、要点、关键词，标注“AI 整理”）、所属项目、关联建议、处理状态。
 
 支持：编辑个人内容或备注、修正 OCR、加入或移出项目、重试失败步骤、删除。编辑生成新版本，旧引用仍能识别其原版本。外部原始材料保留，正文或 OCR 修正另记为新加工版本。
 
@@ -404,7 +405,7 @@ Pi 提供 Agent 循环、工具和可嵌入会话，适合未来需要长期交�
 | EntryRevision | entry_id、版本、原始文本/文件引用、个人备注、内容指纹 |
 | ProjectEntry | owner_id、project_id、entry_id；多对多 |
 | Attachment | owner_id、私有存储键、类型、大小、校验值 |
-| Artifact / Chunk | 来源版本、加工类型、内容、片段位置、索引模型版本 |
+| Artifact / Chunk | 来源版本、加工类型（含知识卡片）、检索单元（chunk / card）、索引文本与展示文本、片段位置、索引模型版本 |
 | Relation | 同项目资料或问题关联、理由、来源、建议状态 |
 | SummaryRevision | 项目、版本、内容、来源、处理水位、更新时间 |
 | Decision | 项目、draft/confirmed/rejected/superseded、理由、引用、修订 |
@@ -453,9 +454,17 @@ Pi 提供 Agent 循环、工具和可嵌入会话，适合未来需要长期交�
 
 先以小数据集精确向量检索建立正确性基线，数据量和延迟需要时再加近似索引。独立 reranker 不作为首版依赖。
 
-### 8.2 引用契约
+### 8.2 知识卡片与检索增强
 
-模型只引用系统提供的证据 ID。服务端验证引用归属、项目范围、版本及存在性。引用卡片显示标题、类型、来源时间、原文片段与跳转入口。
+每个资料版本在生成标题和摘要的同一次 light 调用中产出一张知识卡片：标题、摘要、要点（附来源 chunk）、关键词和“可回答的问题”（ADR 0009）。卡片是派生物，只用于召回和导航，不作为引用证据。
+
+- 上下文 chunk 头：索引前给每个 chunk 拼接资料标题、章节标题和个人备注摘录；展示与引用仍用原文。
+- 卡片路：卡片作为资料级检索单元参与两路检索，RRF 后按资料聚合，再展开到该资料得分最高的原文 chunk。
+- 查询改写、HyDE、reranker 不进首版；多轮检索维持至多两轮。是否启用由评测消融决定。
+
+### 8.3 引用契约
+
+模型只引用系统提供的证据 ID，证据只来自原文 chunk、个人记录与正式决定，知识卡片和总结不能作为证据。服务端验证引用归属、项目范围、版本及存在性。引用卡片显示标题、类型、来源时间、原文片段与跳转入口。
 
 “引用 ID 有效”不等于“内容支持该句结论”。后者需要人工标注评测、失败案例与后续改进，不能通过一次格式校验就宣称无幻觉。
 

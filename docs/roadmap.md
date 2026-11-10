@@ -38,7 +38,8 @@
 - [ ] 准备评测样本：两项目 × 15–20 条材料（见 [evaluation/](evaluation/README.md)），20 道检索题、5 道无答案题。
 - [ ] jieba + `simple` tsvector 原型；语义路 / 关键词路 / RRF 三种方式的 Top 5 命中对比。
 - [ ] 中文分块策略：按段落 + 标题，比较 2–3 组块大小与重叠，锁定初始值。
-- [ ] 生成模型选型：light / heavy 档各 10 条样本，比较 JSON 合法率、字段正确率、质量、延迟、成本，确定路由配置。
+- [ ] 上下文 chunk 头（ADR 0009 R1）：基线 vs 拼接标题与备注后的 Top 5 命中，重点看截图 OCR 与长网页题。
+- [ ] 生成模型选型：light / heavy 档各 10 条样本，比较 JSON 合法率、字段正确率、质量、延迟、成本，确定路由配置。light 档样本使用知识卡片 schema（ADR 0009）。
 
 ### 仓库骨架
 - [ ] 目录：`ios/`、`server/`、`deploy/`、`scripts/`（结构见 product-plan §13）。
@@ -139,10 +140,11 @@
 - [ ] `EmbeddingProvider`（百炼）与 index_version（ADR 0001）。
 - [ ] 正文兜底：服务端抓取（SSRF 防护：协议、私有/回环/链路本地/元数据地址、DNS 与每次重定向校验）+ 正文提取，100,000 字符上限。
 - [ ] OCR 兜底：Tesseract 适配器（仅在无 `client_ocr` 时）。
-- [ ] EntryIngestionGraph：提取兜底 → 标题/摘要（light）→ 分块 → jieba tsvector + Embedding → 状态更新；节点幂等写入。
-- [ ] Artifact / Chunk 表（来源版本、加工类型、位置、分词与索引版本）。
+- [ ] EntryIngestionGraph：提取兜底 → 分块 → 上下文 chunk 头 → jieba tsvector + Embedding（进入“已可检索”）→ 知识卡片（light，标题/摘要/要点/关键词/问题）→ 卡片索引 → 状态更新；节点幂等写入（ADR 0009）。
+- [ ] 卡片生成失败只记为部分失败，不影响原文可检索；卡片不产生 ProjectEvent。
+- [ ] Artifact / Chunk 表（来源版本、加工类型、`unit` = chunk / card、`index_text` 与 `display_text`、位置、分词、上下文头与索引版本）。
 - [ ] `GET /v1/entries/{id}/processing`、`POST /v1/entries/{id}/retry`（复用有效任务）。
-- [ ] iOS：资料详情显示处理状态、失败步骤与重试。
+- [ ] iOS：资料详情显示处理状态、失败步骤与重试；展示知识卡片（标注“AI 整理”）。
 - [ ] 结构化日志：run_id、阶段、延迟；不记录正文与密钥。
 
 **出口检查**
@@ -158,21 +160,22 @@
 
 **目标**：找得到、引得准、不越界、不编造。
 
-- [ ] 检索服务：owner（+ project）过滤 → 关键词路 + 语义路（精确向量检索）→ RRF 融合。
+- [ ] 检索服务：owner（+ project）过滤 → 关键词路 + 语义路（精确向量检索，chunk 与卡片两类单元）→ RRF 融合 → 按资料聚合并展开到最佳原文 chunk（ADR 0009）。
 - [ ] `GET /v1/search`：项目、类型、时间筛选；游标分页。
 - [ ] iOS 搜索页：筛选、结果片段高亮、打开资料及所属项目。
 - [ ] Conversation / Message / Citation 迁移；`GET/POST /v1/projects/{id}/conversations`、`POST/GET /v1/conversations/{id}/messages`、`GET /v1/runs/{id}`（202 + run_id）。
 - [ ] ProjectAnswerGraph：校验范围 → 检索 → 证据整理（区分外部资料 / 个人记录 / 正式决定）→ 回答（heavy）→ 引用校验（ID 存在、归属、项目、版本）。
 - [ ] 信息不足判定与表达；不联网补充。
 - [ ] iOS 问答页：会话、编号引用、引用卡片（标题、类型、时间、片段、跳转原文定位）。
-- [ ] 评测脚本：检索 Top 5、无答案题、引用存在性；结果写入 `docs/evaluation/`。
+- [ ] 评测脚本：检索 Top 5 与 MRR、无答案题、引用存在性；消融基线 / +R1 / +R1+R2 / +R1+R2+R3，确定卡片路权重；结果写入 `docs/evaluation/`。
+- [ ] 引用校验拒绝卡片与总结 ID；问答提示词带卡片导航上下文 vs 不带的引用支持度对比。
 
 **出口检查**
 - 20 道检索题至少 16 道 Top 5 命中；5 道无答案题不编造决定或来源。
 - [T3] 项目问答不使用当前项目范围外资料，全局搜索仍能找到该账号内容。
 - [T2]（扩展）检索结果、对话、引用不泄露其他账号片段。
 
-**风险**：召回不足 → 先调分块与词典，再评估多轮检索（至多两轮）。
+**风险**：召回不足 → 先调分块、词典与卡片路权重，再评估查询改写或多轮检索（至多两轮）。卡片召回导致无答案题编造 → 降低卡片权重或只用于全局搜索。
 
 ---
 
