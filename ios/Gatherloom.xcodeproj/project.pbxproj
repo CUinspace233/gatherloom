@@ -33,6 +33,7 @@
 		EA2CE03405FA0F6CB8F87E16 /* ImagePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09375365574EE945DBA7904 /* ImagePayload.swift */; };
 		EABA9D5D137C31C23EE28232 /* AccountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */; };
 		FD073E4375EEDEDE292B8073 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3953570FC516D9953B8F7E85 /* Assets.xcassets */; };
+		FECF33D34512828701BD1E3F /* AnswerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8470DA9D4858D530AAFC8E1E /* AnswerViews.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +73,7 @@
 		564364766B21B952C4C06492 /* TextRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextRecognizer.swift; sourceTree = "<group>"; };
 		6409C2BC2550B679A1A1D8B7 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		6DAA5113237E8F9F9F3F6023 /* Preprocess.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Preprocess.js; sourceTree = "<group>"; };
+		8470DA9D4858D530AAFC8E1E /* AnswerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnswerViews.swift; sourceTree = "<group>"; };
 		8E8F95AA0C02F8517399C7E7 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		93430B4D552A53A2D7B1D758 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		A990189CE0ED3C67575111B6 /* CaptureViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureViews.swift; sourceTree = "<group>"; };
@@ -91,6 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */,
+				8470DA9D4858D530AAFC8E1E /* AnswerViews.swift */,
 				3953570FC516D9953B8F7E85 /* Assets.xcassets */,
 				537740B690D246447B2A231D /* CaptureQueue.swift */,
 				A990189CE0ED3C67575111B6 /* CaptureViews.swift */,
@@ -276,6 +279,7 @@
 			files = (
 				787E48E8EBEEA711978B7FCC /* APIClient.swift in Sources */,
 				EABA9D5D137C31C23EE28232 /* AccountSession.swift in Sources */,
+				FECF33D34512828701BD1E3F /* AnswerViews.swift in Sources */,
 				9B217211C21C8E1B22BA90D5 /* CaptureOutbox.swift in Sources */,
 				0750961C1116F1F067C3C281 /* CaptureQueue.swift in Sources */,
 				E76B5591F0D2D97F0960FDB4 /* CaptureUploader.swift in Sources */,

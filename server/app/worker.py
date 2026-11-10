@@ -23,9 +23,9 @@ from psycopg.rows import dict_row
 from sqlalchemy import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import jobs, tokenizer
+from app import answering, ingestion, jobs, tokenizer
 from app.db import DATABASE_URL, SessionLocal
-from app.ingestion import Pipeline
+from app.graphs import JobPipeline
 from app.providers import Models, build_models
 from app.settings import load_settings
 
@@ -118,7 +118,12 @@ def work(
     url: str = DATABASE_URL,
 ) -> None:
     with checkpointer(url) as saver:
-        pipeline = Pipeline(sessions, saver, worker_id, models=models)
+        pipelines: dict[str, JobPipeline] = {
+            jobs.INGESTION: ingestion.Pipeline(
+                sessions, saver, worker_id, models=models
+            ),
+            jobs.ANSWER: answering.Pipeline(sessions, saver, worker_id, models=models),
+        }
         while not stopping.is_set():
             try:
                 with sessions() as db:
@@ -130,7 +135,7 @@ def work(
                 stopping.wait(IDLE_SECONDS)
                 continue
             with Heartbeat(sessions, claim, worker_id):
-                pipeline.run(claim)
+                pipelines[claim.kind].run(claim)
 
 
 def main() -> None:

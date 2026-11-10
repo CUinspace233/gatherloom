@@ -89,6 +89,14 @@ Worker 需要 `server/.env` 中的百炼与 DeepSeek key，缺少时拒绝启动
 
 `GET /v1/entries/{id}/processing` 返回状态与失败步骤，`POST /v1/entries/{id}/retry` 只重做未完成的步骤。每次模型调用记录在 `runs` 表（模型、用量、带价格日期的费用估算）。知识卡片只用于展示和召回，不作为问答引用的证据。
 
+### 搜索与问答
+
+`GET /v1/search` 按关键词（jieba）和语义（百炼 Embedding）检索当前账号的资料，可按项目、类型、时间筛选。API 进程需要 `server/.env` 里的百炼 key 来向量化查询，所以要用 `--env-file .env` 启动；没有 key 时搜索降级为只按关键词，返回 `degraded: true`。
+
+项目问答：`POST /v1/conversations/{id}/messages` 返回 202 和 `run_id`，Worker 只用本项目的资料回答（heavy 模型），回答里的 `[n]` 指向原文片段，客户端轮询 `GET /v1/runs/{id}`。资料不足时直接说明，不联网补充。知识卡片只作导航，不能被引用。
+
+评测集与命令见 [docs/evaluation](docs/evaluation/README.md)：`python -m evaluation.load`、`evaluation.retrieval`、`evaluation.answers`。
+
 ### 检查与测试
 
 从仓库根目录创建独立测试数据库，然后运行与 CI 相同的检查。测试数据库只需创建一次。

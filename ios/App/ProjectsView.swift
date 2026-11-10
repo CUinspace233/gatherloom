@@ -154,6 +154,7 @@ private struct ProjectDetailView: View {
                     CaptureEntriesView(session: session, capture: capture, project: project)
                 }
             }
+            ProjectConversationsSection(session: session, capture: capture, project: project)
             Section("问题") {
                 ForEach(questions) { question in
                     Button {

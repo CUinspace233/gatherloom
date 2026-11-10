@@ -320,3 +320,71 @@ class SearchPage(BaseModel):
     degraded: bool = Field(
         description="True when semantic search was unavailable; keyword results only."
     )
+
+
+ConversationTitle = Annotated[
+    str, StringConstraints(strip_whitespace=True, max_length=120, pattern=r"^[^\x00]*$")
+]
+JobStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
+
+
+class ConversationCreate(Input):
+    title: ConversationTitle = ""
+
+
+class ConversationView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    project_id: UUID
+    title: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class MessageCreate(Input):
+    client_message_id: UUID
+    text: QuestionText
+
+
+class RunView(BaseModel):
+    id: UUID
+    status: JobStatus
+    stage: str | None
+    error_code: str | None
+    attempts: int
+    can_retry: bool
+    answer_message_id: UUID | None
+    updated_at: datetime
+
+
+class CitationView(BaseModel):
+    n: int
+    entry_id: UUID
+    revision: int
+    chunk_id: UUID
+    title: str
+    type: EntryType
+    created_at: datetime
+    snippet: str = Field(description="The cited source text as it was when answered.")
+    start_offset: int
+    end_offset: int
+    stale: bool = Field(
+        description="The entry was edited, deleted or removed from the project since."
+    )
+
+
+class MessageView(BaseModel):
+    id: UUID
+    role: Literal["user", "assistant"]
+    content: str = Field(description="Answers mark citations as [n].")
+    insufficient: bool
+    reply_to: UUID | None
+    run: RunView | None = Field(description="Answer job for a question.")
+    citations: list[CitationView]
+    created_at: datetime
+
+
+class AnswerAccepted(BaseModel):
+    message: MessageView
+    run_id: UUID

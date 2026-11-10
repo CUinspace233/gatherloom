@@ -93,7 +93,7 @@ struct SearchView: View {
             }
         }
         .navigationTitle("搜索")
-        .searchable(text: $query, prompt: "搜索资料")
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索资料")
         .toolbar { filterMenu }
         .task(id: SearchKey(query: trimmedQuery, projectID: projectID, kind: kind, period: period)) {
             // Wait for typing to pause before searching.

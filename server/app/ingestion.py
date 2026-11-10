@@ -6,28 +6,21 @@ through ``jobs.fence`` and is idempotent, because a node can run again after a
 crash between its commit and the checkpoint write.
 """
 
-import logging
-from collections.abc import Callable, Iterator
-from contextlib import contextmanager
-from datetime import datetime
 from itertools import pairwise
-from typing import Any, TypedDict
+from typing import Any, ClassVar, TypedDict
 from uuid import UUID
 
-from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from app import cards, chunking, jobs, tokenizer
-from app.models import INDEX_VERSION, Artifact, Chunk, Entry, EntryRevision, Job, Run
-from app.providers import Call, Models
+from app.graphs import Hook, JobPipeline
+from app.models import INDEX_VERSION, Artifact, Chunk, Entry, EntryRevision
 
-log = logging.getLogger("gatherloom.ingestion")
+__all__ = ["Hook", "Pipeline", "delete_entry_chunks"]
 EMBED_BATCH = 25
-Hook = Callable[[str], None]
 
 
 class IngestionState(TypedDict):
@@ -38,6 +31,7 @@ class IngestionState(TypedDict):
 
 
 def initial_state(claim: jobs.Claim) -> IngestionState:
+    assert claim.entry_id is not None and claim.revision is not None
     return {
         "job_id": str(claim.id),
         "owner_id": str(claim.owner_id),
@@ -79,34 +73,21 @@ def chunk_rows(claim: jobs.Claim, unit: str) -> Any:
     )
 
 
-class Pipeline:
-    """Runs one claimed job through the graph. One instance per worker thread."""
+class Pipeline(JobPipeline):
+    """Ingestion jobs. Without models the graph builds the keyword index only."""
 
-    def __init__(
-        self,
-        sessions: sessionmaker[Session],
-        checkpointer: BaseCheckpointSaver[Any],
-        worker_id: str,
-        *,
-        models: Models | None = None,
-        clock: Callable[[], datetime] = jobs.utcnow,
-        hook: Hook | None = None,
-    ) -> None:
-        """Without models the graph builds the keyword index only."""
-        self.sessions = sessions
-        self.models = models
-        self.checkpointer = checkpointer
-        self.worker_id = worker_id
-        self.clock = clock
-        self.hook = hook or (lambda _point: None)
-        self.claim: jobs.Claim | None = None
-        self.last_run: UUID | None = None
+    PROMPT_VERSIONS: ClassVar[dict[str, int]] = {cards.TASK: cards.PROMPT_VERSION}
+
+    def initial_state(self, claim: jobs.Claim) -> dict[str, Any]:
+        return dict(initial_state(claim))
+
+    def build(self) -> StateGraph[Any]:
         graph = StateGraph(IngestionState)
         graph.add_node("load", self.load)
         graph.add_node("index_keywords", self.index_keywords)
         graph.add_node("finish", self.finish)
         steps = ["load", "index_keywords"]
-        if models is not None:
+        if self.models is not None:
             graph.add_node("embed", self.embed)
             graph.add_node("card", self.card)
             graph.add_node("card_index", self.card_index)
@@ -116,72 +97,7 @@ class Pipeline:
         for current, following in pairwise(steps):
             graph.add_edge(current, following)
         graph.add_edge("finish", END)
-        self.graph = graph.compile(checkpointer=checkpointer)
-
-    # Running
-
-    def run(self, claim: jobs.Claim) -> str:
-        """Execute or resume the job. Returns its resulting status."""
-        self.claim = claim
-        config: RunnableConfig = {"configurable": {"thread_id": claim.thread_id}}
-        started = self.clock()
-        try:
-            pending = self.graph.get_state(config).next
-            self.graph.invoke(
-                None if pending else initial_state(claim), config, durability="sync"
-            )
-            status = "succeeded"
-        except jobs.Cancelled:
-            with self.sessions() as db:
-                jobs.record_cancelled(db, claim, self.worker_id, self.clock())
-            status = "cancelled"
-        except jobs.LeaseLost:
-            # The new owner (or the deletion) decides what happens next.
-            status = "lost"
-        except Exception as error:  # noqa: BLE001 - recorded as a job failure
-            failure = (
-                error
-                if isinstance(error, jobs.JobError)
-                else jobs.Retryable("internal_error", type(error).__name__)
-            )
-            try:
-                with self.sessions() as db:
-                    status = jobs.record_failure(
-                        db, claim, self.worker_id, failure, self.clock()
-                    )
-            except jobs.LeaseLost:
-                status = "lost"
-            log.warning(
-                "job attempt failed",
-                extra={
-                    "job_id": str(claim.id),
-                    "error_code": failure.code,
-                    "error_type": type(error).__name__,
-                },
-            )
-        if status in ("succeeded", "cancelled", "failed"):
-            self.checkpointer.delete_thread(claim.thread_id)
-        log.info(
-            "job attempt finished",
-            extra={
-                "job_id": str(claim.id),
-                "status": status,
-                "latency_ms": int((self.clock() - started).total_seconds() * 1000),
-            },
-        )
-        return status
-
-    @contextmanager
-    def step(self, stage: str) -> Iterator[tuple[Session, Job]]:
-        """A fenced transaction that records the current stage."""
-        assert self.claim is not None
-        with self.sessions() as db:
-            job = jobs.fence(db, self.claim, self.worker_id)
-            job.stage = stage
-            job.updated_at = self.clock()
-            yield db, job
-            self.hook(f"{stage}:commit")
-            db.commit()
+        return graph
 
     # Nodes
 
@@ -346,48 +262,6 @@ class Pipeline:
                 )
                 .on_conflict_do_nothing(constraint="uq_chunks_unit")
             )
-        return {}
-
-    def record(self, call: Call) -> None:
-        """Store one model call's usage and cost, whatever the outcome."""
-        assert self.claim is not None
-        cost, price = call.cost()
-        with self.sessions.begin() as db:
-            run = Run(
-                owner_id=self.claim.owner_id,
-                job_id=self.claim.id,
-                task=call.task,
-                provider=call.provider,
-                model=call.model,
-                prompt_version=cards.PROMPT_VERSION
-                if call.task == cards.TASK
-                else None,
-                input_tokens=call.input_tokens,
-                output_tokens=call.output_tokens,
-                cost_estimate=cost,
-                currency=price.currency if price else None,
-                price_date=price.checked if price else None,
-                latency_ms=call.latency_ms,
-                error_code=call.error_code,
-            )
-            db.add(run)
-            db.flush()
-            self.last_run = run.id
-        log.info(
-            "model call",
-            extra={
-                "job_id": str(self.claim.id),
-                "stage": call.task,
-                "latency_ms": call.latency_ms,
-                "error_code": call.error_code,
-                "model": call.model,
-            },
-        )
-
-    def finish(self, state: IngestionState) -> dict[str, Any]:
-        self.hook("finish")
-        with self.step("done") as (_db, job):
-            jobs.settle(job, "succeeded", self.clock())
         return {}
 
 
