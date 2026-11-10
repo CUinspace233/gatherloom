@@ -30,6 +30,7 @@ llm_routes:
 
 ## 待验证（S0）
 - [x] 列出两家当前可用模型 ID（不依赖别名）。2026-11-10：DeepSeek `/models` 只返回 `deepseek-flash`、`deepseek-v4-pro`；百炼中国站有带日期快照 `qwen3.7-flash-2026-07-15`。初始路由：light = `qwen3.7-flash-2026-07-15`，heavy = `deepseek-v4-pro`，不配置 fallback。
+- 2026-11-10 更新：路由改为 light = `qwen3.8-flash`（¥0.8 / ¥2.7 每百万 token，不分档），heavy = `deepseek-flash`（高峰 $0.3 / $1.2）。`qwen3.8-flash` 没有带日期的快照，只能用别名；别名指向的模型变化时，以 `runs` 表的记录和 `check-models` 复测为准。两者都默认思考，分别用 `enable_thinking: false` 和 `thinking: {"type": "disabled"}` 关闭。
 - 千问 3.x 默认开启思考模式：同一张小卡片开启时 12.5 s、1,046 个推理 token，关闭（`enable_thinking: false`）时 1.1 s，输出质量相当。light 档调用一律关闭思考。
 - 价格（2026-11-10）：`qwen3.7-flash-2026-07-15` 输入 ≤32K 档 ¥0.2 / ¥0.8 每百万 token（输入 / 输出）；`deepseek-v4-pro` 高峰时段 $1.32 / $3.96，非高峰半价，费用估算按高峰价记录上限。
 - [ ] 每档用 10 条样本比较 JSON 合法率、字段正确率、中文质量、延迟与成本。尚未做；S3 实测 5 张知识卡片（含 check-models）均首次即合法，单次调用 1.7–4.2 s，¥0.0002–0.0013（长网页节选约 5K 输入 token）。

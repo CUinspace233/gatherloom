@@ -17,7 +17,7 @@ def test_light_chat_uses_qwen_without_thinking_and_reports_usage() -> None:
         "light", [{"role": "user", "content": "你好"}], "test", record
     )
     assert content.startswith("{")
-    assert route.provider == "qwen" and route.model == "qwen3.7-flash-2026-07-15"
+    assert route.provider == "qwen" and route.model == "qwen3.8-flash"
     [(path, body)] = api.requests
     assert path == "completions"
     assert body["enable_thinking"] is False
@@ -26,15 +26,16 @@ def test_light_chat_uses_qwen_without_thinking_and_reports_usage() -> None:
     assert (call.input_tokens, call.output_tokens, call.error_code) == (1000, 200, None)
     cost, price = call.cost()
     assert price is not None and price.currency == "CNY"
-    assert cost == Decimal("0.000360")  # 1000 × 0.2 + 200 × 0.8 per million
+    assert cost == Decimal("0.001340")  # 1000 × 0.8 + 200 × 2.7 per million
 
 
 def test_heavy_tier_routes_to_deepseek() -> None:
     api = FakeAPI()
     _calls, record = collector()
     _content, route = api.models().router.chat_json("heavy", [], "test", record)
-    assert route.provider == "deepseek" and route.model == "deepseek-v4-pro"
+    assert route.provider == "deepseek" and route.model == "deepseek-flash"
     assert "enable_thinking" not in api.requests[0][1]
+    assert api.requests[0][1]["thinking"] == {"type": "disabled"}
 
 
 @pytest.mark.parametrize(
@@ -70,10 +71,7 @@ def test_fallback_only_for_retryable_errors() -> None:
     calls, record = collector()
     _content, route = api.models(**fallback).router.chat_json("light", [], "t", record)
     assert route.model == "deepseek-flash"
-    assert [call.model for call in calls] == [
-        "qwen3.7-flash-2026-07-15",
-        "deepseek-flash",
-    ]
+    assert [call.model for call in calls] == ["qwen3.8-flash", "deepseek-flash"]
 
     api = FakeAPI()
     api.chat.append(401)
@@ -99,7 +97,7 @@ def test_embeddings_are_batched_by_25_and_checked() -> None:
 def test_unknown_price_is_not_guessed() -> None:
     call = Call("t", "qwen", "some-new-model", 10, 10, 5)
     assert call.cost() == (None, None)
-    big = Call("t", "qwen", "qwen3.7-flash-2026-07-15", 40_000, 10, 5)
+    big = Call("t", "qwen", "qwen3.7-flash-2026-07-15", 40_000, 10, 5)  # tiered
     assert big.cost()[0] is None
 
 

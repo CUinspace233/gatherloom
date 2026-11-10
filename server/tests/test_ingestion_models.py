@@ -73,7 +73,7 @@ def test_full_ingestion_embeds_generates_card_and_records_runs(
     with committed() as db:
         card = db.scalars(select(Artifact).where(Artifact.entry_id == entry_id)).one()
         assert card.content["title"] == CARD["title"]
-        assert card.content["model"] == "qwen3.7-flash-2026-07-15"
+        assert card.content["model"] == "qwen3.8-flash"
         assert card.prompt_version == 1
         card_chunk = db.scalars(
             select(Chunk).where(Chunk.entry_id == entry_id, Chunk.unit == "card")
