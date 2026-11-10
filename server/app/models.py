@@ -1,22 +1,30 @@
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+# Bailian qwen3.7-text-embedding-flash default output; index_version 1 (ADR 0001).
+EMBEDDING_DIMENSION = 1024
+INDEX_VERSION = 1
 
 
 class Base(DeclarativeBase):
@@ -227,6 +235,15 @@ class Job(Base):
             "kind",
             name="uq_jobs_entry_revision_kind",
         ),
+        CheckConstraint(
+            "status IN ('queued', 'running', 'succeeded', 'failed', 'cancelled')",
+            name="ck_jobs_status",
+        ),
+        Index(
+            "ix_jobs_claimable",
+            "run_after",
+            postgresql_where=text("status IN ('queued', 'running')"),
+        ),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -235,6 +252,118 @@ class Job(Base):
     revision: Mapped[int]
     kind: Mapped[str] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(16), server_default="queued")
+    attempts: Mapped[int] = mapped_column(server_default="0")
+    generation: Mapped[int] = mapped_column(server_default="0")
+    run_after: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    lease_owner: Mapped[str | None] = mapped_column(String(64))
+    lease_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    stage: Mapped[str | None] = mapped_column(String(32))
+    indexed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    error_step: Mapped[str | None] = mapped_column(String(32))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+def revision_key(name: str) -> ForeignKeyConstraint:
+    return ForeignKeyConstraint(
+        ["owner_id", "entry_id", "revision"],
+        [
+            "entry_revisions.owner_id",
+            "entry_revisions.entry_id",
+            "entry_revisions.revision",
+        ],
+        name=name,
+    )
+
+
+class Chunk(Base):
+    """A retrieval unit: a span of source text, or an entry's knowledge card."""
+
+    __tablename__ = "chunks"
+    __table_args__ = (
+        revision_key("fk_chunks_entry_revision_owner"),
+        UniqueConstraint(
+            "owner_id", "entry_id", "revision", "unit", "ordinal", name="uq_chunks_unit"
+        ),
+        CheckConstraint("unit IN ('chunk', 'card')", name="ck_chunks_unit"),
+        Index("ix_chunks_tokens", "tokens", postgresql_using="gin"),
+        Index("ix_chunks_owner_entry", "owner_id", "entry_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    entry_id: Mapped[UUID]
+    revision: Mapped[int]
+    unit: Mapped[str] = mapped_column(String(8))
+    ordinal: Mapped[int]
+    source: Mapped[str] = mapped_column(String(16))
+    start_offset: Mapped[int]
+    end_offset: Mapped[int]
+    display_text: Mapped[str] = mapped_column(Text)
+    index_text: Mapped[str] = mapped_column(Text)
+    tokens: Mapped[str] = mapped_column(TSVECTOR)
+    embedding: Mapped[list[float] | None] = mapped_column(Vector(EMBEDDING_DIMENSION))
+    context_header_version: Mapped[int]
+    tokenizer_version: Mapped[int]
+    index_version: Mapped[int]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Artifact(Base):
+    """A derived product of one revision, such as its knowledge card."""
+
+    __tablename__ = "artifacts"
+    __table_args__ = (
+        revision_key("fk_artifacts_entry_revision_owner"),
+        UniqueConstraint(
+            "owner_id", "entry_id", "revision", "kind", name="uq_artifacts_kind"
+        ),
+        CheckConstraint("kind IN ('card')", name="ck_artifacts_kind"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    entry_id: Mapped[UUID]
+    revision: Mapped[int]
+    kind: Mapped[str] = mapped_column(String(16))
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    prompt_version: Mapped[int]
+    run_id: Mapped[UUID | None]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Run(Base):
+    """One model call, with usage and cost, for audit and budgeting."""
+
+    __tablename__ = "runs"
+    __table_args__ = (Index("ix_runs_owner_created", "owner_id", "created_at"),)
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    job_id: Mapped[UUID | None] = mapped_column(ForeignKey("jobs.id"))
+    task: Mapped[str] = mapped_column(String(32))
+    provider: Mapped[str] = mapped_column(String(32))
+    model: Mapped[str] = mapped_column(String(128))
+    prompt_version: Mapped[int | None]
+    input_tokens: Mapped[int] = mapped_column(server_default="0")
+    output_tokens: Mapped[int] = mapped_column(server_default="0")
+    cost_estimate: Mapped[Decimal | None] = mapped_column(Numeric(12, 6))
+    currency: Mapped[str | None] = mapped_column(String(3))
+    price_date: Mapped[date | None] = mapped_column(Date)
+    latency_ms: Mapped[int]
+    error_code: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

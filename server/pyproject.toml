@@ -6,6 +6,12 @@ dependencies = [
     "alembic",
     "argon2-cffi",
     "fastapi",
+    "httpx>=0.28.1",
+    "jieba>=0.42.1",
+    "langgraph==1.2.20",
+    "langgraph-checkpoint==4.3.1",
+    "langgraph-checkpoint-postgres==3.2.0",
+    "pgvector>=0.5.1",
     "psycopg[binary]",
     "pydantic",
     "python-multipart",
@@ -29,3 +35,7 @@ testpaths = ["tests"]
 
 [tool.mypy]
 strict = true
+
+[[tool.mypy.overrides]]
+module = ["jieba"]
+ignore_missing_imports = true
