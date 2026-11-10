@@ -39,6 +39,8 @@ PRICES: dict[tuple[str, str], Price] = {
     ("qwen", "qwen3.7-flash-2026-07-15"): Price(
         Decimal("0.2"), Decimal("0.8"), "CNY", PRICE_DATE, 32_000
     ),
+    # Single tier up to 1M input tokens.
+    ("qwen", "qwen3.8-flash"): Price(Decimal("0.8"), Decimal("2.7"), "CNY", PRICE_DATE),
     ("qwen", "qwen3.7-text-embedding-flash"): Price(
         Decimal("0.125"), Decimal(0), "CNY", PRICE_DATE
     ),
@@ -171,9 +173,12 @@ class ChatModel:
             "messages": list(messages),
             "response_format": {"type": "json_object"},
         }
+        # Both providers think by default, which adds latency and cost for no
+        # measured gain on these structured tasks.
         if self.route.provider == "qwen":
-            # Qwen 3.x thinks by default: ~10x slower and costlier for no gain here.
             body["enable_thinking"] = False
+        else:
+            body["thinking"] = {"type": "disabled"}
         payload = self.client.post("chat/completions", body, task, record)
         try:
             return str(payload["choices"][0]["message"]["content"] or "")

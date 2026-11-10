@@ -82,8 +82,8 @@ def load_settings(env: Mapping[str, str] = os.environ) -> Settings:
         embedding_dimension=int(
             env.get("GATHERLOOM_EMBEDDING_DIMENSION") or EMBEDDING_DIMENSION
         ),
-        light=route(env, "light", "qwen", "qwen3.7-flash-2026-07-15"),
-        heavy=route(env, "heavy", "deepseek", "deepseek-v4-pro"),
+        light=route(env, "light", "qwen", "qwen3.8-flash"),
+        heavy=route(env, "heavy", "deepseek", "deepseek-flash"),
         fallback=(
             Route(fallback_provider, env.get("GATHERLOOM_LLM_FALLBACK_MODEL", ""))
             if fallback_provider
