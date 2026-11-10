@@ -139,6 +139,9 @@ OptionalEntryText = Annotated[
 ]
 LongText = Annotated[str, StringConstraints(max_length=100000, pattern=r"^[^\x00]*$")]
 EntryType = Literal["thought", "url", "image"]
+ProcessingStatus = Literal[
+    "queued", "running", "searchable", "succeeded", "partial", "failed", "cancelled"
+]
 
 
 def check_web_url(value: str) -> str:
@@ -242,8 +245,8 @@ class EntryView(BaseModel):
     attachment: AttachmentView | None
     project_ids: list[UUID]
     possible_duplicate: bool
-    processing: str = Field(
-        description="State of the current revision's processing job."
+    processing: ProcessingStatus = Field(
+        description="State of the current revision's processing; see ProcessingView."
     )
     created_at: datetime
     updated_at: datetime
@@ -252,6 +255,21 @@ class EntryView(BaseModel):
 class EntryDetail(EntryView):
     ocr_text: str | None
     extract_text: str | None
+
+
+class ProcessingView(BaseModel):
+    status: ProcessingStatus = Field(
+        description="queued/running: saved and being processed; searchable: "
+        "indexed, enrichment still running; succeeded: done; partial: "
+        "searchable but enrichment failed; failed: not searchable yet."
+    )
+    searchable: bool
+    stage: str | None = Field(description="Last step the worker reached.")
+    failed_step: Literal["index", "card"] | None
+    error_code: str | None
+    attempts: int
+    can_retry: bool
+    updated_at: datetime
 
 
 class RevisionView(BaseModel):

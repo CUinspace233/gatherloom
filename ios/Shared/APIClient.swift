@@ -26,6 +26,7 @@ struct APIError: LocalizedError {
         case (409, "username already exists"): "该用户名已被使用。"
         case (409, "entry changed since base_revision"): "记录已在别处修改，请刷新后再编辑。"
         case (409, "entry for this submission was deleted"): "这条记录已在服务器上删除。"
+        case (409, "processing already finished"): "这条记录已经整理完成。"
         case (409, _): "与服务器上的内容冲突，本机记录已保留。"
         case (411, _), (413, _): "图片超过 10 MB，无法上传。"
         case (415, _): "只支持 JPEG、PNG、HEIC 和 WebP 图片。"

@@ -347,6 +347,8 @@ struct EntryDetailView: View {
     @State private var isWorking = false
     @State private var isEditing = false
     @State private var confirmsDelete = false
+    @State private var processing: ProcessingState?
+    @State private var pollGeneration = 0
 
     init(capture: CaptureQueue, entry: CaptureEntry) {
         self.capture = capture
@@ -378,8 +380,17 @@ struct EntryDetailView: View {
                     }
                 }
             }
-            Section("保存状态") {
-                Text(entry.statusText)
+            Section("处理状态") {
+                Text(ProcessingState.text(for: processing?.status ?? entry.processing))
+                if let processing, processing.canRetry {
+                    if let step = processing.failedStepText {
+                        LabeledContent("失败步骤", value: step)
+                    }
+                    if processing.searchable {
+                        Text("原文已可检索，其余步骤可以重试。").foregroundStyle(.secondary)
+                    }
+                    Button("重试") { Task { await retry() } }
+                }
                 if entry.possibleDuplicate { Text("可能与已有记录重复").foregroundStyle(.secondary) }
                 LabeledContent("保存时间", value: entry.createdAt.formatted(date: .abbreviated, time: .shortened))
                 if entry.revision > 1 { LabeledContent("版本", value: "第 \(entry.revision) 版") }
@@ -396,6 +407,7 @@ struct EntryDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { Button("编辑") { isEditing = true } }
         .task { await reload() }
+        .task(id: "\(entry.revision)-\(pollGeneration)") { await pollProcessing() }
         .refreshable { await reload() }
         .sheet(isPresented: $isEditing) {
             EntryEditor(entry: entry) { text, note in try await save(text: text, note: note) }
@@ -441,6 +453,39 @@ struct EntryDetailView: View {
             errorMessage = nil
         } catch {
             if !(error is CancellationError) { errorMessage = error.localizedDescription }
+        }
+    }
+
+    /// Polls while the server is still working, then refreshes the entry once.
+    private func pollProcessing() async {
+        let path = "v1/entries/\(entry.id.uuidString)/processing"
+        while !Task.isCancelled {
+            do {
+                let state = try await session.request(ProcessingState.self, path, scope: capture.scope)
+                processing = state
+                if !state.isActive {
+                    if state.status != entry.processing { await reload() }
+                    return
+                }
+            } catch {
+                if error is CancellationError { return }
+            }
+            try? await Task.sleep(for: .seconds(3))
+        }
+    }
+
+    private func retry() async {
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            processing = try await session.request(
+                ProcessingState.self, "v1/entries/\(entry.id.uuidString)/retry",
+                method: "POST", scope: capture.scope
+            )
+            capture.noteServerChange()
+            pollGeneration += 1
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

@@ -92,11 +92,38 @@ struct CaptureEntry: Decodable, Identifiable, Hashable {
         return type == .image ? "截图" : "记录"
     }
 
-    var statusText: String {
-        switch processing {
+    var statusText: String { ProcessingState.text(for: processing) }
+}
+
+/// Server-side processing of an entry's current revision.
+struct ProcessingState: Decodable, Hashable {
+    let status: String
+    let searchable: Bool
+    let stage: String?
+    let failedStep: String?
+    let errorCode: String?
+    let attempts: Int
+    let canRetry: Bool
+    let updatedAt: Date
+
+    /// Still changing on the server, so worth polling.
+    var isActive: Bool { ["queued", "running", "searchable"].contains(status) }
+
+    var failedStepText: String? {
+        switch failedStep {
+        case "index": "建立检索索引"
+        case "card": "生成知识卡片"
+        default: nil
+        }
+    }
+
+    static func text(for status: String) -> String {
+        switch status {
         case "queued", "running": "已保存到服务器，正在整理"
+        case "searchable": "已可检索"
         case "succeeded": "整理完成"
-        case "failed": "已保存，部分整理失败"
+        case "partial": "已保存，部分整理失败"
+        case "failed": "已保存，整理失败"
         default: "已保存到服务器"
         }
     }

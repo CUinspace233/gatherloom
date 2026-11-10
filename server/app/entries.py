@@ -20,8 +20,11 @@ from app.contracts import (
     ErrorDetail,
     ErrorResponses,
     Page,
+    ProcessingView,
     RevisionView,
 )
+from app.ingestion import delete_entry_chunks
+from app.jobs import ACTIVE, INGESTION, failed_step, processing_status
 from app.models import Attachment, Entry, EntryRevision, Job, ProjectEntry
 from app.projects import NOT_FOUND, Cursor, Limit, get_project, paginate
 
@@ -32,7 +35,6 @@ CONFLICT: ErrorResponses = {
         "description": "The request conflicts with current state.",
     }
 }
-INGESTION = "entry_ingestion"
 
 
 def live_entries(owner_id: UUID) -> Select[Entry]:
@@ -80,9 +82,9 @@ def views(
         )
     }
     jobs = {
-        entry_id: status
-        for entry_id, status in db.execute(
-            select(Job.entry_id, Job.status)
+        entry_id: processing_status(status, indexed_at)
+        for entry_id, status, indexed_at in db.execute(
+            select(Job.entry_id, Job.status, Job.indexed_at)
             .join(
                 Entry,
                 and_(
@@ -347,18 +349,85 @@ def delete_entry(entry_id: UUID, owner: Owner, db: Db) -> Response:
     Stored files and derived data are purged by the deletion lifecycle (S6).
     """
     entry = get_entry(db, owner.id, entry_id, lock=True)
-    entry.deleted_at = datetime.now(UTC)
+    now = datetime.now(UTC)
+    entry.deleted_at = now
+    # A worker holding a lease on a running job loses it here: its fenced
+    # writes check the status and give up.
     db.execute(
         update(Job)
         .where(
             Job.owner_id == owner.id,
             Job.entry_id == entry.id,
-            Job.status == "queued",
+            Job.status.in_(ACTIVE),
         )
-        .values(status="cancelled")
+        .values(
+            status="cancelled",
+            lease_owner=None,
+            lease_expires_at=None,
+            finished_at=now,
+            updated_at=now,
+        )
     )
+    delete_entry_chunks(db, owner.id, entry.id)
     db.commit()
     return Response(status_code=204)
+
+
+def current_job(db: Session, entry: Entry, *, lock: bool = False) -> Job:
+    query = select(Job).where(
+        Job.owner_id == entry.owner_id,
+        Job.entry_id == entry.id,
+        Job.revision == entry.current_revision,
+        Job.kind == INGESTION,
+    )
+    return db.scalars(query.with_for_update() if lock else query).one()
+
+
+def processing_view(job: Job) -> ProcessingView:
+    status = processing_status(job.status, job.indexed_at)
+    return ProcessingView(
+        status=status,
+        searchable=job.indexed_at is not None,
+        stage=job.stage,
+        failed_step=failed_step(job.error_step) if job.error_code else None,
+        error_code=job.error_code,
+        attempts=job.attempts,
+        can_retry=job.status == "failed",
+        updated_at=job.updated_at,
+    )
+
+
+@router.get("/entries/{entry_id}/processing", responses=NOT_FOUND)
+def entry_processing(entry_id: UUID, owner: Owner, db: Db) -> ProcessingView:
+    """Processing state of the entry's current revision."""
+    entry = get_entry(db, owner.id, entry_id)
+    return processing_view(current_job(db, entry))
+
+
+@router.post("/entries/{entry_id}/retry", responses={**NOT_FOUND, **CONFLICT})
+def retry_processing(entry_id: UUID, owner: Owner, db: Db) -> ProcessingView:
+    """Run failed processing again. Steps that already finished are kept.
+
+    A job that is still queued or running is returned unchanged; 409 when the
+    current revision has already finished processing.
+    """
+    entry = get_entry(db, owner.id, entry_id, lock=True)
+    job = current_job(db, entry, lock=True)
+    if job.status == "failed":
+        now = datetime.now(UTC)
+        job.status = "queued"
+        job.attempts = 0
+        job.generation += 1
+        job.run_after = now
+        job.updated_at = now
+        job.finished_at = None
+        job.error_code = None
+        job.error_step = None
+    elif job.status not in ACTIVE:
+        raise HTTPException(409, "processing already finished")
+    result = processing_view(job)
+    db.commit()
+    return result
 
 
 @router.get("/entries/{entry_id}/revisions", responses=NOT_FOUND)

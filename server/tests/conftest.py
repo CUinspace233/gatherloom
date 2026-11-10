@@ -6,12 +6,27 @@ import pytest
 from alembic import command
 from alembic.config import Config
 from fastapi.testclient import TestClient
-from sqlalchemy import Connection, Engine, create_engine
-from sqlalchemy.orm import Session
+from sqlalchemy import Connection, Engine, create_engine, delete, select, text
+from sqlalchemy.orm import Session, sessionmaker
 
 from app import storage
 from app.db import get_db
 from app.main import app
+from app.models import (
+    Artifact,
+    Attachment,
+    Chunk,
+    Entry,
+    EntryRevision,
+    Job,
+    LoginSession,
+    ProjectEntry,
+    Run,
+    User,
+)
+from app.worker import setup_checkpoints
+
+COMMITTED_PREFIX = "worker_"
 
 
 @pytest.fixture(scope="session")
@@ -62,3 +77,42 @@ def client(connection: Connection) -> Iterator[TestClient]:
 def storage_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(storage, "STORAGE_DIR", tmp_path / "storage")
     return tmp_path / "storage"
+
+
+def purge_committed(sessions: sessionmaker[Session]) -> None:
+    """Delete accounts named worker_* and everything they own."""
+    with sessions.begin() as db:
+        owners = list(
+            db.scalars(
+                select(User.id).where(User.username.startswith(COMMITTED_PREFIX))
+            )
+        )
+        if not owners:
+            return
+        for model in (Run, Artifact, Chunk, Job, ProjectEntry, Attachment):
+            db.execute(delete(model).where(model.owner_id.in_(owners)))
+        db.execute(delete(EntryRevision).where(EntryRevision.owner_id.in_(owners)))
+        db.execute(delete(Entry).where(Entry.owner_id.in_(owners)))
+        db.execute(delete(LoginSession).where(LoginSession.owner_id.in_(owners)))
+        db.execute(delete(User).where(User.id.in_(owners)))
+        for table in ("checkpoint_writes", "checkpoint_blobs", "checkpoints"):
+            for owner in owners:
+                db.execute(
+                    text(f"DELETE FROM {table} WHERE thread_id LIKE :prefix"),
+                    {"prefix": f"{owner}:%"},
+                )
+
+
+@pytest.fixture
+def committed(test_engine: Engine) -> Iterator[sessionmaker[Session]]:
+    """Sessions that really commit, for workers that use several connections.
+
+    Data must belong to accounts named worker_*; it is removed afterwards.
+    """
+    setup_checkpoints(test_engine.url.render_as_string(hide_password=False))
+    sessions = sessionmaker(test_engine, expire_on_commit=False)
+    purge_committed(sessions)
+    try:
+        yield sessions
+    finally:
+        purge_committed(sessions)
