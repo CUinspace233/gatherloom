@@ -12,3 +12,4 @@
 | [0006](0006-orchestration-langgraph-checkpointer.md) | 保持 LangGraph + PostgreSQL checkpointer | 已采纳 |
 | [0007](0007-deployment-overseas-server.md) | 服务器部署在海外/港澳 | 已采纳 |
 | [0008](0008-apple-signing-free-team.md) | 暂用免费签名，内测前购买开发者账号 | 已采纳 |
+| [0009](0009-knowledge-card-retrieval-augmentation.md) | 知识卡片作为派生检索单元，检索增强按评测逐项启用 | 已采纳，S0/S4 待验证 |
