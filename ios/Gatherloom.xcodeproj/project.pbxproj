@@ -8,25 +8,34 @@
 
 /* Begin PBXBuildFile section */
 		0750961C1116F1F067C3C281 /* CaptureQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 537740B690D246447B2A231D /* CaptureQueue.swift */; };
-		0893DB30C36008837C0A9D80 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C6B5D9FA5093B91E71AD294 /* APIClient.swift */; };
-		177956935A1E6CA1478DFC00 /* GatherloomShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		211B22132FB8AA4974338936 /* SharingProbeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */; };
-		2A66DF323D971ED90890460D /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AD54551E3A4A47B4962C284 /* CredentialStore.swift */; };
+		1EF3C1502990FA25248791A7 /* TextRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564364766B21B952C4C06492 /* TextRecognizer.swift */; };
 		387A8845F4476985B301FB43 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93430B4D552A53A2D7B1D758 /* SignInView.swift */; };
-		4218914B1876651A0FD68AD2 /* DebugConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2D8F744CE95E8AFDB666BA /* DebugConnectionView.swift */; };
+		3910627A0654A5DB5275606E /* ImagePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09375365574EE945DBA7904 /* ImagePayload.swift */; };
+		3B220409ECB4F803E16089F8 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6409C2BC2550B679A1A1D8B7 /* Models.swift */; };
+		474BE1FACE037C8B79C6F523 /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAF1840D55F017846F2E3284 /* CredentialStore.swift */; };
+		60B65D8736D955BB43EBFD62 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE763720B3BEF6185AB75E9E /* APIClient.swift */; };
 		6995C5F46A5D10B0B18984A0 /* GatherloomApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */; };
-		95C0B6390C869F6F868A9F60 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D891DA9D986D026F912EA22A /* ShareViewController.swift */; };
-		9DDFFB0BDA6975229DF0D25A /* SharingProbeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75DF2E7C4748D084501DE708 /* SharingProbeApp.swift */; };
+		787E48E8EBEEA711978B7FCC /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE763720B3BEF6185AB75E9E /* APIClient.swift */; };
+		81ECD0F39C9C13F0C50DE1F3 /* CaptureOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD28C3B8FB7442F2285D8843 /* CaptureOutbox.swift */; };
+		86279916DE07B000699C4CE4 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8F95AA0C02F8517399C7E7 /* ShareViewController.swift */; };
+		8E57174B6ACF838DD2522D73 /* CaptureUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375508EEC9EA14F965126BA0 /* CaptureUploader.swift */; };
+		918F70D31E3D93F2393AE01B /* SwipeToDeleteCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 122EF11F326AAC9AB2133256 /* SwipeToDeleteCard.swift */; };
+		9B09D1CD854FEC78EBADC049 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6409C2BC2550B679A1A1D8B7 /* Models.swift */; };
+		9B217211C21C8E1B22BA90D5 /* CaptureOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD28C3B8FB7442F2285D8843 /* CaptureOutbox.swift */; };
 		B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04686A26FFB0C58713DFD4E /* ProjectsView.swift */; };
-		CA62833F72F45B530ACAAD2F /* SharingProbeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */; };
+		B98C940B053E0278D7028EC8 /* Preprocess.js in Resources */ = {isa = PBXBuildFile; fileRef = 6DAA5113237E8F9F9F3F6023 /* Preprocess.js */; };
 		CAC54E8984BD9277A1E70332 /* CaptureViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A990189CE0ED3C67575111B6 /* CaptureViews.swift */; };
-		DEF6BA7AC032BF9B1C654C49 /* CaptureOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = 387836D787842285D9C89953 /* CaptureOutbox.swift */; };
+		D485748AF7CD45E81443C500 /* TextRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564364766B21B952C4C06492 /* TextRecognizer.swift */; };
+		DFB1DF6489D9A11D3A92623B /* GatherloomShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E76B5591F0D2D97F0960FDB4 /* CaptureUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375508EEC9EA14F965126BA0 /* CaptureUploader.swift */; };
+		E9B0B1B2ADB56BC9D91175C3 /* CredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAF1840D55F017846F2E3284 /* CredentialStore.swift */; };
+		EA2CE03405FA0F6CB8F87E16 /* ImagePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09375365574EE945DBA7904 /* ImagePayload.swift */; };
 		EABA9D5D137C31C23EE28232 /* AccountSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */; };
 		FD073E4375EEDEDE292B8073 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3953570FC516D9953B8F7E85 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		4ED24C0AFD46080DAA2CBBC2 /* PBXContainerItemProxy */ = {
+		13BA3589B9ABA2FE4DA4B9F1 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 8507C28021C7218DD60D3AA5 /* Project object */;
 			proxyType = 1;
@@ -36,13 +45,13 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		F3765D1E2D5B6AA7D1CC3383 /* Embed Foundation Extensions */ = {
+		5BE38F1EF1278B0AB9D95125 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				177956935A1E6CA1478DFC00 /* GatherloomShareExtension.appex in Embed Foundation Extensions */,
+				DFB1DF6489D9A11D3A92623B /* GatherloomShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -51,28 +60,28 @@
 
 /* Begin PBXFileReference section */
 		1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = GatherloomShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		16E9D9BF72AE4EE4C79CF722 /* GatherloomSharingProbe.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GatherloomSharingProbe.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		122EF11F326AAC9AB2133256 /* SwipeToDeleteCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeToDeleteCard.swift; sourceTree = "<group>"; };
 		1BF905EE5E8E148602055A92 /* Gatherloom.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gatherloom.entitlements; sourceTree = "<group>"; };
 		24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatherloomApp.swift; sourceTree = "<group>"; };
-		387836D787842285D9C89953 /* CaptureOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureOutbox.swift; sourceTree = "<group>"; };
+		375508EEC9EA14F965126BA0 /* CaptureUploader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureUploader.swift; sourceTree = "<group>"; };
 		3953570FC516D9953B8F7E85 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		3C6B5D9FA5093B91E71AD294 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		4C64ADF27B9E54421E1CDCAF /* Debug-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Debug-Info.plist"; sourceTree = "<group>"; };
 		537740B690D246447B2A231D /* CaptureQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureQueue.swift; sourceTree = "<group>"; };
-		5AD54551E3A4A47B4962C284 /* CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialStore.swift; sourceTree = "<group>"; };
-		62E5C78AD0C829C5A38055A8 /* SharingProbe.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SharingProbe.entitlements; sourceTree = "<group>"; };
-		75DF2E7C4748D084501DE708 /* SharingProbeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingProbeApp.swift; sourceTree = "<group>"; };
-		77A5A5FE1A5B46381B06244F /* Host-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Host-Info.plist"; sourceTree = "<group>"; };
-		8E2D8F744CE95E8AFDB666BA /* DebugConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugConnectionView.swift; sourceTree = "<group>"; };
+		564364766B21B952C4C06492 /* TextRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextRecognizer.swift; sourceTree = "<group>"; };
+		6409C2BC2550B679A1A1D8B7 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		6DAA5113237E8F9F9F3F6023 /* Preprocess.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = Preprocess.js; sourceTree = "<group>"; };
+		8E8F95AA0C02F8517399C7E7 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		93430B4D552A53A2D7B1D758 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 		A990189CE0ED3C67575111B6 /* CaptureViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureViews.swift; sourceTree = "<group>"; };
-		AEE40B2F4B96BDEB6F6BAEF8 /* Extension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Extension-Info.plist"; sourceTree = "<group>"; };
+		AAF1840D55F017846F2E3284 /* CredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialStore.swift; sourceTree = "<group>"; };
+		AE763720B3BEF6185AB75E9E /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		B04686A26FFB0C58713DFD4E /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		BD28C3B8FB7442F2285D8843 /* CaptureOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureOutbox.swift; sourceTree = "<group>"; };
 		BD7BEF415A05B2388104C911 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
 		BF8AE52EB08AD6310F158FBF /* Gatherloom.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Gatherloom.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		D891DA9D986D026F912EA22A /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		C09375365574EE945DBA7904 /* ImagePayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePayload.swift; sourceTree = "<group>"; };
+		CA6715717B3B44EC25F30AC3 /* ShareExtension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ShareExtension-Info.plist"; sourceTree = "<group>"; };
 		FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSession.swift; sourceTree = "<group>"; };
-		FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharingProbeStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -80,46 +89,38 @@
 			isa = PBXGroup;
 			children = (
 				FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */,
-				3C6B5D9FA5093B91E71AD294 /* APIClient.swift */,
 				3953570FC516D9953B8F7E85 /* Assets.xcassets */,
-				387836D787842285D9C89953 /* CaptureOutbox.swift */,
 				537740B690D246447B2A231D /* CaptureQueue.swift */,
 				A990189CE0ED3C67575111B6 /* CaptureViews.swift */,
-				5AD54551E3A4A47B4962C284 /* CredentialStore.swift */,
-				8E2D8F744CE95E8AFDB666BA /* DebugConnectionView.swift */,
 				24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */,
 				B04686A26FFB0C58713DFD4E /* ProjectsView.swift */,
 				93430B4D552A53A2D7B1D758 /* SignInView.swift */,
+				122EF11F326AAC9AB2133256 /* SwipeToDeleteCard.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
 		};
-		59A6B7F4DC64B7E062F9856D /* SharingProbe */ = {
+		B081EBDA727C043C25602812 /* ShareExtension */ = {
 			isa = PBXGroup;
 			children = (
-				AEE40B2F4B96BDEB6F6BAEF8 /* Extension-Info.plist */,
-				77A5A5FE1A5B46381B06244F /* Host-Info.plist */,
-				62E5C78AD0C829C5A38055A8 /* SharingProbe.entitlements */,
+				6DAA5113237E8F9F9F3F6023 /* Preprocess.js */,
+				8E8F95AA0C02F8517399C7E7 /* ShareViewController.swift */,
 			);
-			path = SharingProbe;
-			sourceTree = "<group>";
-		};
-		8EC5C6D97068D33296F8206C /* Extension */ = {
-			isa = PBXGroup;
-			children = (
-				D891DA9D986D026F912EA22A /* ShareViewController.swift */,
-			);
-			name = Extension;
-			path = SharingProbe/Extension;
+			path = ShareExtension;
 			sourceTree = "<group>";
 		};
 		B0B910414C88D89356CDF8DA /* Shared */ = {
 			isa = PBXGroup;
 			children = (
-				FE13FFEDC64CE7E59DAAAE4F /* SharingProbeStore.swift */,
+				AE763720B3BEF6185AB75E9E /* APIClient.swift */,
+				BD28C3B8FB7442F2285D8843 /* CaptureOutbox.swift */,
+				375508EEC9EA14F965126BA0 /* CaptureUploader.swift */,
+				AAF1840D55F017846F2E3284 /* CredentialStore.swift */,
+				C09375365574EE945DBA7904 /* ImagePayload.swift */,
+				6409C2BC2550B679A1A1D8B7 /* Models.swift */,
+				564364766B21B952C4C06492 /* TextRecognizer.swift */,
 			);
-			name = Shared;
-			path = SharingProbe/Shared;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		CA857EF329451D594DF3440E /* Config */ = {
@@ -127,18 +128,10 @@
 			children = (
 				4C64ADF27B9E54421E1CDCAF /* Debug-Info.plist */,
 				1BF905EE5E8E148602055A92 /* Gatherloom.entitlements */,
+				CA6715717B3B44EC25F30AC3 /* ShareExtension-Info.plist */,
 				BD7BEF415A05B2388104C911 /* Signing.xcconfig */,
 			);
 			path = Config;
-			sourceTree = "<group>";
-		};
-		E8428C2C7AFFEC717EB518F8 /* Host */ = {
-			isa = PBXGroup;
-			children = (
-				75DF2E7C4748D084501DE708 /* SharingProbeApp.swift */,
-			);
-			name = Host;
-			path = SharingProbe/Host;
 			sourceTree = "<group>";
 		};
 		ED15D7DB862D37275A3B2851 /* Products */ = {
@@ -146,7 +139,6 @@
 			children = (
 				BF8AE52EB08AD6310F158FBF /* Gatherloom.app */,
 				1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */,
-				16E9D9BF72AE4EE4C79CF722 /* GatherloomSharingProbe.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -156,10 +148,8 @@
 			children = (
 				588F87AFE4F0B4A1CE08B671 /* App */,
 				CA857EF329451D594DF3440E /* Config */,
-				8EC5C6D97068D33296F8206C /* Extension */,
-				E8428C2C7AFFEC717EB518F8 /* Host */,
 				B0B910414C88D89356CDF8DA /* Shared */,
-				59A6B7F4DC64B7E062F9856D /* SharingProbe */,
+				B081EBDA727C043C25602812 /* ShareExtension */,
 				ED15D7DB862D37275A3B2851 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -172,6 +162,7 @@
 			buildConfigurationList = 477026F1EF594A42352F9FB7 /* Build configuration list for PBXNativeTarget "GatherloomShareExtension" */;
 			buildPhases = (
 				3390988F1B2BFC643F365DBF /* Sources */,
+				6D9F26532BB26C8244C5AFF9 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -184,35 +175,18 @@
 			productReference = 1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		C6CC40DD49E7A365A107BAB1 /* GatherloomSharingProbe */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 5628AE9D4AFCB8E3161698BF /* Build configuration list for PBXNativeTarget "GatherloomSharingProbe" */;
-			buildPhases = (
-				1D7AE5129C6A70FCCF0EE228 /* Sources */,
-				F3765D1E2D5B6AA7D1CC3383 /* Embed Foundation Extensions */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				9F9595A8B017148975B3879A /* PBXTargetDependency */,
-			);
-			name = GatherloomSharingProbe;
-			packageProductDependencies = (
-			);
-			productName = GatherloomSharingProbe;
-			productReference = 16E9D9BF72AE4EE4C79CF722 /* GatherloomSharingProbe.app */;
-			productType = "com.apple.product-type.application";
-		};
 		D22CCC96AF537287ADA4C4D6 /* Gatherloom */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7A7FE73B605F8950C600368A /* Build configuration list for PBXNativeTarget "Gatherloom" */;
 			buildPhases = (
 				354FA61DE88D38A4E8340219 /* Sources */,
 				B7A5756502E3302E0608828A /* Resources */,
+				5BE38F1EF1278B0AB9D95125 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				6999168F0E5187B509F9C68C /* PBXTargetDependency */,
 			);
 			name = Gatherloom;
 			packageProductDependencies = (
@@ -231,9 +205,6 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					21C2A3042662F7B88C8E5754 = {
-						ProvisioningStyle = Automatic;
-					};
-					C6CC40DD49E7A365A107BAB1 = {
 						ProvisioningStyle = Automatic;
 					};
 					D22CCC96AF537287ADA4C4D6 = {
@@ -256,13 +227,20 @@
 			projectRoot = "";
 			targets = (
 				D22CCC96AF537287ADA4C4D6 /* Gatherloom */,
-				C6CC40DD49E7A365A107BAB1 /* GatherloomSharingProbe */,
 				21C2A3042662F7B88C8E5754 /* GatherloomShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		6D9F26532BB26C8244C5AFF9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B98C940B053E0278D7028EC8 /* Preprocess.js in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		B7A5756502E3302E0608828A /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -274,21 +252,18 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		1D7AE5129C6A70FCCF0EE228 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				9DDFFB0BDA6975229DF0D25A /* SharingProbeApp.swift in Sources */,
-				CA62833F72F45B530ACAAD2F /* SharingProbeStore.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		3390988F1B2BFC643F365DBF /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				95C0B6390C869F6F868A9F60 /* ShareViewController.swift in Sources */,
-				211B22132FB8AA4974338936 /* SharingProbeStore.swift in Sources */,
+				60B65D8736D955BB43EBFD62 /* APIClient.swift in Sources */,
+				81ECD0F39C9C13F0C50DE1F3 /* CaptureOutbox.swift in Sources */,
+				8E57174B6ACF838DD2522D73 /* CaptureUploader.swift in Sources */,
+				474BE1FACE037C8B79C6F523 /* CredentialStore.swift in Sources */,
+				EA2CE03405FA0F6CB8F87E16 /* ImagePayload.swift in Sources */,
+				3B220409ECB4F803E16089F8 /* Models.swift in Sources */,
+				86279916DE07B000699C4CE4 /* ShareViewController.swift in Sources */,
+				1EF3C1502990FA25248791A7 /* TextRecognizer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -296,26 +271,30 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0893DB30C36008837C0A9D80 /* APIClient.swift in Sources */,
+				787E48E8EBEEA711978B7FCC /* APIClient.swift in Sources */,
 				EABA9D5D137C31C23EE28232 /* AccountSession.swift in Sources */,
-				DEF6BA7AC032BF9B1C654C49 /* CaptureOutbox.swift in Sources */,
+				9B217211C21C8E1B22BA90D5 /* CaptureOutbox.swift in Sources */,
 				0750961C1116F1F067C3C281 /* CaptureQueue.swift in Sources */,
+				E76B5591F0D2D97F0960FDB4 /* CaptureUploader.swift in Sources */,
 				CAC54E8984BD9277A1E70332 /* CaptureViews.swift in Sources */,
-				2A66DF323D971ED90890460D /* CredentialStore.swift in Sources */,
-				4218914B1876651A0FD68AD2 /* DebugConnectionView.swift in Sources */,
+				E9B0B1B2ADB56BC9D91175C3 /* CredentialStore.swift in Sources */,
 				6995C5F46A5D10B0B18984A0 /* GatherloomApp.swift in Sources */,
+				3910627A0654A5DB5275606E /* ImagePayload.swift in Sources */,
+				9B09D1CD854FEC78EBADC049 /* Models.swift in Sources */,
 				B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */,
 				387A8845F4476985B301FB43 /* SignInView.swift in Sources */,
+				918F70D31E3D93F2393AE01B /* SwipeToDeleteCard.swift in Sources */,
+				D485748AF7CD45E81443C500 /* TextRecognizer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		9F9595A8B017148975B3879A /* PBXTargetDependency */ = {
+		6999168F0E5187B509F9C68C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 21C2A3042662F7B88C8E5754 /* GatherloomShareExtension */;
-			targetProxy = 4ED24C0AFD46080DAA2CBBC2 /* PBXContainerItemProxy */;
+			targetProxy = 13BA3589B9ABA2FE4DA4B9F1 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -324,14 +303,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
-				INFOPLIST_FILE = "SharingProbe/Extension-Info.plist";
+				CODE_SIGN_ENTITLEMENTS = Config/Gatherloom.entitlements;
+				INFOPLIST_FILE = "Config/ShareExtension-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe.share;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.share;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -405,26 +384,6 @@
 			};
 			name = Debug;
 		};
-		3FC645649D8712DF8D413CF7 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				INFOPLIST_FILE = "SharingProbe/Host-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Gatherloom Probe";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Release;
-		};
 		4D9F31509238EF2534982873 /* Release */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = BD7BEF415A05B2388104C911 /* Signing.xcconfig */;
@@ -486,38 +445,18 @@
 			};
 			name = Release;
 		};
-		BC5E5272ED669E40ACFAD446 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
-				CODE_SIGN_IDENTITY = "iPhone Developer";
-				INFOPLIST_FILE = "SharingProbe/Host-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Gatherloom Probe";
-				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe;
-				SDKROOT = iphoneos;
-				TARGETED_DEVICE_FAMILY = 1;
-			};
-			name = Debug;
-		};
 		DC08E071A0667461FD57C4F7 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = SharingProbe/SharingProbe.entitlements;
-				INFOPLIST_FILE = "SharingProbe/Extension-Info.plist";
+				CODE_SIGN_ENTITLEMENTS = Config/Gatherloom.entitlements;
+				INFOPLIST_FILE = "Config/ShareExtension-Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.sharingprobe.share;
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.cuinspace233.gatherloom.share;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
@@ -570,15 +509,6 @@
 			buildConfigurations = (
 				043D234844D7BEC67826321D /* Debug */,
 				DC08E071A0667461FD57C4F7 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		5628AE9D4AFCB8E3161698BF /* Build configuration list for PBXNativeTarget "GatherloomSharingProbe" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				BC5E5272ED669E40ACFAD446 /* Debug */,
-				3FC645649D8712DF8D413CF7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

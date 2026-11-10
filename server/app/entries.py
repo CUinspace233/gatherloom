@@ -1,21 +1,66 @@
 from collections import defaultdict
+from datetime import UTC, datetime
 from hashlib import sha256
+from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Response
-from sqlalchemy import and_, func, select
+from sqlalchemy import Select, and_, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.auth import AUTH_ERROR, Db, Owner
-from app.contracts import EntryCreate, EntryView, ErrorDetail, Page
-from app.models import Entry, EntryRevision, Job, ProjectEntry
+from app.contracts import (
+    AttachmentView,
+    EntryCreate,
+    EntryDetail,
+    EntryUpdate,
+    EntryView,
+    ErrorDetail,
+    ErrorResponses,
+    Page,
+    RevisionView,
+)
+from app.models import Attachment, Entry, EntryRevision, Job, ProjectEntry
 from app.projects import NOT_FOUND, Cursor, Limit, get_project, paginate
 
 router = APIRouter(prefix="/v1", tags=["entries"], responses=AUTH_ERROR)
+CONFLICT: ErrorResponses = {
+    409: {
+        "model": ErrorDetail,
+        "description": "The request conflicts with current state.",
+    }
+}
+INGESTION = "entry_ingestion"
 
 
-def views(db: Session, owner_id: UUID, entries: list[Entry]) -> list[EntryView]:
+def live_entries(owner_id: UUID) -> Select[Entry]:
+    return select(Entry).where(Entry.owner_id == owner_id, Entry.deleted_at.is_(None))
+
+
+def get_entry(
+    db: Session, owner_id: UUID, entry_id: UUID, *, lock: bool = False
+) -> Entry:
+    query = live_entries(owner_id).where(Entry.id == entry_id)
+    if lock:
+        query = query.with_for_update()
+    entry = db.scalar(query)
+    if entry is None:
+        raise HTTPException(404, "entry not found")
+    return entry
+
+
+def normalized_url(url: str) -> str:
+    parts = urlsplit(url)
+    return urlunsplit(
+        (parts.scheme.lower(), parts.netloc.lower(), parts.path or "/", parts.query, "")
+    )
+
+
+def views(
+    db: Session, owner_id: UUID, entries: list[Entry], *, detail: bool = False
+) -> list[EntryView]:
     if not entries:
         return []
     ids = [entry.id for entry in entries]
@@ -34,6 +79,31 @@ def views(db: Session, owner_id: UUID, entries: list[Entry]) -> list[EntryView]:
             .where(EntryRevision.owner_id == owner_id, EntryRevision.entry_id.in_(ids))
         )
     }
+    jobs = {
+        entry_id: status
+        for entry_id, status in db.execute(
+            select(Job.entry_id, Job.status)
+            .join(
+                Entry,
+                and_(
+                    Entry.owner_id == Job.owner_id,
+                    Entry.id == Job.entry_id,
+                    Entry.current_revision == Job.revision,
+                ),
+            )
+            .where(
+                Job.owner_id == owner_id, Job.entry_id.in_(ids), Job.kind == INGESTION
+            )
+        )
+    }
+    attachments = {
+        attachment.entry_id: attachment
+        for attachment in db.scalars(
+            select(Attachment).where(
+                Attachment.owner_id == owner_id, Attachment.entry_id.in_(ids)
+            )
+        )
+    }
     projects: dict[UUID, list[UUID]] = defaultdict(list)
     for entry_id, project_id in db.execute(
         select(ProjectEntry.entry_id, ProjectEntry.project_id)
@@ -41,19 +111,58 @@ def views(db: Session, owner_id: UUID, entries: list[Entry]) -> list[EntryView]:
         .order_by(ProjectEntry.project_id)
     ):
         projects[entry_id].append(project_id)
-    return [
-        EntryView(
-            id=entry.id,
-            client_submission_id=entry.client_submission_id,
-            type=entry.type,
-            text=revisions[entry.id].text,
-            note=revisions[entry.id].note,
-            project_ids=projects[entry.id],
-            possible_duplicate=entry.possible_duplicate,
-            created_at=entry.created_at,
+    results = []
+    for entry in entries:
+        revision = revisions[entry.id]
+        extract = revision.client_extract or {}
+        attachment = attachments.get(entry.id)
+        fields: dict[str, Any] = {
+            "id": entry.id,
+            "client_submission_id": entry.client_submission_id,
+            "type": entry.type,
+            "revision": revision.revision,
+            "text": revision.text,
+            "note": revision.note,
+            "source_url": entry.source_url,
+            "title": extract.get("title") or None,
+            "attachment": attachment and AttachmentView.model_validate(attachment),
+            "project_ids": projects[entry.id],
+            "possible_duplicate": entry.possible_duplicate,
+            "processing": jobs.get(entry.id, "queued"),
+            "created_at": entry.created_at,
+            "updated_at": revision.created_at,
+        }
+        if detail:
+            fields["ocr_text"] = (revision.client_ocr or {}).get("text")
+            fields["extract_text"] = extract.get("text") or None
+        results.append(EntryDetail(**fields) if detail else EntryView(**fields))
+    return results
+
+
+def flag_duplicate(db: Session, owner_id: UUID, entry: Entry, fingerprint: str) -> None:
+    # Serialize the duplicate check for identical content in this account.
+    lock = sha256(owner_id.bytes + bytes.fromhex(fingerprint)).digest()[:8]
+    db.execute(select(func.pg_advisory_xact_lock(int.from_bytes(lock, signed=True))))
+    entry.possible_duplicate = (
+        db.scalar(
+            select(EntryRevision.entry_id)
+            .join(
+                Entry,
+                and_(
+                    Entry.owner_id == EntryRevision.owner_id,
+                    Entry.id == EntryRevision.entry_id,
+                ),
+            )
+            .where(
+                EntryRevision.owner_id == owner_id,
+                EntryRevision.content_fingerprint == fingerprint,
+                Entry.id != entry.id,
+                Entry.deleted_at.is_(None),
+            )
+            .limit(1)
         )
-        for entry in entries
-    ]
+        is not None
+    )
 
 
 @router.post(
@@ -65,18 +174,24 @@ def views(db: Session, owner_id: UUID, entries: list[Entry]) -> list[EntryView]:
             "description": "Existing entry for this submission ID.",
         },
         **NOT_FOUND,
+        **CONFLICT,
     },
 )
 def create_entry(
     body: EntryCreate, owner: Owner, db: Db, response: Response
 ) -> EntryView:
-    """Save one text entry. Reusing a submission ID returns the original entry for this account."""
+    """Save one thought, link or image.
+
+    Reusing a submission ID returns the original entry for this account. Image
+    entries reference an attachment uploaded with the same submission ID.
+    """
     entry = db.scalar(
         insert(Entry)
         .values(
             owner_id=owner.id,
             client_submission_id=body.client_submission_id,
             type=body.type,
+            source_url=body.url,
         )
         .on_conflict_do_nothing(constraint="uq_entries_submission")
         .returning(Entry)
@@ -88,6 +203,8 @@ def create_entry(
                 Entry.client_submission_id == body.client_submission_id,
             )
         ).one()
+        if existing.deleted_at is not None:
+            raise HTTPException(409, "entry for this submission was deleted")
         response.status_code = 200
         return views(db, owner.id, [existing])[0]
 
@@ -99,21 +216,28 @@ def create_entry(
             )
         )
 
-    fingerprint = sha256(body.text.encode()).hexdigest()
-    # Serialize the duplicate check for identical text in this account.
-    lock = sha256(owner.id.bytes + bytes.fromhex(fingerprint)).digest()[:8]
-    db.execute(select(func.pg_advisory_xact_lock(int.from_bytes(lock, signed=True))))
-    entry.possible_duplicate = (
-        db.scalar(
-            select(EntryRevision.entry_id)
+    if body.attachment_id is not None:
+        attachment = db.scalar(
+            select(Attachment)
             .where(
-                EntryRevision.owner_id == owner.id,
-                EntryRevision.content_fingerprint == fingerprint,
+                Attachment.owner_id == owner.id,
+                Attachment.id == body.attachment_id,
+                Attachment.client_submission_id == body.client_submission_id,
             )
-            .limit(1)
+            .with_for_update()
         )
-        is not None
-    )
+        if attachment is None:
+            raise HTTPException(404, "attachment not found")
+        if attachment.entry_id is not None:
+            raise HTTPException(409, "attachment already belongs to an entry")
+        attachment.entry_id = entry.id
+        fingerprint = attachment.sha256
+    elif body.url is not None:
+        fingerprint = sha256(normalized_url(body.url).encode()).hexdigest()
+    else:
+        fingerprint = sha256(body.text.encode()).hexdigest()
+
+    flag_duplicate(db, owner.id, entry, fingerprint)
     db.add(
         EntryRevision(
             owner_id=owner.id,
@@ -122,12 +246,14 @@ def create_entry(
             text=body.text,
             note=body.note,
             content_fingerprint=fingerprint,
+            client_ocr=body.client_ocr and body.client_ocr.model_dump(mode="json"),
+            client_extract=body.client_extract
+            and body.client_extract.model_dump(mode="json"),
         )
     )
     db.flush()
-    db.add(
-        Job(owner_id=owner.id, entry_id=entry.id, revision=1, kind="entry_ingestion")
-    )
+    db.add(Job(owner_id=owner.id, entry_id=entry.id, revision=1, kind=INGESTION))
+    db.flush()
     result = views(db, owner.id, [entry])[0]
     db.commit()
     return result
@@ -152,7 +278,7 @@ def list_entries(
     project_id: UUID | None = None,
 ) -> Page[EntryView]:
     """List entries for the current account, optionally scoped to the inbox or one project."""
-    query = select(Entry).where(Entry.owner_id == owner.id)
+    query = live_entries(owner.id)
     links = select(ProjectEntry.entry_id).where(ProjectEntry.owner_id == owner.id)
     if project_id is not None:
         if inbox:
@@ -168,10 +294,120 @@ def list_entries(
 
 
 @router.get("/entries/{entry_id}", responses=NOT_FOUND)
-def entry_detail(entry_id: UUID, owner: Owner, db: Db) -> EntryView:
-    entry = db.scalar(
-        select(Entry).where(Entry.owner_id == owner.id, Entry.id == entry_id)
+def entry_detail(entry_id: UUID, owner: Owner, db: Db) -> EntryDetail:
+    entry = get_entry(db, owner.id, entry_id)
+    result = views(db, owner.id, [entry], detail=True)[0]
+    assert isinstance(result, EntryDetail)
+    return result
+
+
+@router.patch("/entries/{entry_id}", responses={**NOT_FOUND, **CONFLICT})
+def update_entry(entry_id: UUID, body: EntryUpdate, owner: Owner, db: Db) -> EntryView:
+    """Edit the text or note. Each edit creates a new revision and processing job.
+
+    base_revision must equal the entry's current revision; otherwise 409.
+    """
+    entry = get_entry(db, owner.id, entry_id, lock=True)
+    if entry.current_revision != body.base_revision:
+        raise HTTPException(409, "entry changed since base_revision")
+    current = db.get_one(EntryRevision, (owner.id, entry.id, entry.current_revision))
+    text = current.text if body.text is None else body.text
+    if entry.type == "thought" and not text:
+        raise HTTPException(422, "thought entries need text")
+    fingerprint = current.content_fingerprint
+    if entry.type == "thought" and text != current.text:
+        fingerprint = sha256(text.encode()).hexdigest()
+        flag_duplicate(db, owner.id, entry, fingerprint)
+    revision = entry.current_revision + 1
+    db.add(
+        EntryRevision(
+            owner_id=owner.id,
+            entry_id=entry.id,
+            revision=revision,
+            text=text,
+            note=current.note if body.note is None else body.note,
+            content_fingerprint=fingerprint,
+            client_ocr=current.client_ocr,
+            client_extract=current.client_extract,
+        )
     )
-    if entry is None:
-        raise HTTPException(404, "entry not found")
-    return views(db, owner.id, [entry])[0]
+    entry.current_revision = revision
+    db.flush()
+    db.add(Job(owner_id=owner.id, entry_id=entry.id, revision=revision, kind=INGESTION))
+    db.flush()
+    result = views(db, owner.id, [entry])[0]
+    db.commit()
+    return result
+
+
+@router.delete("/entries/{entry_id}", status_code=204, responses=NOT_FOUND)
+def delete_entry(entry_id: UUID, owner: Owner, db: Db) -> Response:
+    """Remove an entry from every list and cancel its pending processing.
+
+    Stored files and derived data are purged by the deletion lifecycle (S6).
+    """
+    entry = get_entry(db, owner.id, entry_id, lock=True)
+    entry.deleted_at = datetime.now(UTC)
+    db.execute(
+        update(Job)
+        .where(
+            Job.owner_id == owner.id,
+            Job.entry_id == entry.id,
+            Job.status == "queued",
+        )
+        .values(status="cancelled")
+    )
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.get("/entries/{entry_id}/revisions", responses=NOT_FOUND)
+def list_revisions(entry_id: UUID, owner: Owner, db: Db) -> list[RevisionView]:
+    """List every revision of an entry, newest first."""
+    get_entry(db, owner.id, entry_id)
+    return [
+        RevisionView.model_validate(revision)
+        for revision in db.scalars(
+            select(EntryRevision)
+            .where(
+                EntryRevision.owner_id == owner.id, EntryRevision.entry_id == entry_id
+            )
+            .order_by(EntryRevision.revision.desc())
+        )
+    ]
+
+
+@router.put(
+    "/projects/{project_id}/entries/{entry_id}", status_code=204, responses=NOT_FOUND
+)
+def add_to_project(project_id: UUID, entry_id: UUID, owner: Owner, db: Db) -> Response:
+    """Add an entry to a project. Adding it again has no effect."""
+    get_project(db, owner.id, project_id)
+    get_entry(db, owner.id, entry_id)
+    db.execute(
+        insert(ProjectEntry)
+        .values(owner_id=owner.id, project_id=project_id, entry_id=entry_id)
+        .on_conflict_do_nothing()
+    )
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.delete(
+    "/projects/{project_id}/entries/{entry_id}", status_code=204, responses=NOT_FOUND
+)
+def remove_from_project(
+    project_id: UUID, entry_id: UUID, owner: Owner, db: Db
+) -> Response:
+    """Remove an entry from a project. The entry itself is kept."""
+    get_project(db, owner.id, project_id)
+    get_entry(db, owner.id, entry_id)
+    db.execute(
+        delete(ProjectEntry).where(
+            ProjectEntry.owner_id == owner.id,
+            ProjectEntry.project_id == project_id,
+            ProjectEntry.entry_id == entry_id,
+        )
+    )
+    db.commit()
+    return Response(status_code=204)

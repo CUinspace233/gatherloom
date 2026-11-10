@@ -9,9 +9,7 @@ configFiles:
 fileGroups:
   - Config/Debug-Info.plist
   - Config/Gatherloom.entitlements
-  - SharingProbe/SharingProbe.entitlements
-  - SharingProbe/Host-Info.plist
-  - SharingProbe/Extension-Info.plist
+  - Config/ShareExtension-Info.plist
 settings:
   base:
     CODE_SIGN_STYLE: Automatic
@@ -19,17 +17,15 @@ settings:
     GENERATE_INFOPLIST_FILE: YES
     MARKETING_VERSION: '0.1.0'
     SWIFT_VERSION: '5.0'
-settingGroups:
-  SharingProbe:
-    base:
-      CODE_SIGN_ENTITLEMENTS: SharingProbe/SharingProbe.entitlements
-      TARGETED_DEVICE_FAMILY: '1'
 targets:
   Gatherloom:
     type: application
     platform: iOS
     sources:
       - App
+      - Shared
+    dependencies:
+      - target: GatherloomShareExtension
     settings:
       base:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -42,40 +38,21 @@ targets:
       configs:
         Debug:
           INFOPLIST_FILE: Config/Debug-Info.plist
-  GatherloomSharingProbe:
-    type: application
-    platform: iOS
-    sources:
-      - SharingProbe/Host
-      - SharingProbe/Shared
-    dependencies:
-      - target: GatherloomShareExtension
-    settings:
-      groups: [SharingProbe]
-      base:
-        INFOPLIST_FILE: SharingProbe/Host-Info.plist
-        INFOPLIST_KEY_CFBundleDisplayName: Gatherloom Probe
-        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        PRODUCT_BUNDLE_IDENTIFIER: io.github.cuinspace233.gatherloom.sharingprobe
   GatherloomShareExtension:
     type: app-extension
     platform: iOS
     sources:
-      - SharingProbe/Extension
-      - SharingProbe/Shared
+      - ShareExtension
+      - Shared
     settings:
-      groups: [SharingProbe]
       base:
         APPLICATION_EXTENSION_API_ONLY: YES
-        INFOPLIST_FILE: SharingProbe/Extension-Info.plist
-        PRODUCT_BUNDLE_IDENTIFIER: io.github.cuinspace233.gatherloom.sharingprobe.share
+        CODE_SIGN_ENTITLEMENTS: Config/Gatherloom.entitlements
+        INFOPLIST_FILE: Config/ShareExtension-Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: io.github.cuinspace233.gatherloom.share
+        TARGETED_DEVICE_FAMILY: '1'
 schemes:
   Gatherloom:
     build:
       targets:
         Gatherloom: all
-  GatherloomSharingProbe:
-    build:
-      targets:
-        GatherloomSharingProbe: all

@@ -93,36 +93,37 @@
 **目标**：本地已确认保存的内容不丢失、不重复、不串账号。
 
 - [x] 文字记录首段已实现。支持本机保存、收集箱或项目归属、前台重试，以及 `POST /v1/entries` 和按归属查询。服务端在同一事务内写入记录、正文版本和待处理任务。
+- [x] 链接、截图、分享扩展、编辑与删除已实现，S0 的分享扩展探针与调试用「测试连接」页已移除。模拟器已验证文字、链接、截图（本机 OCR）、断网保存后恢复上传，以及从相册分享截图直传服务器。
 
 ### 服务端
-- [ ] 迁移：Entry、EntryRevision（原始文本/文件引用、备注、内容指纹）、Attachment、ProjectEntry、Job（先建表，S3 实现 Worker）。
-- [ ] `POST /v1/entries`：文字 / URL / 单图（multipart 落盘、10 MiB 限制、校验和）；附带 `client_ocr`、`client_extract` 可选字段。
-- [ ] `client_submission_id` 幂等：同账号同键返回同记录；Entry 与 Job 同一事务登记。
-- [ ] 附件先写私有临时文件、校验后关联；定期清理孤立临时文件。
-- [ ] 相同内容不同 submission_id → 返回"可能重复"提示，不合并。
-- [ ] `GET /v1/entries?inbox=true`、`GET/PATCH/DELETE /v1/entries/{id}`、`GET /v1/entries/{id}/revisions`。
-- [ ] `PUT/DELETE /v1/projects/{id}/entries/{entry_id}`，校验同账号。
-- [ ] `GET /v1/attachments/{id}` 认证读取。
+- [x] 迁移：Entry、EntryRevision（原始文本/文件引用、备注、内容指纹）、Attachment、ProjectEntry、Job（先建表，S3 实现 Worker）。
+- [x] `POST /v1/entries`：文字 / URL / 单图（图片先经 `POST /v1/attachments` multipart 落盘、10 MiB 限制、校验和）；附带 `client_ocr`、`client_extract` 可选字段。
+- [x] `client_submission_id` 幂等：同账号同键返回同记录；Entry 与 Job 同一事务登记。
+- [x] 附件先写私有临时文件、校验后关联；定期清理孤立临时文件。
+- [x] 相同内容不同 submission_id → 返回"可能重复"提示，不合并。
+- [x] `GET /v1/entries?inbox=true`、`GET/PATCH/DELETE /v1/entries/{id}`、`GET /v1/entries/{id}/revisions`。
+- [x] `PUT/DELETE /v1/projects/{id}/entries/{entry_id}`，校验同账号。
+- [x] `GET /v1/attachments/{id}` 认证读取。
 
 ### iOS：SharedCapture（App 与扩展共用）
-- [ ] Outbox：App Group 下按账号分目录；每个提交一个目录（内容文件 + 原子写入的 manifest）。
-- [ ] 提交状态机：本地已保存 → 上传中 → 服务器已保存 → 可检索 → 整理完成 / 部分失败。
-- [ ] Vision OCR 封装（降采样、行 + 坐标、失败不阻塞）。
-- [ ] 上传器：从文件上传、指数退避；主 App 进入前台时排空队列。
-- [ ] 账号切换 / 退出：暂停旧账号任务，提示待上传数量，可显式删除本机副本。
+- [x] Outbox：App Group 下按账号分目录；每个提交一个目录（内容文件 + 原子写入的 manifest）。
+- [ ] 提交状态机：本地已保存 → 上传中 → 服务器已保存 → 可检索 → 整理完成 / 部分失败。前三段已完成；后三段依赖 S3 Worker。
+- [x] Vision OCR 封装（降采样、行 + 坐标、失败不阻塞）。
+- [x] 上传器：从文件上传、指数退避；主 App 进入前台时排空队列。
+- [x] 账号切换 / 退出：暂停旧账号任务，提示待上传数量，可显式删除本机副本。
 
 ### iOS：界面与扩展
-- [ ] 记录页：输入框、粘贴链接、选择截图、个人备注、归属选择（收集箱 / 最近三个项目）、保存后清空并提供"查看记录"。
-- [ ] 收集箱列表与分配项目；资料详情（原始内容、备注、OCR/正文、状态）。
-- [ ] Share Extension：预览、备注、归属（默认收集箱）、保存；多附件时提示选择一项。
-- [ ] Safari JS 预处理文件接入（ADR 0004），扩展内 OCR（ADR 0003）。
-- [ ] 扩展提交后短时尝试上传，失败留给主 App。
+- [x] 记录页：输入框、粘贴链接、选择截图、个人备注、归属选择（收集箱 / 最近三个项目）、保存后清空并提供"查看记录"。
+- [x] 收集箱列表与分配项目；资料详情（原始内容、备注、OCR/正文、状态）。
+- [x] Share Extension：预览、备注、归属（默认收集箱）、保存；多附件时提示选择一项。
+- [x] Safari JS 预处理文件接入（ADR 0004），扩展内 OCR（ADR 0003）。
+- [x] 扩展提交后短时尝试上传，失败留给主 App。
 
 **出口检查**
-- [T1] 同账号重复提交同幂等键只创建一条；不同账号同键相互独立。
-- [T8] 账号退出与切换不会将旧账号待上传内容提交到新账号。
-- [T9]（部分）文件大小限制有效。
-- 真机：Safari 分享、截图分享、离线新增后恢复上传；20 次断网 / 强退 / 恢复场景无已确认内容丢失。
+- [x] [T1] 同账号重复提交同幂等键只创建一条；不同账号同键相互独立（记录与附件均有 PostgreSQL 测试）。
+- [ ] [T8] 账号退出与切换不会将旧账号待上传内容提交到新账号。Outbox 按服务地址与账号分目录、上传前校验当前账号，扩展保存前复核账号；尚无 iOS 自动化测试。
+- [x] [T9]（部分）文件大小限制有效：读取请求体前按 Content-Length 拒绝，写入时再次计数。
+- [ ] 真机：Safari 分享、截图分享、离线新增后恢复上传；20 次断网 / 强退 / 恢复场景无已确认内容丢失。
 
 **风险**：扩展内存与超时 → OCR 与正文提取失败时降级为主 App 补做。
 

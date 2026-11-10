@@ -5,12 +5,14 @@ from getpass import getpass
 from typing import Annotated
 
 from pydantic import Field, SecretStr, TypeAdapter, ValidationError
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
+from sqlalchemy.orm import Session
 
+from app import storage
 from app.auth import digest, password_hasher
 from app.contracts import Password, Username
 from app.db import SessionLocal
-from app.models import InviteCode, LoginSession, User
+from app.models import Attachment, InviteCode, LoginSession, User
 
 InviteHours = TypeAdapter(Annotated[int, Field(ge=1, le=168)])
 
@@ -42,6 +44,31 @@ def reset_password(username: str, password: SecretStr) -> None:
         )
 
 
+def cleanup_attachments(db: Session, now: datetime) -> int:
+    """Remove uploads never linked to an entry and stale temporary files."""
+    stale = list(
+        db.execute(
+            delete(Attachment)
+            .where(
+                Attachment.entry_id.is_(None),
+                Attachment.created_at < now - timedelta(hours=24),
+            )
+            .returning(Attachment.owner_id, Attachment.id)
+        )
+    )
+    db.commit()
+    for owner_id, attachment_id in stale:
+        storage.discard(owner_id, attachment_id)
+    removed = len(stale)
+    cutoff = (now - timedelta(hours=1)).timestamp()
+    if storage.tmp_dir().is_dir():
+        for path in storage.tmp_dir().iterdir():
+            if path.stat().st_mtime < cutoff:
+                path.unlink(missing_ok=True)
+                removed += 1
+    return removed
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Manage Gatherloom invitations and account recovery."
@@ -53,7 +80,17 @@ def main() -> None:
         "reset-password", help="Change a password and revoke all active sessions."
     )
     reset.add_argument("username")
+    actions.add_parser(
+        "cleanup-attachments",
+        help="Delete uploads not linked to an entry within 24 hours.",
+    )
     args = parser.parse_args()
+
+    if args.action == "cleanup-attachments":
+        with SessionLocal() as db:
+            removed = cleanup_attachments(db, datetime.now(UTC))
+        print(f"Removed {removed} files.")
+        return
 
     if args.action == "invite":
         try:

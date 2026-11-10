@@ -480,9 +480,10 @@ Pi 提供 Agent 循环、工具和可嵌入会话，适合未来需要长期交�
 | POST /v1/auth/login、/refresh、/logout | 会话管理 |
 | GET /v1/me | 当前账号、时区、配额 |
 | GET/POST /v1/projects | 项目列表、创建 |
-| GET/PATCH /v1/projects/{id} | 概览、目标、归档 |
+| GET/PATCH/DELETE /v1/projects/{id} | 概览、目标、归档；删除项目及其问题，资料保留并回到收集箱 |
 | GET/POST /v1/projects/{id}/questions | 待解问题 |
 | PATCH /v1/questions/{id} | 编辑或确认解决 |
+| POST /v1/attachments | 先上传截图（multipart、10 MiB、SHA-256 校验），按提交编号幂等 |
 | POST /v1/entries | 提交文字、URL 或图片及备注；支持客户端幂等键 |
 | GET /v1/entries?inbox=true | 收集箱 |
 | GET/PATCH/DELETE /v1/entries/{id} | 详情、创建修订、删除 |

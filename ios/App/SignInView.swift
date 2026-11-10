@@ -7,7 +7,6 @@ struct SignInView: View {
     }
 
     @Bindable var session: AccountSession
-    let onTestConnection: () -> Void
     @FocusState private var focusedField: Field?
 
     @State private var username = ""
@@ -75,16 +74,6 @@ struct SignInView: View {
             }
             .disabled(isSubmitting)
             .navigationTitle("Gatherloom")
-            #if DEBUG
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("测试连接") {
-                        focusedField = nil
-                        onTestConnection()
-                    }
-                }
-            }
-            #endif
         }
     }
 
@@ -111,7 +100,8 @@ struct SignInView: View {
     }
 }
 
-private struct OutsideFieldTap: UIViewRepresentable {
+/// Clears text focus when the user taps outside any text field.
+struct OutsideFieldTap: UIViewRepresentable {
     let isEnabled: Bool
     let onTap: () -> Void
 

@@ -1,8 +1,10 @@
 from datetime import datetime
 from typing import Annotated, Any, Literal, Self
+from urllib.parse import urlsplit
 from uuid import UUID
 
 from pydantic import (
+    AfterValidator,
     BaseModel,
     ConfigDict,
     Field,
@@ -39,12 +41,6 @@ QuestionText = Annotated[
 ]
 ProjectStatus = Literal["active", "archived"]
 QuestionStatus = Literal["open", "resolved"]
-EntryText = Annotated[
-    str,
-    StringConstraints(
-        strip_whitespace=True, min_length=1, max_length=20000, pattern=r"^[^\x00]*$"
-    ),
-]
 ErrorResponses = dict[int | str, dict[str, Any]]
 
 
@@ -137,22 +133,133 @@ class QuestionView(BaseModel):
     created_at: datetime
 
 
+OptionalEntryText = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, max_length=20000, pattern=r"^[^\x00]*$"),
+]
+LongText = Annotated[str, StringConstraints(max_length=100000, pattern=r"^[^\x00]*$")]
+EntryType = Literal["thought", "url", "image"]
+
+
+def check_web_url(value: str) -> str:
+    parts = urlsplit(value)
+    if (
+        parts.scheme.lower() not in ("http", "https")
+        or not parts.hostname
+        or parts.username is not None
+        or parts.password is not None
+    ):
+        raise ValueError("must be an http or https URL without credentials")
+    return value
+
+
+WebURL = Annotated[
+    str,
+    StringConstraints(strip_whitespace=True, min_length=1, max_length=2048),
+    AfterValidator(check_web_url),
+]
+
+
+class OCRLine(Input):
+    text: Annotated[str, StringConstraints(max_length=2000, pattern=r"^[^\x00]*$")]
+    box: Annotated[
+        list[Annotated[float, Field(ge=0, le=1)]], Field(min_length=4, max_length=4)
+    ] = Field(description="Normalized x, y, width, height with a top-left origin.")
+
+
+class ClientOCR(Input):
+    text: LongText
+    lines: Annotated[list[OCRLine], Field(max_length=2000)] = []
+    engine: Annotated[str, StringConstraints(max_length=64)] = ""
+
+
+class ClientExtract(Input):
+    title: Annotated[str, StringConstraints(max_length=500, pattern=r"^[^\x00]*$")] = ""
+    text: LongText = ""
+    canonical_url: WebURL | None = None
+    captured_at: datetime | None = None
+
+
 class EntryCreate(Input):
     client_submission_id: UUID
-    type: Literal["thought"] = "thought"
-    text: EntryText
+    type: EntryType = "thought"
+    text: OptionalEntryText = ""
     note: ProjectGoal = ""
     project_id: UUID | None = None
+    url: WebURL | None = None
+    attachment_id: UUID | None = None
+    client_ocr: ClientOCR | None = None
+    client_extract: ClientExtract | None = None
+
+    @model_validator(mode="after")
+    def match_type(self) -> Self:
+        if self.type == "thought" and not self.text:
+            raise ValueError("thought entries need text")
+        if (self.url is not None) != (self.type == "url"):
+            raise ValueError("url is required for url entries and only allowed there")
+        if (self.attachment_id is not None) != (self.type == "image"):
+            raise ValueError(
+                "attachment_id is required for image entries and only allowed there"
+            )
+        if self.client_ocr is not None and self.type != "image":
+            raise ValueError("client_ocr is only allowed for image entries")
+        if self.client_extract is not None and self.type != "url":
+            raise ValueError("client_extract is only allowed for url entries")
+        return self
+
+
+class EntryUpdate(Input):
+    base_revision: Annotated[int, Field(ge=1)]
+    text: OptionalEntryText | None = None
+    note: ProjectGoal | None = None
+
+    @model_validator(mode="after")
+    def require_changes(self) -> Self:
+        if self.text is None and self.note is None:
+            raise ValueError("provide text or note")
+        return self
+
+
+class AttachmentView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    client_submission_id: UUID
+    content_type: str
+    size: int
+    sha256: str
 
 
 class EntryView(BaseModel):
     id: UUID
     client_submission_id: UUID
-    type: str
+    type: EntryType
+    revision: int
     text: str
     note: str
+    source_url: str | None
+    title: str | None = Field(description="Page title captured by the client, if any.")
+    attachment: AttachmentView | None
     project_ids: list[UUID]
     possible_duplicate: bool
+    processing: str = Field(
+        description="State of the current revision's processing job."
+    )
+    created_at: datetime
+    updated_at: datetime
+
+
+class EntryDetail(EntryView):
+    ocr_text: str | None
+    extract_text: str | None
+
+
+class RevisionView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    revision: int
+    text: str
+    note: str
     created_at: datetime
 
 

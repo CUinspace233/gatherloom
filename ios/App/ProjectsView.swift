@@ -1,18 +1,5 @@
 import SwiftUI
 
-struct Project: Codable, Identifiable {
-    let id: UUID
-    let name: String
-    let goal: String
-    let status: Status
-
-    enum Status: String, Codable, CaseIterable {
-        case active, archived
-
-        var title: String { self == .active ? "进行中" : "已归档" }
-    }
-}
-
 struct Question: Decodable, Identifiable {
     let id: UUID
     let text: String
@@ -25,9 +12,22 @@ struct Question: Decodable, Identifiable {
     }
 }
 
-struct Page<Item: Decodable>: Decodable {
-    let items: [Item]
-    let nextCursor: String?
+private struct ProjectRow: View {
+    let project: Project
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(project.name).foregroundStyle(.primary)
+                Text(project.status.title).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .contentShape(.rect)
+    }
 }
 
 struct ProjectsView: View {
@@ -38,34 +38,46 @@ struct ProjectsView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showsEditor = false
+    @State private var openProjectID: UUID?
+    @State private var selectedProject: Project?
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(projects) { project in
-                    NavigationLink {
-                        ProjectDetailView(session: session, capture: capture, project: project, onSaved: save)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(project.name)
-                            Text(project.status.title).font(.caption).foregroundStyle(.secondary)
+            ScrollView {
+                LazyVStack(spacing: 12) {
+                    ForEach(projects) { project in
+                        SwipeToDeleteCard(
+                            isOpen: openProjectID == project.id,
+                            onOpenChange: { openProjectID = $0 ? project.id : nil },
+                            onTap: { openProjectID = nil; selectedProject = project },
+                            onDelete: { Task { await delete(project) } }
+                        ) {
+                            ProjectRow(project: project)
                         }
                     }
+                    if let nextCursor {
+                        Button("加载更多") { Task { await load(after: nextCursor) } }
+                            .disabled(isLoading)
+                            .padding(.vertical, 8)
+                    }
+                    if isLoading {
+                        ProgressView().padding()
+                    } else if let errorMessage {
+                        Text(errorMessage).foregroundStyle(.red)
+                        Button("重试") { Task { await load() } }
+                    } else if projects.isEmpty {
+                        ContentUnavailableView("还没有项目", systemImage: "folder", description: Text("点加号创建第一个项目。"))
+                    }
                 }
-                if let nextCursor {
-                    Button("加载更多") { Task { await load(after: nextCursor) } }
-                        .disabled(isLoading)
-                }
-                if isLoading {
-                    ProgressView()
-                } else if let errorMessage {
-                    Text(errorMessage).foregroundStyle(.red)
-                    Button("重试") { Task { await load() } }
-                } else if projects.isEmpty {
-                    ContentUnavailableView("还没有项目", systemImage: "folder", description: Text("点加号创建第一个项目。"))
-                }
+                .padding(.horizontal)
+                .padding(.top, 8)
             }
+            .background(Color(.systemGroupedBackground))
+            .scrollDismissesKeyboard(.immediately)
             .navigationTitle("项目")
+            .navigationDestination(item: $selectedProject) { project in
+                ProjectDetailView(session: session, capture: capture, project: project, onSaved: save)
+            }
             .toolbar {
                 Button("新建项目", systemImage: "plus") { showsEditor = true }
                     .disabled(isLoading)
@@ -75,6 +87,17 @@ struct ProjectsView: View {
             }
             .task { await load() }
             .refreshable { await load() }
+        }
+    }
+
+    private func delete(_ project: Project) async {
+        do {
+            _ = try await session.send("v1/projects/\(project.id.uuidString)", method: "DELETE")
+            withAnimation { projects.removeAll { $0.id == project.id } }
+            openProjectID = nil
+            capture.forgetProject(project.id)
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 
@@ -160,6 +183,7 @@ private struct ProjectDetailView: View {
             }
         }
         .navigationTitle(project.name)
+        .onAppear { capture.markRecent(project.id) }
         .toolbar {
             Button("编辑项目") { showsProjectEditor = true }.disabled(isLoading)
         }

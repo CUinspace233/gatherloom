@@ -7,7 +7,7 @@
 A project-driven personal knowledge workspace with iOS capture, source-grounded answers, and continuous reflection.
 
 ## 状态
-Gatherloom 支持邀请码注册、项目与问题管理，以及离线文字记录。最低支持 iOS 17。
+Gatherloom 支持邀请码注册、项目与问题管理，以及离线保存的想法、链接和截图（含系统分享扩展与本机文字识别）。最低支持 iOS 17。
 
 ## iOS 开发
 
@@ -34,15 +34,15 @@ GATHERLOOM_DEV_CLIENTS='<Mac IPv4>,<iPhone IPv4>' \
   uv run --locked uvicorn app.main:app --host '<Mac IPv4>' --port 8000 --reload --no-proxy-headers
 ```
 
-在 `Gatherloom` 的 Debug 构建中打开「记录 → 测试连接」，填写 `http://<Mac 的局域网 IPv4>:8000` 后点「测试连接」。首次访问时按 iPhone 的提示允许本地网络访问。成功时显示 `HTTP 200 · status=ok`。
+在登录页的「服务地址」填写 `http://<Mac 的局域网 IPv4>:8000`，再登录或注册。首次访问时按 iPhone 的提示允许本地网络访问。连接失败时登录页会显示错误。模拟器可直接使用 `http://127.0.0.1:8000`。
 
-### 分享扩展探针
+### 记录与分享
 
-在 Xcode 用 `GatherloomSharingProbe` scheme 安装 Gatherloom Probe。打开后点「写入新测试码」，再在 Safari 的分享菜单里选 Gatherloom Probe。核对扩展的 App Group 和 Keychain 两行是否都读到主 App 写入的测试码。
+在「记录」写想法，或粘贴一个链接（整段只有一个 http/https 地址时按链接保存），也可以点「选择截图」。备注和归属（收集箱、最近项目或其他项目）可选。保存时先写入本机，收到 API 确认后才显示「已保存到服务器，正在整理」。截图在上传前用 Vision 在本机识别文字。
 
-### 离线文字记录
+在 Safari、相册等 App 的分享菜单选 Gatherloom，可保存链接、文字或一张图片。Safari 分享会附带页面标题和正文快照。扩展先存到本机，再短暂尝试上传；失败的记录在打开 Gatherloom 后继续上传。扩展只保存到 Gatherloom 当前登录的账号，未登录时提示先打开 App 登录。
 
-登录后在「记录」写下想法，可加备注并选择收集箱或项目。保存时先写入本机，收到 API 确认后才显示「已保存到服务器」。断网后可在「收集箱」或「项目 → 查看项目记录」找到未同步的内容。恢复网络后保持 App 在前台，或重开 App 继续上传。退出账号会保留该账号的待上传记录。
+断网后可在「收集箱」或「项目 → 查看项目记录」找到未同步的内容。恢复网络后保持 App 在前台，或重开 App 继续上传。退出账号会保留该账号的待上传记录，也可以在「账号设置」中删除本机副本。资料详情支持编辑想法和备注（生成新版本）、加入或移出项目，以及删除。
 
 ## 服务端开发
 
@@ -57,6 +57,8 @@ uv run --locked uvicorn app.main:app
 ```
 
 在另一个终端运行 `curl -fsS http://127.0.0.1:8000/healthz`。`GET /healthz` 返回 HTTP 200 和 `{"status":"ok"}`，用于确认 API 进程可达。
+
+截图等附件保存在 `GATHERLOOM_STORAGE_DIR`（默认 `server/var/storage`），单个文件最大 10 MiB。定期运行 `uv run --locked python -m app.admin cleanup-attachments`，删除 24 小时内未关联到记录的上传。
 
 在 `server/` 目录运行 `uv run --locked python -m app.admin invite` 生成一个有效期 24 小时的单次邀请码。真机注册使用局域网启动方式，在登录页填入 Mac 的服务地址并选择「使用邀请码注册」。每个账号各用一个邀请码。账号恢复使用 `uv run --locked python -m app.admin reset-password <用户名>`，命令会提示输入密码并撤销该账号的所有会话。
 
