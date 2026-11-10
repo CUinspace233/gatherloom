@@ -300,3 +300,23 @@ class RevisionView(BaseModel):
 class Page[T](BaseModel):
     items: list[T]
     next_cursor: str | None
+
+
+class SearchHit(BaseModel):
+    entry: EntryView
+    score: float
+    chunk_id: UUID = Field(description="Source chunk that best represents the entry.")
+    source: str = Field(description="text, extract, ocr or meta.")
+    snippet: str
+    highlights: list[tuple[int, int]] = Field(
+        description="Character ranges in snippet that match the query."
+    )
+    matched_by: list[Literal["keyword", "semantic", "card"]]
+
+
+class SearchPage(BaseModel):
+    items: list[SearchHit]
+    next_cursor: str | None
+    degraded: bool = Field(
+        description="True when semantic search was unavailable; keyword results only."
+    )
