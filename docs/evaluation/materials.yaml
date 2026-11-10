@@ -1,0 +1,369 @@
+# Synthetic evaluation materials, written for Gatherloom. Not real user data.
+# Fields: id, account, project, type (thought | url | image), note, and
+#   thought: text
+#   url: url, title, body (page text as the Share Extension would send it), text (optional)
+#   image: ocr (text recognized on device), text (optional)
+# Coverage: same names in different senses, a duplicate URL with different
+# notes, contradictory opinions, a decision that changes, long pages that
+# split into several chunks, screenshots, Chinese with English terms.
+
+accounts:
+  eval_a:
+    A1: 开发个人知识库 App
+    A2: 家庭咖啡烘焙
+  eval_b:
+    B1: 向量数据库调优
+
+materials:
+  # ---------- A1 开发个人知识库 App ----------
+  - id: a1-01
+    account: eval_a
+    project: A1
+    type: thought
+    text: SwiftUI 的状态管理我决定全面改用 @Observable 宏，ObservableObject 加 @Published 的写法太啰嗦，而且视图会因为无关属性变化而整体刷新。
+    note: iOS 架构
+
+  - id: a1-02
+    account: eval_a
+    project: A1
+    type: url
+    url: https://example.com/blog/offline-first-sync
+    title: 离线优先应用的同步与幂等设计
+    note: 上传队列参考
+    body: |
+      离线优先（offline-first）的核心原则是：用户的每一次保存都先落到本机持久存储，网络只是后台的搬运工。界面上“已保存”的含义必须诚实，只有本机文件和提交清单都写盘成功后才能显示。
+
+      上传队列的每个提交都应该带一个客户端生成的幂等键（idempotency key）。服务端以“账号 + 幂等键”为唯一约束，同一个键重复提交时返回第一次创建的记录，而不是再建一条。这样客户端可以放心地在超时后重试，不用担心重复。
+
+      重试策略推荐指数退避：第一次失败等 2 秒，之后翻倍，上限 5 分钟，并加入随机抖动，避免大量设备同时恢复网络时把服务器打垮。App 回到前台时立即尝试一次，不必等退避计时结束。
+
+      冲突处理上，个人知识库的大多数内容只有一个编辑者，不需要 CRDT。对“编辑已有记录”这种少见操作，使用版本号做乐观并发控制：请求带上 base_revision，服务器发现版本已变化就返回 409，由用户决定是否覆盖。
+
+      账号切换是最容易被忽略的场景：待上传队列必须按账号分目录保存，切换账号后旧账号的内容暂停上传，绝不能提交到新账号下。
+
+  - id: a1-03
+    account: eval_a
+    project: A1
+    type: url
+    url: https://example.com/notes/pgvector-hybrid-search
+    title: 用 pgvector 和全文检索做混合搜索
+    note: 检索方案主参考
+    body: |
+      PostgreSQL 的全文检索和 pgvector 可以在同一个数据库里组成混合搜索：关键词路负责精确词匹配，向量路负责语义相近。两路分别取前 50 个候选，再融合排序。
+
+      融合最常用的是 RRF（Reciprocal Rank Fusion，倒数排名融合）：每个结果在每一路的得分是 1/(k + 排名)，k 通常取 60，各路得分相加。RRF 只看名次不看原始分数，因此不需要把 ts_rank 和余弦距离归一化到同一量纲，这是它最大的优点。
+
+      数据量小的时候（几万行以内）直接做精确的向量距离排序就够了，先保证正确性，再在延迟不可接受时加 HNSW 或 IVFFlat 近似索引。近似索引会牺牲少量召回率，需要用评测集确认影响。
+
+      中文全文检索需要先分词。PostgreSQL 内置的解析器不认识中文词边界，常见做法是在应用侧用 jieba 分词后以空格连接，再交给 to_tsvector('simple', ...)。查询时必须使用同一个分词器和词典，否则两侧切出来的词对不上。
+
+  - id: a1-04
+    account: eval_a
+    project: A1
+    type: thought
+    text: 本地存储先用 SQLite 存全部资料，服务器只做备份，这样离线体验最好，也省服务器钱。
+    note: 存储决定（第一版）
+
+  - id: a1-05
+    account: eval_a
+    project: A1
+    type: thought
+    text: 推翻之前“本地 SQLite 为主”的决定：检索和问答都要在服务器上跑 Embedding，资料必须以服务器 PostgreSQL 为准，手机上只保留待上传队列。
+    note: 存储决定（更新）
+
+  - id: a1-06
+    account: eval_a
+    project: A1
+    type: image
+    ocr: |
+      Model Studio 文本向量 计费
+      qwen3.7-text-embedding-flash 0.125 元 / 百万 Token
+      text-embedding-v4 0.5 元 / 百万 Token
+      默认维度 1024 单次最多 25 条
+    note: 百炼 Embedding 价格截图
+
+  - id: a1-07
+    account: eval_a
+    project: A1
+    type: thought
+    text: RRF 太粗糙了，名次一样的两条结果分数差距完全被抹平。我更倾向于把关键词分和向量分各自归一化后加权求和，权重用评测集调。
+    note: 检索融合（反对 RRF）
+
+  - id: a1-08
+    account: eval_a
+    project: A1
+    type: url
+    url: https://example.com/blog/langgraph-checkpointer
+    title: LangGraph 检查点：让长流程在崩溃后继续
+    note: Worker 恢复
+    body: |
+      LangGraph 的 checkpointer 会在每个节点执行后保存图的状态，进程崩溃后用同一个 thread_id 调用即可从最后一个完成的节点继续，而不是从头再跑。PostgreSQL 版本的 checkpointer 把状态存进 checkpoints、checkpoint_blobs、checkpoint_writes 三张表。
+
+      要注意持久化模式：默认的 async 模式在下一个节点执行的同时异步写检查点，如果恰好在这时崩溃，最后一步会丢失；对外部副作用多的流程应该用 sync 模式，每步写完再继续。
+
+      检查点只能保证“从哪里继续”，不能保证节点本身不重复执行。节点在提交外部写入之后、检查点保存之前崩溃，重放时这个节点会再跑一次，所以每个节点都要做成幂等的：先查结果是否已存在，存在就跳过。
+
+      检查点里最好只放 ID，不放大段正文。这样删除用户资料时，不会在检查点里残留已删除的内容。
+
+  - id: a1-09
+    account: eval_a
+    project: A1
+    type: url
+    url: https://example.com/notes/pgvector-hybrid-search
+    title: 用 pgvector 和全文检索做混合搜索
+    note: 第二次收藏：重点看中文分词那一段
+    body: |
+      PostgreSQL 的全文检索和 pgvector 可以在同一个数据库里组成混合搜索：关键词路负责精确词匹配，向量路负责语义相近。
+
+      中文全文检索需要先分词。PostgreSQL 内置的解析器不认识中文词边界，常见做法是在应用侧用 jieba 分词后以空格连接，再交给 to_tsvector('simple', ...)。查询时必须使用同一个分词器和词典，否则两侧切出来的词对不上。
+
+  - id: a1-10
+    account: eval_a
+    project: A1
+    type: image
+    ocr: |
+      Traceback (most recent call last):
+        File "worker.py", line 88, in claim
+      psycopg.errors.LockNotAvailable: could not obtain lock on row in relation "jobs"
+      HINT: use SKIP LOCKED to skip rows that are locked by other transactions
+    note: Worker 认领任务时报锁冲突的截图
+    text: 多个 worker 抢同一行时报错，后来改成 FOR UPDATE SKIP LOCKED 解决
+
+  - id: a1-11
+    account: eval_a
+    project: A1
+    type: thought
+    text: Observable 这个词要小心：SwiftUI 里的 @Observable 是 Swift 宏，跟 RxJS 的 Observable（异步数据流）完全不是一回事，写文档时别混用。
+    note: 术语
+
+  - id: a1-12
+    account: eval_a
+    project: A1
+    type: url
+    url: https://example.com/guide/reranker-tradeoffs
+    title: 要不要加 Reranker？小型 RAG 系统的取舍
+    note: 暂不加 reranker
+    body: |
+      Cross-encoder 重排（reranker）通常能在混合检索之后进一步提升前几名的准确度，但它带来三个成本：每次查询多一次模型调用、增加几百毫秒延迟、多一个外部依赖。
+
+      对于资料量在几千条以内的个人知识库，更划算的顺序是：先把分块和上下文头做好，再看混合检索的 Top 5 命中率；只有在评测集上明显达不到目标时，才引入 reranker，并且要设置超时降级，失败时回到原来的排序。
+
+      另一个常被低估的改进是给每个分块加上下文头：把文档标题和章节名拼到分块前面再索引，能显著减少“分块脱离上下文”导致的漏召回。
+
+  - id: a1-13
+    account: eval_a
+    project: A1
+    type: thought
+    text: 必须加 reranker，没有重排的 RAG 回答质量肯定不行，延迟多几百毫秒用户感觉不到。
+    note: 和 a1-12 观点相反
+
+  - id: a1-14
+    account: eval_a
+    project: A1
+    type: thought
+    text: Embedding 批量调用时注意 batch 上限，百炼一次最多 25 条，超过直接 400，要在客户端分批。
+    note: 踩坑记录
+
+  - id: a1-15
+    account: eval_a
+    project: A1
+    type: image
+    ocr: |
+      TestFlight 内测
+      免费开发者账号 (Personal Team) 不能上传 TestFlight
+      需要 Apple Developer Program 99 美元/年
+      App Group 与 Keychain 共享在免费账号下可用
+    note: 签名方案截图
+    text: 内测前要买开发者账号
+
+  - id: a1-16
+    account: eval_a
+    project: A1
+    type: thought
+    text: 知识卡片只能当导航，不能当证据。问答引用必须指向原文片段，否则模型的摘要错误会被当成事实引用出去。
+    note: 引用原则
+
+  - id: a1-17
+    account: eval_a
+    project: A1
+    type: url
+    url: https://example.com/blog/chinese-chunking
+    title: 中文长文分块的几个经验
+    note: 分块参数
+    body: |
+      中文没有空格，按固定字符数切块很容易把一句话切成两半。更稳妥的做法是先按段落切，段落太长再按句号、问号、感叹号切，最后才按字数硬切。
+
+      块的大小建议在 300 到 800 字之间。太短的块缺少上下文，语义向量不稳定；太长的块会把多个主题混在一起，关键词得分被稀释。相邻块之间重叠一句话，可以缓解边界处的信息丢失。
+
+      短文本（比如一句想法）不要切，整条作为一个块索引。截图 OCR 出来的文字经常是零散的短行，可以先合并成段落再处理。
+
+      记录每个块在原文中的起止位置，引用时才能准确跳回原文。
+
+  - id: a1-18
+    account: eval_a
+    project: A1
+    type: thought
+    text: 周会决定：S4 先做搜索再做问答，问答由 Worker 异步执行，客户端轮询结果，避免长请求超时丢回答。
+    note: 迭代计划
+
+  # ---------- A2 家庭咖啡烘焙 ----------
+  - id: a2-01
+    account: eval_a
+    project: A2
+    type: url
+    url: https://example.com/coffee/roast-stages
+    title: 家庭烘焙的四个阶段
+    note: 入门
+    body: |
+      咖啡烘焙大致分为脱水、梅纳反应、一爆和发展四个阶段。脱水阶段生豆由青绿转黄，散发草腥味，通常持续 4 到 6 分钟。
+
+      梅纳反应阶段豆子转为浅褐色，开始出现烤面包和焦糖的香气。这个阶段升温过快会让豆子表面焦而内部不熟。
+
+      一爆时会听到类似爆米花的噼啪声，这是豆子内部水汽和二氧化碳冲破细胞壁。一爆开始后进入发展阶段，发展时间一般占总烘焙时间的 15% 到 25%，时间越长风味越偏焦糖和苦甜，越短越偏酸和果香。
+
+      出锅后要在 3 分钟内把豆子冷却到室温，否则余温会继续烘焙，风味变得平淡。
+
+  - id: a2-02
+    account: eval_a
+    project: A2
+    type: thought
+    text: 耶加雪菲这批浅烘，一爆后只发展 1 分 30 秒就下豆，柑橘和茉莉花香很明显，下次可以再短一点试试。
+    note: 烘焙记录
+
+  - id: a2-03
+    account: eval_a
+    project: A2
+    type: image
+    ocr: |
+      烘焙记录 #12
+      生豆：哥伦比亚 慧兰 200g
+      入豆温度 180℃  回温点 1:20
+      转黄 5:10  一爆 8:45  下豆 10:30
+      失重率 14.2%
+    note: 烘焙曲线截图
+
+  - id: a2-04
+    account: eval_a
+    project: A2
+    type: url
+    url: https://example.com/coffee/pour-over-basics
+    title: 手冲咖啡的水温和粉水比
+    note: 冲煮参数
+    body: |
+      手冲的常用粉水比在 1:15 到 1:16 之间，15 克咖啡粉对应 225 到 240 克水。浅烘豆建议用 92 到 94℃ 的水，深烘豆用 85 到 88℃，水温太高会萃取出更多苦味。
+
+      闷蒸用粉量两倍的水，等待 30 秒左右让二氧化碳排出，再分两到三段注水，总时间控制在 2 分 30 秒左右。
+
+  - id: a2-05
+    account: eval_a
+    project: A2
+    type: thought
+    text: 新烘的豆子至少养豆 7 天再喝，排气不充分时冲出来又酸又涩。
+    note: 养豆（观点一）
+
+  - id: a2-06
+    account: eval_a
+    project: A2
+    type: thought
+    text: 浅烘豆养 2 到 3 天就是最好喝的时候，养一周以上香气已经掉了一半，所谓必须养 7 天是深烘豆的经验。
+    note: 养豆（和 a2-05 相反）
+
+  - id: a2-07
+    account: eval_a
+    project: A2
+    type: thought
+    text: 决定把爆米花机换成小型直火滚筒烘焙机，爆米花机受热不均匀，一次只能烘 80 克，batch 太小。
+    note: 器材决定
+
+  - id: a2-08
+    account: eval_a
+    project: A2
+    type: thought
+    text: 磨豆机刻度：手冲用 24 格，法压用 32 格，意式要 8 格以下但这台磨不了那么细。
+    note: 研磨刻度
+
+  - id: a2-09
+    account: eval_a
+    project: A2
+    type: image
+    ocr: |
+      生豆价格表
+      埃塞俄比亚 耶加雪菲 G1  98元/kg
+      哥伦比亚 慧兰 82元/kg
+      巴西 喜拉多 56元/kg
+    note: 生豆采购
+
+  - id: a2-10
+    account: eval_a
+    project: A2
+    type: url
+    url: https://example.com/coffee/cooling-tray
+    title: 自制冷却盘：用电脑风扇快速降温
+    note: DIY
+    body: |
+      家庭烘焙最容易被忽略的是冷却。把一个 12 厘米的机箱风扇固定在不锈钢网筛下方，抽风向下，200 克豆子大约 2 分钟就能降到室温。风扇用 12V 电源适配器供电，注意加装开关。
+
+  - id: a2-11
+    account: eval_a
+    project: A2
+    type: thought
+    text: 失重率 12% 左右是浅烘，15% 左右中烘，18% 以上就算深烘了，可以用来判断这次烘到哪了。
+    note: 判断烘焙度
+
+  - id: a2-12
+    account: eval_a
+    project: A2
+    type: thought
+    text: 下次烘焙记得记录环境温度，冬天回温点明显比夏天晚。
+    note: 待办
+
+  # ---------- B1 向量数据库调优（另一个账号）----------
+  - id: b1-01
+    account: eval_b
+    project: B1
+    type: url
+    url: https://example.com/pgvector/hnsw-tuning
+    title: pgvector HNSW 参数怎么调
+    note: 索引调优
+    body: |
+      HNSW 索引有两个建索引参数：m（每个节点的连接数，默认 16）和 ef_construction（建索引时的候选列表大小，默认 64）。我们的数据集上 m 取 24、ef_construction 取 200 时召回率最好，建索引时间约为默认值的 3 倍。
+
+      查询时的 hnsw.ef_search 默认 40，调到 100 后召回率从 0.93 提升到 0.98，延迟增加约 30%。
+
+  - id: b1-02
+    account: eval_b
+    project: B1
+    type: thought
+    text: 我们决定推送通知统一用自建的 APNs 服务，不接第三方推送平台。
+    note: 团队决定
+
+  - id: b1-03
+    account: eval_b
+    project: B1
+    type: thought
+    text: IVFFlat 的 lists 参数取行数的平方根左右，probes 取 lists 的十分之一起步。
+    note: IVFFlat
+
+  - id: b1-04
+    account: eval_b
+    project: B1
+    type: image
+    ocr: |
+      App 定价方案
+      基础版 免费
+      专业版 18 元/月 或 168 元/年
+    note: 定价截图
+
+  - id: b1-05
+    account: eval_b
+    project: B1
+    type: thought
+    text: SwiftUI 状态管理我们还在用 ObservableObject，暂时不迁移到 @Observable。
+    note: 和 eval_a 的 a1-01 相反，用来检验账号隔离
+
+  - id: b1-06
+    account: eval_b
+    project: B1
+    type: thought
+    text: Android 版计划明年 3 月发布。
+    note: 路线图

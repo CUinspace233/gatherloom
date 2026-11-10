@@ -26,7 +26,7 @@ jobs:
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
       - run: uv sync --locked
       - run: uv run --locked ruff check .
-      - run: uv run --locked mypy app tests
+      - run: uv run --locked mypy app tests evaluation
       - run: docker compose -f ../deploy/compose.yaml up -d --wait postgres
       - run: docker compose -f ../deploy/compose.yaml exec -T postgres createdb -U gatherloom gatherloom_test
       - run: uv run --locked python -m pytest

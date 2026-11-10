@@ -25,6 +25,17 @@
 - `no_answer.yaml`：5 道无答案题；指标：不编造决定或来源。
 - `scope.yaml`：跨项目、跨账号边界题。
 
+## 文件与命令
+当前的 `materials.yaml`（36 条）与题目由开发助手编写，用于打通流程和回归，不是真实材料。换成真实材料时保持相同字段即可。
+
+```sh
+cd server
+uv run --locked --env-file .env python -m evaluation.load       # 导入并整理（eval_a、eval_b 账号）
+uv run --locked --env-file .env python -m evaluation.retrieval  # 检索评测，写入 results/<日期>-retrieval.md
+```
+
+截图材料只有 OCR 文字，附件记录没有图片文件。
+
 ## 结果记录
 每次评测记录：日期、Embedding 与分词版本、分块参数、上下文头与卡片 prompt 版本、模型路由、各指标结果、失败案例。
 
