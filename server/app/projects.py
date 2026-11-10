@@ -21,7 +21,7 @@ from app.contracts import (
     QuestionUpdate,
     QuestionView,
 )
-from app.models import Entry, Project, ProjectEntry, ProjectQuestion
+from app.models import Conversation, Entry, Project, ProjectEntry, ProjectQuestion
 
 router = APIRouter(prefix="/v1", tags=["projects"], responses=AUTH_ERROR)
 NOT_FOUND: ErrorResponses = {
@@ -65,7 +65,7 @@ def decode_cursor(cursor: str) -> tuple[datetime, UUID]:
         raise HTTPException(400, "invalid pagination cursor") from None
 
 
-def paginate[T: (Project, ProjectQuestion, Entry)](
+def paginate[T: (Project, ProjectQuestion, Entry, Conversation)](
     db: Session,
     query: Select[T],
     model: type[T],

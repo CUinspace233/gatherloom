@@ -217,8 +217,23 @@ class ProjectEntry(Base):
 
 
 class Job(Base):
+    """Background work: ingesting an entry revision, or answering a question."""
+
     __tablename__ = "jobs"
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "message_id"],
+            ["messages.owner_id", "messages.id"],
+            name="fk_jobs_message_owner",
+        ),
+        UniqueConstraint("message_id", name="uq_jobs_message"),
+        CheckConstraint(
+            "(kind = 'entry_ingestion' AND entry_id IS NOT NULL"
+            " AND revision IS NOT NULL AND message_id IS NULL)"
+            " OR (kind = 'project_answer' AND message_id IS NOT NULL"
+            " AND entry_id IS NULL AND revision IS NULL)",
+            name="ck_jobs_subject",
+        ),
         ForeignKeyConstraint(
             ["owner_id", "entry_id", "revision"],
             [
@@ -248,8 +263,9 @@ class Job(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     owner_id: Mapped[UUID]
-    entry_id: Mapped[UUID]
-    revision: Mapped[int]
+    entry_id: Mapped[UUID | None]
+    revision: Mapped[int | None]
+    message_id: Mapped[UUID | None]
     kind: Mapped[str] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(16), server_default="queued")
     attempts: Mapped[int] = mapped_column(server_default="0")
@@ -367,3 +383,104 @@ class Run(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "id", name="uq_conversations_owner_id_id"),
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_conversations_project_owner",
+        ),
+        Index(
+            "ix_conversations_owner_project_created_id",
+            "owner_id",
+            "project_id",
+            "created_at",
+            "id",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    project_id: Mapped[UUID]
+    title: Mapped[str] = mapped_column(String(120), server_default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Message(Base):
+    """A question from the user, or the persisted answer to one (reply_to)."""
+
+    __tablename__ = "messages"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "id", name="uq_messages_owner_id_id"),
+        UniqueConstraint(
+            "owner_id", "client_message_id", name="uq_messages_client_message"
+        ),
+        UniqueConstraint("reply_to", name="uq_messages_reply_to"),
+        ForeignKeyConstraint(
+            ["owner_id", "conversation_id"],
+            ["conversations.owner_id", "conversations.id"],
+            name="fk_messages_conversation_owner",
+        ),
+        ForeignKeyConstraint(
+            ["owner_id", "reply_to"],
+            ["messages.owner_id", "messages.id"],
+            name="fk_messages_reply_owner",
+        ),
+        CheckConstraint("role IN ('user', 'assistant')", name="ck_messages_role"),
+        CheckConstraint(
+            "(role = 'user') = (reply_to IS NULL)", name="ck_messages_reply"
+        ),
+        Index(
+            "ix_messages_owner_conversation_created",
+            "owner_id",
+            "conversation_id",
+            "created_at",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    conversation_id: Mapped[UUID]
+    role: Mapped[str] = mapped_column(String(16))
+    content: Mapped[str] = mapped_column(Text)
+    client_message_id: Mapped[UUID | None]
+    reply_to: Mapped[UUID | None]
+    insufficient: Mapped[bool] = mapped_column(server_default="false")
+    trace: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Citation(Base):
+    """A numbered reference in an answer to a source chunk, as it was then."""
+
+    __tablename__ = "citations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "message_id"],
+            ["messages.owner_id", "messages.id"],
+            name="fk_citations_message_owner",
+        ),
+        UniqueConstraint("message_id", "n", name="uq_citations_message_n"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    message_id: Mapped[UUID]
+    n: Mapped[int]
+    entry_id: Mapped[UUID]
+    revision: Mapped[int]
+    chunk_id: Mapped[UUID]
+    start_offset: Mapped[int]
+    end_offset: Mapped[int]
+    snippet: Mapped[str] = mapped_column(Text)

@@ -17,11 +17,16 @@ from app.models import (
     Artifact,
     Attachment,
     Chunk,
+    Citation,
+    Conversation,
     Entry,
     EntryRevision,
     Job,
     LoginSession,
+    Message,
+    Project,
     ProjectEntry,
+    ProjectQuestion,
     Run,
     User,
 )
@@ -90,10 +95,22 @@ def purge_committed(sessions: sessionmaker[Session]) -> None:
         )
         if not owners:
             return
-        for model in (Run, Artifact, Chunk, Job, ProjectEntry, Attachment):
+        for model in (
+            Run,
+            Artifact,
+            Chunk,
+            Job,
+            Citation,
+            Message,
+            Conversation,
+            ProjectEntry,
+            Attachment,
+            EntryRevision,
+            Entry,
+            ProjectQuestion,
+            Project,
+        ):
             db.execute(delete(model).where(model.owner_id.in_(owners)))
-        db.execute(delete(EntryRevision).where(EntryRevision.owner_id.in_(owners)))
-        db.execute(delete(Entry).where(Entry.owner_id.in_(owners)))
         db.execute(delete(LoginSession).where(LoginSession.owner_id.in_(owners)))
         db.execute(delete(User).where(User.id.in_(owners)))
         for table in ("checkpoint_writes", "checkpoint_blobs", "checkpoints"):

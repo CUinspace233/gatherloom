@@ -13,13 +13,24 @@ from hashlib import sha256
 from typing import Any, Literal, cast
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, CursorResult, and_, func, or_, select, update
+from sqlalchemy import (
+    ColumnElement,
+    CursorResult,
+    and_,
+    case,
+    func,
+    or_,
+    select,
+    update,
+)
 from sqlalchemy.orm import Session
 
 from app.contracts import ProcessingStatus
-from app.models import Entry, Job
+from app.models import Entry, Job, Message
 
 INGESTION = "entry_ingestion"
+ANSWER = "project_answer"
+KINDS = (ANSWER, INGESTION)  # claim order: answers first
 LEASE = timedelta(seconds=60)
 MAX_ATTEMPTS = 3
 BACKOFF = timedelta(seconds=30)
@@ -68,15 +79,17 @@ class LeaseLost(Exception):
 
 
 class Cancelled(Exception):
-    """The entry was deleted or replaced by a newer revision."""
+    """The subject is gone: entry deleted or replaced, or question removed."""
 
 
 @dataclass(frozen=True)
 class Claim:
     id: UUID
     owner_id: UUID
-    entry_id: UUID
-    revision: int
+    kind: str
+    entry_id: UUID | None
+    revision: int | None
+    message_id: UUID | None
     generation: int
     attempts: int
 
@@ -89,13 +102,14 @@ def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-def owner_lock_key(owner_id: UUID) -> int:
-    return int.from_bytes(sha256(b"jobs" + owner_id.bytes).digest()[:8], signed=True)
+def owner_lock_key(owner_id: UUID, kind: str) -> int:
+    digest = sha256(b"jobs" + owner_id.bytes + kind.encode()).digest()
+    return int.from_bytes(digest[:8], signed=True)
 
 
 def claimable(now: datetime) -> ColumnElement[bool]:
     return and_(
-        Job.kind == INGESTION,
+        Job.kind.in_(KINDS),
         or_(
             and_(Job.status == "queued", Job.run_after <= now),
             and_(Job.status == "running", Job.lease_expires_at < now),
@@ -104,23 +118,28 @@ def claimable(now: datetime) -> ColumnElement[bool]:
 
 
 def claim(db: Session, worker_id: str, now: datetime) -> Claim | None:
-    """Lease the next runnable job, at most one running job per account."""
+    """Lease the next runnable job, at most one running job per account and kind.
+
+    Answers are claimed before ingestion so questions do not wait behind a
+    backlog of entries.
+    """
     candidates = db.execute(
-        select(Job.id, Job.owner_id)
+        select(Job.id, Job.owner_id, Job.kind)
         .where(claimable(now))
-        .order_by(Job.run_after, Job.created_at)
+        .order_by(case((Job.kind == ANSWER, 0), else_=1), Job.run_after, Job.created_at)
         .limit(20)
     ).all()
-    for job_id, owner_id in candidates:
-        # Serialize claims per account so the busy check below cannot race.
+    for job_id, owner_id, kind in candidates:
+        # Serialize claims per account and kind so the busy check cannot race.
         if not db.scalar(
-            select(func.pg_try_advisory_xact_lock(owner_lock_key(owner_id)))
+            select(func.pg_try_advisory_xact_lock(owner_lock_key(owner_id, kind)))
         ):
             continue
         busy = db.scalar(
             select(Job.id)
             .where(
                 Job.owner_id == owner_id,
+                Job.kind == kind,
                 Job.status == "running",
                 Job.lease_expires_at >= now,
                 Job.id != job_id,
@@ -147,12 +166,14 @@ def claim(db: Session, worker_id: str, now: datetime) -> Claim | None:
         job.lease_expires_at = now + LEASE
         job.updated_at = now
         result = Claim(
-            job.id,
-            job.owner_id,
-            job.entry_id,
-            job.revision,
-            job.generation,
-            job.attempts,
+            id=job.id,
+            owner_id=job.owner_id,
+            kind=job.kind,
+            entry_id=job.entry_id,
+            revision=job.revision,
+            message_id=job.message_id,
+            generation=job.generation,
+            attempts=job.attempts,
         )
         db.commit()
         return result
@@ -174,23 +195,36 @@ def heartbeat(db: Session, claim: Claim, worker_id: str, now: datetime) -> bool:
 
 
 def fence(db: Session, claim: Claim, worker_id: str) -> Job:
-    """Lock the entry and job for writing; raise unless this worker owns it.
+    """Lock the subject and job for writing; raise unless this worker owns it.
 
-    Lock order matches the API (entry first, then job) to avoid deadlocks.
+    Lock order matches the API (subject first, then job) to avoid deadlocks.
     """
-    entry = db.scalar(
-        select(Entry)
-        .where(Entry.owner_id == claim.owner_id, Entry.id == claim.entry_id)
-        .with_for_update(read=True)
-    )
+    if claim.kind == ANSWER:
+        subject_live = (
+            db.scalar(
+                select(Message.id)
+                .where(
+                    Message.owner_id == claim.owner_id, Message.id == claim.message_id
+                )
+                .with_for_update(read=True)
+            )
+            is not None
+        )
+    else:
+        entry = db.scalar(
+            select(Entry)
+            .where(Entry.owner_id == claim.owner_id, Entry.id == claim.entry_id)
+            .with_for_update(read=True)
+        )
+        subject_live = (
+            entry is not None
+            and entry.deleted_at is None
+            and entry.current_revision == claim.revision
+        )
     job = db.scalar(select(Job).where(Job.id == claim.id).with_for_update())
     if job is None or job.status != "running" or job.lease_owner != worker_id:
         raise LeaseLost
-    if (
-        entry is None
-        or entry.deleted_at is not None
-        or entry.current_revision != claim.revision
-    ):
+    if not subject_live:
         raise Cancelled
     return job
 
