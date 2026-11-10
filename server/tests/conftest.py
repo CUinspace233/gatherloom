@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from os import environ
+from pathlib import Path
 
 import pytest
 from alembic import command
@@ -8,6 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, create_engine
 from sqlalchemy.orm import Session
 
+from app import storage
 from app.db import get_db
 from app.main import app
 
@@ -54,3 +56,9 @@ def client(connection: Connection) -> Iterator[TestClient]:
             yield client
     finally:
         app.dependency_overrides.pop(get_db)
+
+
+@pytest.fixture(autouse=True)
+def storage_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.setattr(storage, "STORAGE_DIR", tmp_path / "storage")
+    return tmp_path / "storage"

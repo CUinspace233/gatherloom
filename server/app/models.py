@@ -1,7 +1,9 @@
 from datetime import datetime
+from typing import Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -11,7 +13,9 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -110,17 +114,20 @@ class Entry(Base):
             "owner_id", "client_submission_id", name="uq_entries_submission"
         ),
         Index("ix_entries_owner_created_id", "owner_id", "created_at", "id"),
+        CheckConstraint("type IN ('thought', 'url', 'image')", name="ck_entries_type"),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     client_submission_id: Mapped[UUID]
     type: Mapped[str] = mapped_column(String(16))
+    source_url: Mapped[str | None] = mapped_column(Text)
     current_revision: Mapped[int] = mapped_column(server_default="1")
     possible_duplicate: Mapped[bool] = mapped_column(server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class EntryRevision(Base):
@@ -142,6 +149,42 @@ class EntryRevision(Base):
     text: Mapped[str] = mapped_column(Text)
     note: Mapped[str] = mapped_column(Text, server_default="")
     content_fingerprint: Mapped[str] = mapped_column(String(64))
+    client_ocr: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    client_extract: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class Attachment(Base):
+    __tablename__ = "attachments"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "id", name="uq_attachments_owner_id_id"),
+        UniqueConstraint(
+            "owner_id", "client_submission_id", name="uq_attachments_submission"
+        ),
+        ForeignKeyConstraint(
+            ["owner_id", "entry_id"],
+            ["entries.owner_id", "entries.id"],
+            name="fk_attachments_entry_owner",
+        ),
+        Index(
+            "ix_attachments_unlinked_created",
+            "created_at",
+            postgresql_where=text("entry_id IS NULL"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    client_submission_id: Mapped[UUID]
+    entry_id: Mapped[UUID | None]
+    content_type: Mapped[str] = mapped_column(String(32))
+    size: Mapped[int] = mapped_column(BigInteger)
+    sha256: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
 
 class ProjectEntry(Base):

@@ -4,8 +4,8 @@ from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy import Select, select, tuple_, update
+from fastapi import APIRouter, HTTPException, Query, Response
+from sqlalchemy import Select, delete, select, tuple_, update
 from sqlalchemy.orm import Session
 
 from app.auth import AUTH_ERROR, Db, Owner
@@ -21,7 +21,7 @@ from app.contracts import (
     QuestionUpdate,
     QuestionView,
 )
-from app.models import Entry, Project, ProjectQuestion
+from app.models import Entry, Project, ProjectEntry, ProjectQuestion
 
 router = APIRouter(prefix="/v1", tags=["projects"], responses=AUTH_ERROR)
 NOT_FOUND: ErrorResponses = {
@@ -135,6 +135,28 @@ def update_project(
         raise HTTPException(404, "project not found")
     db.commit()
     return ProjectView.model_validate(project)
+
+
+@router.delete("/projects/{project_id}", status_code=204, responses=NOT_FOUND)
+def delete_project(project_id: UUID, owner: Owner, db: Db) -> Response:
+    """Delete a project and its questions.
+
+    Entries are kept; those not in another project return to the inbox.
+    """
+    locked = owned_projects(owner.id).where(Project.id == project_id).with_for_update()
+    if db.scalar(locked) is None:
+        raise HTTPException(404, "project not found")
+    for model in (ProjectEntry, ProjectQuestion):
+        db.execute(
+            delete(model).where(
+                model.owner_id == owner.id, model.project_id == project_id
+            )
+        )
+    db.execute(
+        delete(Project).where(Project.owner_id == owner.id, Project.id == project_id)
+    )
+    db.commit()
+    return Response(status_code=204)
 
 
 @router.get("/projects/{project_id}/questions", responses={**NOT_FOUND, **BAD_CURSOR})

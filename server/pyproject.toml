@@ -8,6 +8,7 @@ dependencies = [
     "fastapi",
     "psycopg[binary]",
     "pydantic",
+    "python-multipart",
     "sqlalchemy",
     "uvicorn",
 ]

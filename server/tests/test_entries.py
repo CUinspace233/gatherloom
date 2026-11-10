@@ -60,7 +60,8 @@ def test_text_entry_replays_and_records_revision_and_job_once(
     assert independent.json()["id"] != saved["id"]
     assert independent.json()["possible_duplicate"] is False
     detail_path = f"/v1/entries/{saved['id']}"
-    assert client.get(detail_path, headers=owner_headers).json() == saved
+    detail = client.get(detail_path, headers=owner_headers).json()
+    assert detail == {**saved, "ocr_text": None, "extract_text": None}
     assert client.get(detail_path, headers=other_headers).status_code == 404
 
     first = client.get("/v1/entries?inbox=true&limit=1", headers=owner_headers).json()

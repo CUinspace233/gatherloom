@@ -4,8 +4,7 @@ import Observation
 @MainActor
 @Observable
 final class AccountSession {
-    private static let serverKey = "GatherloomServerURL"
-    private static let accountKey = "GatherloomActiveAccount"
+    private static let defaults = AccountSession.migratedDefaults()
     private var client: APIClient?
     private var credentials: Credentials?
     private var sessionID = UUID()
@@ -14,7 +13,7 @@ final class AccountSession {
     private(set) var isRestoring = true
     private(set) var isSigningOut = false
     private(set) var notice: String?
-    var serverAddress = UserDefaults.standard.string(forKey: AccountSession.serverKey) ?? ""
+    var serverAddress = AccountSession.defaults.string(forKey: AppGroup.serverKey) ?? ""
     var account: Account? { credentials?.account }
     var captureScope: CaptureScope? {
         guard let client, let account else { return nil }
@@ -24,7 +23,7 @@ final class AccountSession {
     func restore() {
         guard isRestoring else { return }
         defer { isRestoring = false }
-        guard let saved = UserDefaults.standard.string(forKey: Self.accountKey),
+        guard let saved = Self.defaults.string(forKey: AppGroup.accountKey),
               let accountID = UUID(uuidString: saved) else { return }
         do {
             let client = try APIClient(address: serverAddress)
@@ -45,8 +44,8 @@ final class AccountSession {
         let credentials = try APIClient.decode(Credentials.self, from: data)
         try CredentialStore.save(credentials, server: client.baseURL)
         serverAddress = client.baseURL.absoluteString
-        UserDefaults.standard.set(serverAddress, forKey: Self.serverKey)
-        UserDefaults.standard.set(credentials.account.id.uuidString, forKey: Self.accountKey)
+        Self.defaults.set(serverAddress, forKey: AppGroup.serverKey)
+        Self.defaults.set(credentials.account.id.uuidString, forKey: AppGroup.accountKey)
         self.client = client
         self.credentials = credentials
         sessionID = UUID()
@@ -71,24 +70,55 @@ final class AccountSession {
         method: String = "GET",
         query: [URLQueryItem] = [],
         body: (any Encodable)? = nil,
+        form: MultipartForm? = nil,
         scope: CaptureScope? = nil
     ) async throws -> T {
+        let data = try await send(path, method: method, query: query, body: body, form: form, scope: scope)
+        return try APIClient.decode(type, from: data)
+    }
+
+    /// Sends an authenticated request, renewing the access token once if it expired.
+    func send(
+        _ path: String,
+        method: String = "GET",
+        query: [URLQueryItem] = [],
+        body: (any Encodable)? = nil,
+        form: MultipartForm? = nil,
+        scope: CaptureScope? = nil
+    ) async throws -> Data {
         try Task.checkCancellation()
         if let scope, captureScope != scope { throw CancellationError() }
         guard !isSigningOut, let client, let credentials else { throw signedOut }
         let id = sessionID
         let data: Data
         do {
-            data = try await client.send(path, method: method, query: query, body: body, accessToken: credentials.accessToken)
+            data = try await client.send(
+                path, method: method, query: query, body: body, form: form, accessToken: credentials.accessToken
+            )
         } catch let error as APIError where error.status == 401 {
             let renewed = try await refresh(client: client, rejectedToken: credentials.accessToken, id: id)
             try Task.checkCancellation()
             guard id == sessionID, !isSigningOut else { throw CancellationError() }
-            data = try await client.send(path, method: method, query: query, body: body, accessToken: renewed.accessToken)
+            data = try await client.send(
+                path, method: method, query: query, body: body, form: form, accessToken: renewed.accessToken
+            )
         }
         try Task.checkCancellation()
         guard id == sessionID, !isSigningOut else { throw CancellationError() }
-        return try APIClient.decode(type, from: data)
+        return data
+    }
+
+    /// Moves the active account from the app's own defaults into the App
+    /// Group so the share extension saves to the same account.
+    private static func migratedDefaults() -> UserDefaults {
+        let shared = AppGroup.defaults
+        for key in [AppGroup.serverKey, AppGroup.accountKey] {
+            if shared.object(forKey: key) == nil, let value = UserDefaults.standard.string(forKey: key) {
+                shared.set(value, forKey: key)
+            }
+            UserDefaults.standard.removeObject(forKey: key)
+        }
+        return shared
     }
 
     private func refresh(client: APIClient, rejectedToken: String, id: UUID) async throws -> Credentials {
@@ -131,7 +161,7 @@ final class AccountSession {
         client = nil
         sessionID = UUID()
         refreshTask = nil
-        UserDefaults.standard.removeObject(forKey: Self.accountKey)
+        Self.defaults.removeObject(forKey: AppGroup.accountKey)
         if let message { notice = message }
     }
 

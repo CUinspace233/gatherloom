@@ -3,9 +3,6 @@ import SwiftUI
 @main
 struct GatherloomApp: App {
     @State private var session = AccountSession()
-    #if DEBUG
-    @State private var showsConnectionCheck = ProcessInfo.processInfo.arguments.contains("--check-health")
-    #endif
 
     var body: some Scene {
         WindowGroup {
@@ -13,38 +10,26 @@ struct GatherloomApp: App {
                 if session.isRestoring {
                     ProgressView("正在读取登录状态")
                 } else if let scope = session.captureScope {
-                    SignedInTabs(session: session, scope: scope, onTestConnection: showConnectionCheck)
+                    SignedInTabs(session: session, scope: scope)
                         .id(scope)
                 } else {
-                    SignInView(session: session, onTestConnection: showConnectionCheck)
+                    SignInView(session: session)
                 }
             }
+            .environment(session)
             .task { session.restore() }
-            #if DEBUG
-            .sheet(isPresented: $showsConnectionCheck) {
-                DebugConnectionView()
-            }
-            #endif
         }
-    }
-
-    private func showConnectionCheck() {
-        #if DEBUG
-        showsConnectionCheck = true
-        #endif
     }
 }
 
 private struct SignedInTabs: View {
     let session: AccountSession
-    let onTestConnection: () -> Void
     @Environment(\.scenePhase) private var scenePhase
     @State private var capture: CaptureQueue
     @State private var showsSettings = false
 
-    init(session: AccountSession, scope: CaptureScope, onTestConnection: @escaping () -> Void) {
+    init(session: AccountSession, scope: CaptureScope) {
         self.session = session
-        self.onTestConnection = onTestConnection
         _capture = State(initialValue: CaptureQueue(scope: scope, session: session))
     }
 
@@ -54,9 +39,6 @@ private struct SignedInTabs: View {
                 CaptureView(capture: capture)
                     .navigationTitle("记录")
                     .toolbar {
-                        #if DEBUG
-                        Button("测试连接", action: onTestConnection)
-                        #endif
                         Button("账号设置", systemImage: "person.crop.circle") { showsSettings = true }
                     }
             }
@@ -91,6 +73,7 @@ private struct AccountSettingsView: View {
     let capture: CaptureQueue
     @Environment(\.dismiss) private var dismiss
     @State private var errorMessage: String?
+    @State private var confirmsDiscard = false
 
     var body: some View {
         NavigationStack {
@@ -102,8 +85,11 @@ private struct AccountSettingsView: View {
                 }
                 if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
                 if !capture.pending.isEmpty {
-                    Text("有 \(capture.pending.count) 条记录尚未同步。退出后会保存在本机，下次登录同一账号时继续上传。")
-                        .foregroundStyle(.secondary)
+                    Section {
+                        Text("有 \(capture.pending.count) 条记录尚未同步。退出后会保存在本机，下次登录同一账号时继续上传，不会提交到其他账号。")
+                            .foregroundStyle(.secondary)
+                        Button("删除本机未同步记录", role: .destructive) { confirmsDiscard = true }
+                    }
                 }
                 Button("退出登录", role: .destructive) {
                     Task {
@@ -120,6 +106,13 @@ private struct AccountSettingsView: View {
             .navigationTitle("账号设置")
             .toolbar { Button("完成") { dismiss() }.disabled(session.isSigningOut) }
             .interactiveDismissDisabled(session.isSigningOut)
+            .confirmationDialog(
+                "删除 \(capture.pending.count) 条未同步记录？", isPresented: $confirmsDiscard, titleVisibility: .visible
+            ) {
+                Button("删除本机副本", role: .destructive) { Task { await capture.discardPending() } }
+            } message: {
+                Text("这些记录还没有上传到服务器，删除后无法恢复。")
+            }
         }
     }
 }
