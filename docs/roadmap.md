@@ -34,7 +34,7 @@
 ### 服务端与模型（ADR 0001、0002、0005、0007）
 - [ ] 服务器清单：系统、CPU、内存、磁盘、Docker/Compose、域名、证书、备份目的地。
 - [ ] 测量服务器到百炼国际站、DeepSeek 的延迟。
-- [ ] 百炼：确认 `qwen3.7-text-embedding-flash` 国际站可用、维度、批量上限、计价。
+- [x] 百炼：`qwen3.7-text-embedding-flash` 在中国站（当前 key 所属站点）可用，默认 1024 维，单批上限 25 条，¥0.125/百万 token（2026-11-10）。国际站未测。
 - [ ] 准备评测样本：两项目 × 15–20 条材料（见 [evaluation/](evaluation/README.md)），20 道检索题、5 道无答案题。
 - [ ] jieba + `simple` tsvector 原型；语义路 / 关键词路 / RRF 三种方式的 Top 5 命中对比。
 - [ ] 中文分块策略：按段落 + 标题，比较 2–3 组块大小与重叠，锁定初始值。
@@ -107,7 +107,7 @@
 
 ### iOS：SharedCapture（App 与扩展共用）
 - [x] Outbox：App Group 下按账号分目录；每个提交一个目录（内容文件 + 原子写入的 manifest）。
-- [ ] 提交状态机：本地已保存 → 上传中 → 服务器已保存 → 可检索 → 整理完成 / 部分失败。前三段已完成；后三段依赖 S3 Worker。
+- [x] 提交状态机：本地已保存 → 上传中 → 服务器已保存 → 可检索 → 整理完成 / 部分失败。后三段由 S3 Worker 驱动，资料详情轮询处理状态。
 - [x] Vision OCR 封装（降采样、行 + 坐标、失败不阻塞）。
 - [x] 上传器：从文件上传、指数退避；主 App 进入前台时排空队列。
 - [x] 账号切换 / 退出：暂停旧账号任务，提示待上传数量，可显式删除本机副本。
@@ -133,25 +133,27 @@
 
 **目标**：可靠的后台执行，资料加入项目后可搜索。
 
-- [ ] Job 认领：`SELECT … FOR UPDATE SKIP LOCKED` + 租约 + 心跳；退避重试（上限 3 次）；不可重试错误分类。
-- [ ] 进程：`worker`、`scheduler` 启动命令；全局并发 2、单账号并发 1（可配置）。
-- [ ] LangGraph + PostgreSQL checkpointer 接入；thread_id 含 owner_id 与 run_id（ADR 0006）。
-- [ ] Run / Usage 表：provider、model、prompt_version、用量、费用估算、错误。
-- [ ] `LLMProvider`（DeepSeek、千问）与任务路由配置（ADR 0002）；Pydantic 校验 + 一次修复。
-- [ ] `EmbeddingProvider`（百炼）与 index_version（ADR 0001）。
-- [ ] 正文兜底：服务端抓取（SSRF 防护：协议、私有/回环/链路本地/元数据地址、DNS 与每次重定向校验）+ 正文提取，100,000 字符上限。
-- [ ] OCR 兜底：Tesseract 适配器（仅在无 `client_ocr` 时）。
-- [ ] EntryIngestionGraph：提取兜底 → 分块 → 上下文 chunk 头 → jieba tsvector + Embedding（进入“已可检索”）→ 知识卡片（light，标题/摘要/要点/关键词/问题）→ 卡片索引 → 状态更新；节点幂等写入（ADR 0009）。
-- [ ] 卡片生成失败只记为部分失败，不影响原文可检索；卡片不产生 ProjectEvent。
-- [ ] Artifact / Chunk 表（来源版本、加工类型、`unit` = chunk / card、`index_text` 与 `display_text`、位置、分词、上下文头与索引版本）。
-- [ ] `GET /v1/entries/{id}/processing`、`POST /v1/entries/{id}/retry`（复用有效任务）。
-- [ ] iOS：资料详情显示处理状态、失败步骤与重试；展示知识卡片（标注“AI 整理”）。
-- [ ] 结构化日志：run_id、阶段、延迟；不记录正文与密钥。
+- [x] Job 认领：`SELECT … FOR UPDATE SKIP LOCKED` + 租约（60 秒）+ 心跳 + 围栏写入；退避重试（30 s × 4ⁿ，上限 3 次）；不可重试错误分类。
+- [x] 进程：`python -m app.worker`；全局并发 2（`GATHERLOOM_WORKER_CONCURRENCY`）、单账号并发 1。
+- [ ] `scheduler` 启动命令：顺延到 S5（周回顾调度时一并实现）。
+- [x] LangGraph + PostgreSQL checkpointer 接入；thread_id 为 `owner_id:job_id:generation`，`durability="sync"`，状态只存 ID（ADR 0006）。
+- [x] Run 表：provider、model、prompt_version、用量、带价格日期的费用估算、延迟、错误；每次调用（含失败与修复）一行。
+- [x] `LLMProvider`（DeepSeek、千问）与任务路由配置（ADR 0002）；Pydantic 校验 + 一次修复。
+- [x] `EmbeddingProvider`（百炼）与 index_version（ADR 0001）。
+- [ ] 正文兜底：服务端抓取（SSRF 防护：协议、私有/回环/链路本地/元数据地址、DNS 与每次重定向校验）+ 正文提取，100,000 字符上限。**顺延**：当前没有客户端正文的链接只索引标题、备注与 URL。
+- [ ] OCR 兜底：Tesseract 适配器（仅在无 `client_ocr` 时）。**顺延**：当前没有 OCR 的截图只索引备注。
+- [x] EntryIngestionGraph：分块 → 上下文 chunk 头 → jieba tsvector + Embedding（进入“已可检索”）→ 知识卡片（light，标题/摘要/要点/关键词/问题）→ 卡片索引 → 状态更新；节点幂等写入（ADR 0009）。提取兜底随上两项顺延。
+- [x] 卡片生成失败只记为部分失败，不影响原文可检索；卡片不产生 ProjectEvent。
+- [x] Artifact / Chunk 表（来源版本、加工类型、`unit` = chunk / card、`index_text` 与 `display_text`、位置、分词、上下文头与索引版本）。
+- [x] `GET /v1/entries/{id}/processing`、`POST /v1/entries/{id}/retry`（复用有效任务）。
+- [x] iOS：资料详情显示处理状态、失败步骤与重试；展示知识卡片（标注“AI 整理”）。模拟器已验证。
+- [x] 结构化日志（JSON）：job_id、状态、阶段、延迟、模型、错误码；不记录正文与密钥。
 
 **出口检查**
-- [T4]（入库部分）加工中重启 Worker 可恢复，发布结果不重复。
-- [T9] URL 抓取拒绝内部地址与恶意重定向。
-- 失败可重试；资料加入项目后可被检索命中。
+- [x] [T4]（入库部分）加工中重启 Worker 可恢复，发布结果不重复：节点间、事务中途、失去租约三种中断有自动化测试；本机 `kill -9` 实测（卡片步骤中断，重启后续做，未重做 Embedding）。
+- [ ] [T9] URL 抓取拒绝内部地址与恶意重定向。随服务端抓取顺延。
+- [x] 失败可重试（API 测试与模拟器验证）。
+- [ ] 资料加入项目后可被检索命中：索引已就绪，检索接口在 S4 实现后验证。
 
 **风险**：checkpointer 与 jobs 状态不一致 → 对外状态只从领域任务投影，崩溃恢复测试覆盖节点间中断。
 

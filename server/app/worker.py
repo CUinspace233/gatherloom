@@ -26,10 +26,20 @@ from sqlalchemy.orm import Session, sessionmaker
 from app import jobs, tokenizer
 from app.db import DATABASE_URL, SessionLocal
 from app.ingestion import Pipeline
+from app.providers import Models, build_models
+from app.settings import load_settings
 
 log = logging.getLogger("gatherloom.worker")
 IDLE_SECONDS = 2.0
-LOG_FIELDS = ("job_id", "status", "stage", "latency_ms", "error_code", "error_type")
+LOG_FIELDS = (
+    "job_id",
+    "status",
+    "stage",
+    "latency_ms",
+    "error_code",
+    "error_type",
+    "model",
+)
 
 
 class JsonFormatter(logging.Formatter):
@@ -103,11 +113,12 @@ class Heartbeat:
 def work(
     stopping: threading.Event,
     worker_id: str,
+    models: Models,
     sessions: sessionmaker[Session] = SessionLocal,
     url: str = DATABASE_URL,
 ) -> None:
     with checkpointer(url) as saver:
-        pipeline = Pipeline(sessions, saver, worker_id)
+        pipeline = Pipeline(sessions, saver, worker_id, models=models)
         while not stopping.is_set():
             try:
                 with sessions() as db:
@@ -127,6 +138,9 @@ def main() -> None:
     handler.setFormatter(JsonFormatter())
     logging.basicConfig(level=logging.INFO, handlers=[handler])
     concurrency = int(os.environ.get("GATHERLOOM_WORKER_CONCURRENCY", "2"))
+    settings = load_settings()
+    if problems := settings.problems():
+        raise SystemExit("worker configuration: " + "; ".join(problems))
     tokenizer.warm_up()
     setup_checkpoints()
     stopping = threading.Event()
@@ -135,7 +149,12 @@ def main() -> None:
     prefix = f"{socket.gethostname()[:32]}:{os.getpid()}"
     threads = [
         threading.Thread(
-            target=work, args=(stopping, f"{prefix}:{index}:{uuid4().hex[:8]}")
+            target=work,
+            args=(
+                stopping,
+                f"{prefix}:{index}:{uuid4().hex[:8]}",
+                build_models(settings),
+            ),
         )
         for index in range(concurrency)
     ]

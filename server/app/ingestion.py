@@ -10,20 +10,23 @@ import logging
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
+from itertools import pairwise
 from typing import Any, TypedDict
 from uuid import UUID
 
 from langchain_core.runnables import RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
-from sqlalchemy import delete, exists, func, select
+from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import chunking, jobs, tokenizer
-from app.models import INDEX_VERSION, Chunk, Entry, EntryRevision, Job
+from app import cards, chunking, jobs, tokenizer
+from app.models import INDEX_VERSION, Artifact, Chunk, Entry, EntryRevision, Job, Run
+from app.providers import Call, Models
 
 log = logging.getLogger("gatherloom.ingestion")
+EMBED_BATCH = 25
 Hook = Callable[[str], None]
 
 
@@ -58,6 +61,15 @@ def material(db: Session, claim: jobs.Claim) -> chunking.Material:
     )
 
 
+def artifact_rows(claim: jobs.Claim) -> Any:
+    return (
+        Artifact.owner_id == claim.owner_id,
+        Artifact.entry_id == claim.entry_id,
+        Artifact.revision == claim.revision,
+        Artifact.kind == "card",
+    )
+
+
 def chunk_rows(claim: jobs.Claim, unit: str) -> Any:
     return (
         Chunk.owner_id == claim.owner_id,
@@ -76,22 +88,33 @@ class Pipeline:
         checkpointer: BaseCheckpointSaver[Any],
         worker_id: str,
         *,
+        models: Models | None = None,
         clock: Callable[[], datetime] = jobs.utcnow,
         hook: Hook | None = None,
     ) -> None:
+        """Without models the graph builds the keyword index only."""
         self.sessions = sessions
+        self.models = models
         self.checkpointer = checkpointer
         self.worker_id = worker_id
         self.clock = clock
         self.hook = hook or (lambda _point: None)
         self.claim: jobs.Claim | None = None
+        self.last_run: UUID | None = None
         graph = StateGraph(IngestionState)
         graph.add_node("load", self.load)
         graph.add_node("index_keywords", self.index_keywords)
         graph.add_node("finish", self.finish)
-        graph.add_edge(START, "load")
-        graph.add_edge("load", "index_keywords")
-        graph.add_edge("index_keywords", "finish")
+        steps = ["load", "index_keywords"]
+        if models is not None:
+            graph.add_node("embed", self.embed)
+            graph.add_node("card", self.card)
+            graph.add_node("card_index", self.card_index)
+            steps += ["embed", "card", "card_index"]
+        steps.append("finish")
+        graph.add_edge(START, steps[0])
+        for current, following in pairwise(steps):
+            graph.add_edge(current, following)
         graph.add_edge("finish", END)
         self.graph = graph.compile(checkpointer=checkpointer)
 
@@ -213,9 +236,153 @@ class Pipeline:
                             ]
                         )
                     )
+            if self.models is None and job.indexed_at is None:
+                job.indexed_at = self.clock()
+        return {}
+
+    def embed(self, state: IngestionState) -> dict[str, Any]:
+        """Embed source chunks batch by batch; finished batches survive a crash.
+
+        Completing this step makes the entry searchable ("已可检索").
+        """
+        self.hook("embed")
+        assert self.claim is not None and self.models is not None
+        claim, embedder = self.claim, self.models.embedder
+        while True:
+            with self.step("embed") as (db, _job):
+                pending = db.execute(
+                    select(Chunk.id, Chunk.index_text)
+                    .where(*chunk_rows(claim, "chunk"), Chunk.embedding.is_(None))
+                    .order_by(Chunk.ordinal)
+                    .limit(EMBED_BATCH)
+                ).all()
+            if not pending:
+                break
+            vectors = embedder.embed(
+                [text for _id, text in pending], "embed", self.record
+            )
+            with self.step("embed") as (db, _job):
+                for (chunk_id, _text), vector in zip(pending, vectors, strict=True):
+                    db.execute(
+                        update(Chunk)
+                        .where(Chunk.id == chunk_id, Chunk.embedding.is_(None))
+                        .values(embedding=vector)
+                    )
+        with self.step("embed") as (_db, job):
             if job.indexed_at is None:
                 job.indexed_at = self.clock()
         return {}
+
+    def card(self, state: IngestionState) -> dict[str, Any]:
+        """Generate the knowledge card once per revision."""
+        self.hook("card")
+        assert self.claim is not None and self.models is not None
+        claim = self.claim
+        with self.step("card") as (db, _job):
+            if db.scalar(select(exists().where(*artifact_rows(claim)))):
+                return {}
+            source = material(db, claim)
+            chunks = [
+                (ordinal, text)
+                for ordinal, text in db.execute(
+                    select(Chunk.ordinal, Chunk.display_text)
+                    .where(*chunk_rows(claim, "chunk"))
+                    .order_by(Chunk.ordinal)
+                )
+            ]
+        # The model call happens outside any transaction or row lock.
+        card, route = cards.generate(self.models.router, source, chunks, self.record)
+        run_id = self.last_run
+        with self.step("card") as (db, _job):
+            db.execute(
+                insert(Artifact)
+                .values(
+                    owner_id=claim.owner_id,
+                    entry_id=claim.entry_id,
+                    revision=claim.revision,
+                    kind="card",
+                    content={**card.model_dump(), "model": route.model},
+                    prompt_version=cards.PROMPT_VERSION,
+                    run_id=run_id,
+                )
+                .on_conflict_do_nothing(constraint="uq_artifacts_kind")
+            )
+        return {}
+
+    def card_index(self, state: IngestionState) -> dict[str, Any]:
+        """Index the card as one entry-level retrieval unit (ADR 0009 R2)."""
+        self.hook("card_index")
+        assert self.claim is not None and self.models is not None
+        claim = self.claim
+        with self.step("card_index") as (db, _job):
+            if db.scalar(select(exists().where(*chunk_rows(claim, "card")))):
+                return {}
+            content = db.scalar(select(Artifact.content).where(*artifact_rows(claim)))
+        if content is None:
+            raise jobs.Permanent("card_missing")
+        text = cards.Card.model_validate(
+            {key: value for key, value in content.items() if key != "model"}
+        ).index_text()
+        [vector] = self.models.embedder.embed([text], "embed_card", self.record)
+        with self.step("card_index") as (db, _job):
+            db.execute(
+                insert(Chunk)
+                .values(
+                    owner_id=claim.owner_id,
+                    entry_id=claim.entry_id,
+                    revision=claim.revision,
+                    unit="card",
+                    ordinal=0,
+                    source="card",
+                    start_offset=0,
+                    end_offset=0,
+                    display_text=text,
+                    index_text=text,
+                    tokens=func.to_tsvector("simple", tokenizer.index_text(text)),
+                    embedding=vector,
+                    context_header_version=chunking.CONTEXT_HEADER_VERSION,
+                    tokenizer_version=tokenizer.TOKENIZER_VERSION,
+                    index_version=INDEX_VERSION,
+                )
+                .on_conflict_do_nothing(constraint="uq_chunks_unit")
+            )
+        return {}
+
+    def record(self, call: Call) -> None:
+        """Store one model call's usage and cost, whatever the outcome."""
+        assert self.claim is not None
+        cost, price = call.cost()
+        with self.sessions.begin() as db:
+            run = Run(
+                owner_id=self.claim.owner_id,
+                job_id=self.claim.id,
+                task=call.task,
+                provider=call.provider,
+                model=call.model,
+                prompt_version=cards.PROMPT_VERSION
+                if call.task == cards.TASK
+                else None,
+                input_tokens=call.input_tokens,
+                output_tokens=call.output_tokens,
+                cost_estimate=cost,
+                currency=price.currency if price else None,
+                price_date=price.checked if price else None,
+                latency_ms=call.latency_ms,
+                error_code=call.error_code,
+            )
+            db.add(run)
+            db.flush()
+            self.last_run = run.id
+        log.info(
+            "model call",
+            extra={
+                "job_id": str(self.claim.id),
+                "stage": call.task,
+                "latency_ms": call.latency_ms,
+                "error_code": call.error_code,
+                "model": call.model,
+            },
+        )
 
     def finish(self, state: IngestionState) -> dict[str, Any]:
         self.hook("finish")

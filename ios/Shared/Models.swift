@@ -84,6 +84,7 @@ struct CaptureEntry: Decodable, Identifiable, Hashable {
     let createdAt: Date
     var ocrText: String?
     var extractText: String?
+    var card: KnowledgeCard?
 
     var headline: String {
         if let title, !title.isEmpty { return title }
@@ -93,6 +94,15 @@ struct CaptureEntry: Decodable, Identifiable, Hashable {
     }
 
     var statusText: String { ProcessingState.text(for: processing) }
+}
+
+/// AI-generated summary of an entry. Shown as "AI 整理", never cited as a source.
+struct KnowledgeCard: Decodable, Hashable {
+    let title: String
+    let summary: String
+    let keyPoints: [String]
+    let keywords: [String]
+    let model: String
 }
 
 /// Server-side processing of an entry's current revision.

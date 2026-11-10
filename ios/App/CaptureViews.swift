@@ -358,6 +358,9 @@ struct EntryDetailView: View {
     var body: some View {
         Form {
             content
+            if let card = entry.card {
+                cardSection(card)
+            }
             if !entry.note.isEmpty {
                 Section("我的备注") { Text(entry.note).textSelection(.enabled) }
             }
@@ -417,6 +420,31 @@ struct EntryDetailView: View {
         } message: {
             Text("记录会从收集箱、项目和搜索中移除。")
         }
+    }
+
+    private func cardSection(_ card: KnowledgeCard) -> some View {
+        Section {
+            Text(card.title).font(.headline)
+            Text(card.summary)
+            if !card.keyPoints.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(card.keyPoints.enumerated()), id: \.offset) { _, point in
+                        Label(point, systemImage: "circle.fill")
+                            .labelStyle(BulletLabelStyle())
+                    }
+                }
+            }
+            if !card.keywords.isEmpty {
+                Text(card.keywords.joined(separator: " · "))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Label("知识卡片", systemImage: "sparkles")
+        } footer: {
+            Text("AI 整理，可能有误；原文以上方内容为准。")
+        }
+        .textSelection(.enabled)
     }
 
     @ViewBuilder
@@ -528,6 +556,15 @@ struct EntryDetailView: View {
         let baseRevision: Int
         let text: String?
         let note: String
+    }
+}
+
+private struct BulletLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            configuration.icon.font(.system(size: 5)).foregroundStyle(.secondary)
+            configuration.title
+        }
     }
 }
 

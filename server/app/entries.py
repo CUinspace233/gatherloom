@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import (
     AttachmentView,
+    CardView,
     EntryCreate,
     EntryDetail,
     EntryUpdate,
@@ -25,7 +26,7 @@ from app.contracts import (
 )
 from app.ingestion import delete_entry_chunks
 from app.jobs import ACTIVE, INGESTION, failed_step, processing_status
-from app.models import Attachment, Entry, EntryRevision, Job, ProjectEntry
+from app.models import Artifact, Attachment, Entry, EntryRevision, Job, ProjectEntry
 from app.projects import NOT_FOUND, Cursor, Limit, get_project, paginate
 
 router = APIRouter(prefix="/v1", tags=["entries"], responses=AUTH_ERROR)
@@ -98,6 +99,25 @@ def views(
             )
         )
     }
+    cards = {
+        artifact.entry_id: artifact
+        for artifact in db.scalars(
+            select(Artifact)
+            .join(
+                Entry,
+                and_(
+                    Entry.owner_id == Artifact.owner_id,
+                    Entry.id == Artifact.entry_id,
+                    Entry.current_revision == Artifact.revision,
+                ),
+            )
+            .where(
+                Artifact.owner_id == owner_id,
+                Artifact.entry_id.in_(ids),
+                Artifact.kind == "card",
+            )
+        )
+    }
     attachments = {
         attachment.entry_id: attachment
         for attachment in db.scalars(
@@ -118,6 +138,7 @@ def views(
         revision = revisions[entry.id]
         extract = revision.client_extract or {}
         attachment = attachments.get(entry.id)
+        card = cards.get(entry.id)
         fields: dict[str, Any] = {
             "id": entry.id,
             "client_submission_id": entry.client_submission_id,
@@ -126,7 +147,9 @@ def views(
             "text": revision.text,
             "note": revision.note,
             "source_url": entry.source_url,
-            "title": extract.get("title") or None,
+            "title": extract.get("title")
+            or (card and card.content.get("title"))
+            or None,
             "attachment": attachment and AttachmentView.model_validate(attachment),
             "project_ids": projects[entry.id],
             "possible_duplicate": entry.possible_duplicate,
@@ -137,8 +160,21 @@ def views(
         if detail:
             fields["ocr_text"] = (revision.client_ocr or {}).get("text")
             fields["extract_text"] = extract.get("text") or None
+            fields["card"] = card and card_view(card)
         results.append(EntryDetail(**fields) if detail else EntryView(**fields))
     return results
+
+
+def card_view(artifact: Artifact) -> CardView:
+    content = artifact.content
+    return CardView(
+        title=content["title"],
+        summary=content["summary"],
+        key_points=[point["text"] for point in content.get("key_points", [])],
+        keywords=content.get("keywords", []),
+        model=content.get("model", ""),
+        created_at=artifact.created_at,
+    )
 
 
 def flag_duplicate(db: Session, owner_id: UUID, entry: Entry, fingerprint: str) -> None:

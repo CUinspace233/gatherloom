@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Connection, func, insert, select, update
 from test_accounts_projects import headers, invitation, register
 
-from app.models import Chunk, Job
+from app.models import Artifact, Chunk, Job
 
 
 def set_job(connection: Connection, entry_id: str, **values: object) -> None:
@@ -150,3 +150,55 @@ def test_delete_cancels_running_job_and_removes_index(
         )
         == 0
     )
+
+
+def test_entry_detail_shows_card_and_lists_use_its_title(
+    client: TestClient, connection: Connection
+) -> None:
+    owner = headers(register(client, "process_e", invitation(connection)))
+    entry = client.post(
+        "/v1/entries",
+        json={"client_submission_id": str(uuid4()), "text": "一段没有标题的想法"},
+        headers=owner,
+    ).json()
+    assert entry["title"] is None
+    entry_id = UUID(entry["id"])
+    owner_id = connection.scalar(select(Job.owner_id).where(Job.entry_id == entry_id))
+    connection.execute(
+        insert(Artifact).values(
+            owner_id=owner_id,
+            entry_id=entry_id,
+            revision=1,
+            kind="card",
+            prompt_version=1,
+            content={
+                "title": "AI 标题",
+                "summary": "摘要。",
+                "key_points": [{"text": "要点一", "chunks": [0]}],
+                "keywords": ["想法"],
+                "questions": ["能回答什么？"],
+                "kind_hint": "个人想法",
+                "model": "qwen3.7-flash-2026-07-15",
+            },
+        )
+    )
+    detail = client.get(f"/v1/entries/{entry_id}", headers=owner).json()
+    assert detail["title"] == "AI 标题"
+    card = detail["card"]
+    assert (card["summary"], card["key_points"], card["keywords"]) == (
+        "摘要。",
+        ["要点一"],
+        ["想法"],
+    )
+    assert card["model"] == "qwen3.7-flash-2026-07-15"
+    assert "questions" not in card
+    listed = client.get("/v1/entries", headers=owner).json()["items"][0]
+    assert listed["title"] == "AI 标题" and "card" not in listed
+
+    # A new revision has no card yet; the old one is not shown for it.
+    client.patch(
+        f"/v1/entries/{entry_id}",
+        json={"base_revision": 1, "note": "改"},
+        headers=owner,
+    )
+    assert client.get(f"/v1/entries/{entry_id}", headers=owner).json()["card"] is None
