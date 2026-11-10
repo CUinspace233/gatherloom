@@ -46,7 +46,7 @@
 - [x] `server/`：uv + `pyproject.toml` + 锁文件；FastAPI 空应用、`/healthz`；ruff、pytest、mypy 配置。
 - [ ] 锁定版本：FastAPI、SQLAlchemy、Alembic、LangGraph、checkpointer、pgvector、jieba。
 - [ ] `deploy/compose.yaml`：api、worker、scheduler（同镜像不同命令）、postgres（pgvector 镜像）。
-- [ ] `ios/`：Xcode 工程、App / ShareExtension / SharedCapture target、SPM 依赖锁定。
+- [x] `ios/`：Xcode 工程、App / ShareExtension target 与共用 `Shared/` 源码；暂无 SPM 依赖。
 - [x] CI：服务端 lint + test 配置。
 
 **出口检查**
