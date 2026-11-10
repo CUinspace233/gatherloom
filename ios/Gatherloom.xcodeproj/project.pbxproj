@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0750961C1116F1F067C3C281 /* CaptureQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 537740B690D246447B2A231D /* CaptureQueue.swift */; };
 		1EF3C1502990FA25248791A7 /* TextRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564364766B21B952C4C06492 /* TextRecognizer.swift */; };
+		2F0A75CD82D49F4D9944F14E /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08A9ABF9020DEE734156EE7E /* SearchView.swift */; };
 		387A8845F4476985B301FB43 /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93430B4D552A53A2D7B1D758 /* SignInView.swift */; };
 		3910627A0654A5DB5275606E /* ImagePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09375365574EE945DBA7904 /* ImagePayload.swift */; };
 		3B220409ECB4F803E16089F8 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6409C2BC2550B679A1A1D8B7 /* Models.swift */; };
@@ -59,6 +60,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		08A9ABF9020DEE734156EE7E /* SearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchView.swift; sourceTree = "<group>"; };
 		1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = GatherloomShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		122EF11F326AAC9AB2133256 /* SwipeToDeleteCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwipeToDeleteCard.swift; sourceTree = "<group>"; };
 		1BF905EE5E8E148602055A92 /* Gatherloom.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Gatherloom.entitlements; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 				A990189CE0ED3C67575111B6 /* CaptureViews.swift */,
 				24BD02EC0727EFF24BCEB21A /* GatherloomApp.swift */,
 				B04686A26FFB0C58713DFD4E /* ProjectsView.swift */,
+				08A9ABF9020DEE734156EE7E /* SearchView.swift */,
 				93430B4D552A53A2D7B1D758 /* SignInView.swift */,
 				122EF11F326AAC9AB2133256 /* SwipeToDeleteCard.swift */,
 			);
@@ -282,6 +285,7 @@
 				3910627A0654A5DB5275606E /* ImagePayload.swift in Sources */,
 				9B09D1CD854FEC78EBADC049 /* Models.swift in Sources */,
 				B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */,
+				2F0A75CD82D49F4D9944F14E /* SearchView.swift in Sources */,
 				387A8845F4476985B301FB43 /* SignInView.swift in Sources */,
 				918F70D31E3D93F2393AE01B /* SwipeToDeleteCard.swift in Sources */,
 				D485748AF7CD45E81443C500 /* TextRecognizer.swift in Sources */,

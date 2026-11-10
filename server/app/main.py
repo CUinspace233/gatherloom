@@ -13,12 +13,14 @@ from app.attachments import router as attachments_router
 from app.auth import router as auth_router
 from app.entries import router as entries_router
 from app.projects import router as projects_router
+from app.search_api import router as search_router
 
 app = FastAPI(title="Gatherloom API")
 app.include_router(auth_router)
 app.include_router(projects_router)
 app.include_router(entries_router)
 app.include_router(attachments_router)
+app.include_router(search_router)
 # Multipart framing and form fields add a little to the file itself.
 MAX_UPLOAD_REQUEST = storage.MAX_ATTACHMENT_BYTES + 64 * 1024
 allowed_clients = frozenset(

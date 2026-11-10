@@ -50,8 +50,7 @@ private struct SignedInTabs: View {
             ProjectsView(session: session, capture: capture)
                 .tabItem { Label("项目", systemImage: "folder") }
             NavigationStack {
-                ContentUnavailableView("搜索", systemImage: "magnifyingglass", description: Text("在这里查找收集过的资料。"))
-                    .navigationTitle("搜索")
+                SearchView(session: session, capture: capture)
             }
             .tabItem { Label("搜索", systemImage: "magnifyingglass") }
         }
