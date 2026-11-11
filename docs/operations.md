@@ -59,14 +59,35 @@ curl https://<域名>/healthz
 - **应用服务**：API、Worker 和 scheduler 使用同一个镜像，启动命令不同。每次启动前，`migrate` 会先执行数据库迁移。
 - **数据卷**：`postgres-data`（数据库）、`storage`（附件）、`state`（删除日志）、`caddy-data`（证书）。
 
+### 服务器上已有反向代理
+80 和 443 已被 nginx 等占用时，由它终止 TLS，Caddy 只在本机端口提供 HTTP。在 `deploy/.env.prod` 中设置：
+
+```sh
+GATHERLOOM_DOMAIN=:80
+HTTP_PORT=127.0.0.1:8100
+HTTPS_PORT=127.0.0.1:8143
+```
+
+外层代理转发到 `http://127.0.0.1:8100`，请求体上限不低于 12 MB，并把 `X-Forwarded-For` 覆盖为真实客户端地址（nginx：`proxy_set_header X-Forwarded-For $remote_addr;`）。登录限流按这个地址计算。Caddy 只信任来自私有网段的 `X-Forwarded-For`。
+
 下文用 `dc` 代指 `docker compose -f deploy/compose.prod.yaml --env-file deploy/.env.prod`。
 
 ### 更新版本
 ```sh
-git pull
-dc up -d --build      # migrate 会先跑完迁移，再启动新版本
-dc ps                 # 确认 api 为 healthy
+scripts/deploy.sh     # 快进到 origin/main，重建并重启，等待 api 健康
 ```
+`migrate` 会先跑完迁移，再启动新版本。API 在 2 分钟内没有恢复健康时，脚本打印日志并以非零状态退出。
+
+### 自动部署
+合并到 `main` 且改动涉及 `server/`、`deploy/`、`scripts/` 时，`Server checks` 工作流在检查通过后通过 SSH 运行服务器上的 `scripts/deploy.sh`。也可以在 Actions 页面手动运行该工作流（选择 `main`）。
+
+一次性配置：
+1. 在服务器上生成专用密钥：`ssh-keygen -t ed25519 -N '' -C gatherloom-github-actions -f ~/.ssh/gatherloom_github_actions_ed25519`。
+2. 把公钥加入 `~/.ssh/authorized_keys`，并限制为只能运行部署脚本：
+   `command="/srv/gatherloom/scripts/deploy.sh",restrict ssh-ed25519 AAAA… gatherloom-github-actions`
+3. 在 GitHub 仓库建立 `production` 环境（部署分支限定 `main`），添加 secrets：`DEPLOY_HOST`、`DEPLOY_USER`、`DEPLOY_SSH_KEY`（私钥）、`DEPLOY_KNOWN_HOSTS`（`ssh-keyscan -t ed25519 <主机>` 的输出，核对指纹后填入），端口不是 22 时加 `DEPLOY_PORT`。
+
+服务器上的检出目录需要能 `git fetch origin main`，并保持在 `main` 分支、没有本地改动。
 
 ### 邀请用户
 ```sh
