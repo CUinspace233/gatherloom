@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import events, grounding, jobs, relations, search
+from app import decisions, events, grounding, jobs, relations, search
 from app.graphs import JobPipeline
 from app.models import (
     Artifact,
@@ -111,6 +111,7 @@ class Pipeline(JobPipeline):
     PROMPT_VERSIONS: ClassVar[dict[str, int]] = {
         TASK: PROMPT_VERSION,
         relations.TASK: relations.PROMPT_VERSION,
+        decisions.TASK: decisions.PROMPT_VERSION,
     }
 
     def initial_state(self, claim: jobs.Claim) -> dict[str, Any]:
@@ -123,7 +124,15 @@ class Pipeline(JobPipeline):
 
     def build(self) -> StateGraph[Any]:
         graph = StateGraph(MaintenanceState)
-        steps = ["load", "gather", "summarize", "relate", "publish", "finish"]
+        steps = [
+            "load",
+            "gather",
+            "summarize",
+            "relate",
+            "draft_decisions",
+            "publish",
+            "finish",
+        ]
         for name in steps:
             graph.add_node(name, getattr(self, name))
         graph.add_edge(START, steps[0])
@@ -362,8 +371,7 @@ class Pipeline(JobPipeline):
         return "\n".join(lines)
 
     def decision_lines(self, db: Session) -> list[str]:
-        """Confirmed decisions; filled in by the decisions stage."""
-        return []
+        return decisions.confirmed_lines(db, self.project_id)
 
     @staticmethod
     def describe_changes(changes: list[list[str | None]]) -> str:
@@ -460,6 +468,35 @@ class Pipeline(JobPipeline):
                     updated = dict(job.payload or {})
                     updated["related"] = [*updated.get("related", []), entry_text]
                     job.payload = updated
+        return {}
+
+    def draft_decisions(self, state: MaintenanceState) -> dict[str, Any]:
+        """Propose decision drafts, only when this run saw new material."""
+        self.hook("draft_decisions")
+        payload = self.payload()
+        new_material = any(
+            kind in (events.ENTRY_READY, events.ENTRY_ADDED)
+            for kind, _subject in payload.get("changes", [])
+        )
+        if payload["noop"] or payload.get("drafted") or not new_material:
+            return {}
+        assert self.models is not None and self.claim is not None
+        owner_id, project_id = self.claim.owner_id, self.project_id
+        with self.sessions() as db:
+            drafts = decisions.propose(
+                db,
+                owner_id,
+                project_id,
+                payload["evidence"],
+                self.models.router,
+                self.record,
+                self.clock(),
+            )
+        with self.step("draft_decisions") as (db, job):
+            decisions.store(db, owner_id, project_id, drafts)
+            updated = dict(job.payload or {})
+            updated["drafted"] = True
+            job.payload = updated
         return {}
 
     def publish(self, state: MaintenanceState) -> dict[str, Any]:

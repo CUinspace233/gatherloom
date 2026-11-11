@@ -624,3 +624,77 @@ class Relation(Base):
         DateTime(timezone=True), server_default=func.now()
     )
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Decision(Base):
+    """A decision draft proposed by AI, or a decision the user confirmed.
+
+    Only the user's confirm action makes a draft a decision (product-plan
+    §3.8). ``version`` guards every change against concurrent edits.
+    """
+
+    __tablename__ = "decisions"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "id", name="uq_decisions_owner_id_id"),
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_decisions_project_owner",
+        ),
+        CheckConstraint(
+            "status IN ('draft', 'confirmed', 'rejected', 'superseded')",
+            name="ck_decisions_status",
+        ),
+        Index("ix_decisions_project_status", "project_id", "status"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    project_id: Mapped[UUID]
+    status: Mapped[str] = mapped_column(String(16), server_default="draft")
+    title: Mapped[str] = mapped_column(String(120))
+    choice: Mapped[str] = mapped_column(Text)
+    rationale: Mapped[str] = mapped_column(Text, server_default="")
+    alternatives: Mapped[list[str]] = mapped_column(JSONB, server_default="[]")
+    premises: Mapped[list[str]] = mapped_column(JSONB, server_default="[]")
+    sources: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, server_default="[]")
+    topic_key: Mapped[str] = mapped_column(String(120))
+    source_fingerprint: Mapped[str] = mapped_column(String(64))
+    version: Mapped[int] = mapped_column(server_default="1")
+    superseded_by: Mapped[UUID | None]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class DecisionRevision(Base):
+    """The text of a confirmed decision each time it was confirmed or revised."""
+
+    __tablename__ = "decision_revisions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "decision_id"],
+            ["decisions.owner_id", "decisions.id"],
+            name="fk_decision_revisions_decision_owner",
+        ),
+        UniqueConstraint(
+            "decision_id", "version", name="uq_decision_revisions_version"
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    decision_id: Mapped[UUID]
+    version: Mapped[int]
+    title: Mapped[str] = mapped_column(String(120))
+    choice: Mapped[str] = mapped_column(Text)
+    rationale: Mapped[str] = mapped_column(Text)
+    alternatives: Mapped[list[str]] = mapped_column(JSONB)
+    premises: Mapped[list[str]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

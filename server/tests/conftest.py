@@ -1,6 +1,8 @@
 from collections.abc import Iterator
 from os import environ
 from pathlib import Path
+from typing import Any
+from uuid import UUID
 
 import pytest
 from alembic import command
@@ -19,6 +21,8 @@ from app.models import (
     Chunk,
     Citation,
     Conversation,
+    Decision,
+    DecisionRevision,
     Entry,
     EntryRevision,
     Job,
@@ -101,6 +105,8 @@ def purge_committed(sessions: sessionmaker[Session]) -> None:
         for model in (
             Run,
             Relation,
+            DecisionRevision,
+            Decision,
             Artifact,
             Chunk,
             Job,
@@ -148,3 +154,22 @@ def saver(
 ) -> Iterator[PostgresSaver]:
     with checkpointer(test_engine.url.render_as_string(hide_password=False)) as saver:
         yield saver
+
+
+@pytest.fixture
+def ready_project(
+    committed: sessionmaker[Session], saver: PostgresSaver
+) -> tuple[UUID, UUID, Any, Any]:
+    """An account with one project, two ingested entries and a queued
+    maintenance job. Returns (owner, project, FakeAPI, Clock)."""
+    from fake_models import FakeAPI
+    from test_answering import ingest_all, material, project
+    from test_worker import Clock, account
+
+    owner = account(committed)
+    project_id = project(committed, owner, "知识库 App")
+    material(committed, owner, project_id, "SwiftUI 状态管理改用 @Observable 宏。")
+    material(committed, owner, project_id, "上传队列用幂等键防止重复提交。")
+    api, clock = FakeAPI(), Clock()
+    ingest_all(committed, saver, api, clock)
+    return owner, project_id, api, clock

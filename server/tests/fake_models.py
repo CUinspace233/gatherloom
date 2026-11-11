@@ -30,9 +30,11 @@ class FakeAPI:
         self.chat: list[Reply] = []
         self.embeddings: list[Reply] = []
         self.requests: list[tuple[str, dict[str, Any]]] = []
-        # Relation suggestions default to none; tests script them when needed.
+        self.by_task: dict[str, list[Reply]] = {}
+        # Relations and decision drafts default to none; tests script them.
         self.defaults: list[tuple[str, Reply]] = [
             ("帮用户整理一个项目里的资料", chat_reply({"relations": []})),
+            ("值得做出决定", chat_reply({"drafts": []})),
         ]
 
     def handle(self, request: httpx.Request) -> httpx.Response:
@@ -44,12 +46,23 @@ class FakeAPI:
             if reply is None:
                 reply = embedding_reply(len(body["input"]))
         else:
-            reply = self.chat.pop(0) if self.chat else self.default_chat(body)
+            reply = self.scripted(body)
         if isinstance(reply, Exception):
             raise reply
         if isinstance(reply, int):
             return httpx.Response(reply, json={"error": {"message": "scripted"}})
         return httpx.Response(200, json=reply)
+
+    def script(self, marker: str, *replies: Reply) -> None:
+        """Queue replies for requests whose system prompt contains marker."""
+        self.by_task.setdefault(marker, []).extend(replies)
+
+    def scripted(self, body: dict[str, Any]) -> Reply:
+        system = body["messages"][0]["content"] if body.get("messages") else ""
+        for marker, queue in self.by_task.items():
+            if marker in system and queue:
+                return queue.pop(0)
+        return self.chat.pop(0) if self.chat else self.default_chat(body)
 
     def default_chat(self, body: dict[str, Any]) -> Reply:
         """Unscripted replies, chosen by the task's system prompt."""
