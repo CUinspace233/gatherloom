@@ -41,6 +41,18 @@ def parse[T: BaseModel](content: str, model: type[T]) -> T:
         raise ValueError(f"字段不符合要求：{problems}") from error
 
 
+def reconcile(text: str, cited: list[int]) -> tuple[str, list[int]]:
+    """Align a text's [n] markers with its declared citations when one side
+    is simply missing: models often list citations but omit the markers, or
+    the reverse. Conflicting markers are left for ``check_markers``."""
+    found = markers(text)
+    if cited and not found:
+        text = text.rstrip() + "".join(f"[{n}]" for n in sorted(set(cited)))
+    elif found and not cited:
+        cited = sorted(found)
+    return text, cited
+
+
 def check_markers(
     texts: Iterable[str], cited: Iterable[int], numbers: set[int]
 ) -> None:

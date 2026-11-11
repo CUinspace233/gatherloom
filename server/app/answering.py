@@ -70,6 +70,7 @@ def validate(content: str, numbers: set[int]) -> Draft:
     sufficient one must cite something.
     """
     draft = grounding.parse(content, Draft)
+    draft.answer, draft.citations = grounding.reconcile(draft.answer, draft.citations)
     grounding.check_markers([draft.answer], draft.citations, numbers)
     if not draft.insufficient and not draft.citations:
         raise ValueError("回答没有引用任何证据；证据不足时应将 insufficient 设为 true")

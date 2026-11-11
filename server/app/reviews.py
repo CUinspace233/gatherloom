@@ -213,10 +213,11 @@ def validate_review(content: str, numbers: set[int]) -> ReviewDraft:
     draft = grounding.parse(content, ReviewDraft)
     for section in SECTIONS:
         for item in getattr(draft, section):
+            item.text, item.citations = grounding.reconcile(item.text, item.citations)
             grounding.check_markers([item.text], item.citations, numbers)
     for item in draft.next_steps:
         if not item.text.startswith("建议"):
-            raise ValueError("next_steps 每条都要以“建议”开头")
+            item.text = f"建议：{item.text}"  # keep it worded as a suggestion
     return draft
 
 
