@@ -108,6 +108,8 @@ uv run --locked --env-file .env python -m app.scheduler
 
 项目页的「生成阶段回顾」可以随时生成从上次回顾结束到现在的回顾。
 
+删除的资料由 scheduler 在几分钟后彻底清理（附件、卡片、引用片段、问答依据与检查点），需要立即清理时运行 `python -m app.admin purge-deleted`。
+
 评测集与命令见 [docs/evaluation](docs/evaluation/README.md)：`python -m evaluation.load`、`evaluation.retrieval`、`evaluation.answers`、`evaluation.understanding`。
 
 ### 检查与测试
@@ -123,7 +125,11 @@ GATHERLOOM_TEST_DATABASE_URL=postgresql+psycopg://gatherloom:gatherloom-local@12
   uv run --locked python -m pytest
 ```
 
+## 部署
+生产环境使用 `deploy/compose.prod.yaml`：Caddy 自动 HTTPS 是唯一公网入口，PostgreSQL 在无外网的内部网络。部署、邀请、额度、备份与恢复见 [使用说明与运维手册](docs/operations.md)。
+
 ## 文档
+- [使用说明与运维手册](docs/operations.md)
 - [产品与技术方案](docs/product-plan.md)
 - [知识卡片与检索增强方案](docs/knowledge-cards-and-retrieval.md)
 - [分阶段开发路线](docs/roadmap.md)

@@ -311,3 +311,26 @@ def test_search_drops_unrelated_semantic_matches(
     page = search_api(a, q="新增的记录")
     assert ids(page) == [str(only)]
     assert page["items"][0]["matched_by"] == ["semantic"]
+
+
+def test_removed_and_deleted_entries_stop_matching_at_once(
+    client: TestClient, connection: Connection, embedder: FakeEmbedder
+) -> None:
+    """[T5] Removing from a project narrows the project scope right away;
+    deleting through the API removes the entry from every search."""
+    a = Account(client, connection, "search_t5")
+    project = a.project("项目")
+    note = a.entry("迁移计划", project=project)
+    a.index(note, "数据库迁移计划的独有词汇", basis(9))
+    embedder.vectors = {"独有词汇": basis(9)}
+    assert ids(search_api(a, q="独有词汇", project_id=project)) == [str(note)]
+
+    removed = a.client.delete(
+        f"/v1/projects/{project}/entries/{note}", headers=a.headers
+    )
+    assert removed.status_code == 204
+    assert ids(search_api(a, q="独有词汇", project_id=project)) == []
+    assert ids(search_api(a, q="独有词汇")) == [str(note)]
+
+    assert a.client.delete(f"/v1/entries/{note}", headers=a.headers).status_code == 204
+    assert ids(search_api(a, q="独有词汇")) == []
