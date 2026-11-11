@@ -20,8 +20,10 @@ from app.contracts import (
     EntryView,
     ErrorDetail,
     ErrorResponses,
+    OCRLineView,
     Page,
     ProcessingView,
+    RevisionDetail,
     RevisionView,
 )
 from app.ingestion import delete_entry_chunks
@@ -480,6 +482,58 @@ def list_revisions(entry_id: UUID, owner: Owner, db: Db) -> list[RevisionView]:
             .order_by(EntryRevision.revision.desc())
         )
     ]
+
+
+def ocr_lines(client_ocr: dict[str, Any] | None) -> list[OCRLineView]:
+    """OCR lines with their offsets in the OCR text, when the text is the
+    lines joined by newlines (as the iOS app sends it)."""
+    if not client_ocr:
+        return []
+    lines = client_ocr.get("lines") or []
+    texts = [str(line.get("text", "")) for line in lines]
+    aligned = "\n".join(texts) == client_ocr.get("text")
+    views, position = [], 0
+    for line, text in zip(lines, texts, strict=True):
+        views.append(
+            OCRLineView(
+                text=text,
+                box=list(line.get("box") or [0, 0, 0, 0]),
+                start=position if aligned else None,
+                end=position + len(text) if aligned else None,
+            )
+        )
+        position += len(text) + 1
+    return views
+
+
+@router.get("/entries/{entry_id}/revisions/{revision}", responses=NOT_FOUND)
+def revision_detail(
+    entry_id: UUID, revision: int, owner: Owner, db: Db
+) -> RevisionDetail:
+    """The full original text of one revision, including page text and OCR."""
+    entry = get_entry(db, owner.id, entry_id)
+    found = db.get(EntryRevision, (owner.id, entry.id, revision))
+    if found is None:
+        raise HTTPException(404, "revision not found")
+    extract = found.client_extract or {}
+    attachment = db.scalar(
+        select(Attachment.id).where(
+            Attachment.owner_id == owner.id, Attachment.entry_id == entry.id
+        )
+    )
+    return RevisionDetail(
+        revision=found.revision,
+        current_revision=entry.current_revision,
+        type=entry.type,  # type: ignore[arg-type]
+        text=found.text,
+        note=found.note,
+        title=extract.get("title") or None,
+        extract_text=extract.get("text") or None,
+        ocr_text=(found.client_ocr or {}).get("text"),
+        ocr_lines=ocr_lines(found.client_ocr),
+        attachment_id=attachment,
+        created_at=found.created_at,
+    )
 
 
 @router.put(

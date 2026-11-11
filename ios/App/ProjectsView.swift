@@ -155,7 +155,7 @@ private struct ProjectDetailView: View {
                 }
             }
             ProjectConversationsSection(session: session, capture: capture, project: project)
-            Section("问题") {
+            Section("待解问题") {
                 ForEach(questions) { question in
                     Button {
                         selectedQuestion = question
@@ -176,7 +176,7 @@ private struct ProjectDetailView: View {
                     Text(errorMessage).foregroundStyle(.red)
                     Button("重试") { Task { await load() } }
                 }
-                Button("添加问题", systemImage: "plus") {
+                Button("添加待解问题", systemImage: "plus") {
                     selectedQuestion = nil
                     showsQuestionEditor = true
                 }
@@ -327,7 +327,7 @@ private struct QuestionEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("问题", text: $text, axis: .vertical)
+                TextField("还需要弄清楚什么？", text: $text, axis: .vertical)
                 if question != nil {
                     Picker("状态", selection: $status) {
                         ForEach(Question.Status.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -336,7 +336,7 @@ private struct QuestionEditor: View {
                 if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
             }
             .disabled(isSaving)
-            .navigationTitle(question == nil ? "添加问题" : "编辑问题")
+            .navigationTitle(question == nil ? "添加待解问题" : "编辑待解问题")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }.disabled(isSaving)

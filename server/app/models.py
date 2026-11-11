@@ -481,6 +481,7 @@ class Citation(Base):
     entry_id: Mapped[UUID]
     revision: Mapped[int]
     chunk_id: Mapped[UUID]
+    source: Mapped[str] = mapped_column(String(16), server_default="text")
     start_offset: Mapped[int]
     end_offset: Mapped[int]
     snippet: Mapped[str] = mapped_column(Text)

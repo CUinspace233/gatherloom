@@ -129,7 +129,7 @@ def main() -> None:
         f"# 问答评测 {date.today().isoformat()}",
         "",
         (
-            "> 题目与材料由开发助手编写，结果偏乐观。自动检查只覆盖“是否声明资料不足”“引用是否在项目内”"
+            "> 题目与材料由开发助手编写，结果偏乐观。自动检查只覆盖“是否声明资料不足”“引用是否在项目内”（资料不足时允许引用部分相关证据）"
             "“是否出现其他资料独有的答案片段”；引用是否真正支持回答需要人工判断，下方列出全文供检查。"
         ),
         "",
@@ -147,10 +147,11 @@ def main() -> None:
         leaks = [
             term for term in item.get("leak_terms", []) if term in result["answer"]
         ]
+        # Insufficient answers may cite partly relevant evidence from the project.
         ok = (
             result["status"] == "succeeded"
             and result["insufficient"]
-            and not result["cited"]
+            and not result["outside"]
             and not leaks
         )
         passed += ok

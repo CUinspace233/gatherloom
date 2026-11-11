@@ -7,6 +7,7 @@ from uuid import UUID, uuid4
 from fastapi.testclient import TestClient
 from sqlalchemy import Connection, insert, select, update
 from test_accounts_projects import headers, invitation, register
+from test_capture_sources import upload as upload_file
 
 from app.models import Citation, Entry, Job, Message
 
@@ -182,3 +183,48 @@ def test_failed_runs_can_be_retried(client: TestClient, connection: Connection) 
     )
     assert client.post(f"{run_path}/retry", headers=a["headers"]).status_code == 409
     assert client.get(f"/v1/runs/{uuid4()}", headers=a["headers"]).status_code == 404
+
+
+def test_revision_detail_returns_original_text_and_ocr_offsets(
+    client: TestClient, connection: Connection
+) -> None:
+    a = setup_account(client, connection, "chat_d")
+    submission = str(uuid4())
+    upload = upload_file(client, a["headers"], submission)
+    assert upload.status_code in (200, 201), upload.text
+    entry = client.post(
+        "/v1/entries",
+        json={
+            "client_submission_id": submission,
+            "type": "image",
+            "attachment_id": upload.json()["id"],
+            "note": "白板",
+            "client_ocr": {
+                "text": "第一行\n第二行结论",
+                "lines": [
+                    {"text": "第一行", "box": [0.1, 0.1, 0.5, 0.05]},
+                    {"text": "第二行结论", "box": [0.1, 0.2, 0.6, 0.05]},
+                ],
+            },
+        },
+        headers=a["headers"],
+    ).json()
+    detail = client.get(
+        f"/v1/entries/{entry['id']}/revisions/1", headers=a["headers"]
+    ).json()
+    assert detail["ocr_text"] == "第一行\n第二行结论"
+    assert [(line["start"], line["end"]) for line in detail["ocr_lines"]] == [
+        (0, 3),
+        (4, 9),
+    ]
+    assert detail["attachment_id"] == upload.json()["id"]
+    assert (detail["revision"], detail["current_revision"]) == (1, 1)
+    missing = client.get(f"/v1/entries/{entry['id']}/revisions/2", headers=a["headers"])
+    assert missing.status_code == 404
+    other = setup_account(client, connection, "chat_e")
+    assert (
+        client.get(
+            f"/v1/entries/{entry['id']}/revisions/1", headers=other["headers"]
+        ).status_code
+        == 404
+    )

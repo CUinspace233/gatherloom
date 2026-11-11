@@ -15,28 +15,25 @@ With no evidence at all the answer is a fixed "insufficient" reply and no
 model is called. No web access, no query rewriting, one retrieval round.
 """
 
-import json
-import re
 from typing import Annotated, Any, ClassVar, TypedDict
 from uuid import UUID
 
 from langgraph.graph import END, START, StateGraph
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import jobs, search
+from app import grounding, jobs, search
 from app.graphs import JobPipeline
 from app.models import Artifact, Chunk, Citation, Conversation, Entry, Message, Project
 
-PROMPT_VERSION = 1
+PROMPT_VERSION = 2
 TASK = "project_answer"
 EVIDENCE = 6
 HISTORY = 6
 EVIDENCE_CHARS = 1200
 INSUFFICIENT = "现有资料不足以回答这个问题。可以先收集相关资料，或换个问法再试。"
-_MARKER = re.compile(r"\[(\d+)\]")
 
 
 class AnswerState(TypedDict):
@@ -61,40 +58,22 @@ SYSTEM = """你是个人项目知识库的问答助手，只能依据用户提�
 2. 证据分“外部资料”和“个人记录”。引用个人记录时说明这是用户自己记录的想法或决定。
 3. “导航上下文”是 AI 整理的资料摘要，只帮助你理解，不能引用，也不能当作事实来源。
 4. 证据之间有矛盾时并列说明各自的依据；同一件事的决定前后变化时，以较新的记录为准并说明变化。
-5. 证据不足以回答时，insufficient 为 true，简短说明缺少什么，不要猜测，不要引用。
+5. 证据不足以完整回答时，insufficient 为 true，说明缺少什么；只有与问题直接相关的部分证据才引用并标注 [n]，不要罗列证据涵盖了哪些主题，不要猜测。
 6. 不使用证据以外的知识补充事实，不编造来源。
 只输出 JSON：{"answer": 回答正文, "citations": [用到的编号], "insufficient": true 或 false}。"""
 
 
 def validate(content: str, numbers: set[int]) -> Draft:
-    """Parse and check a reply. Raises ValueError with a message for repair."""
-    try:
-        draft = Draft.model_validate(json.loads(content))
-    except json.JSONDecodeError as error:
-        raise ValueError(f"不是合法 JSON：{error.msg}") from error
-    except ValidationError as error:
-        problems = "; ".join(
-            f"{'.'.join(map(str, item['loc']))}: {item['msg']}"
-            for item in error.errors()
-        )
-        raise ValueError(f"字段不符合要求：{problems}") from error
-    markers = {int(n) for n in _MARKER.findall(draft.answer)}
-    cited = set(draft.citations)
-    if unknown := (markers | cited) - numbers:
-        raise ValueError(f"引用了不存在的证据编号：{sorted(unknown)}")
-    if markers != cited:
-        raise ValueError(
-            f"正文中的标注 {sorted(markers)} 与 citations {sorted(cited)} 不一致"
-        )
-    if not draft.insufficient and not cited:
+    """Parse and check a reply. Raises ValueError with a message for repair.
+
+    An insufficient answer may cite the partly relevant evidence it used; a
+    sufficient one must cite something.
+    """
+    draft = grounding.parse(content, Draft)
+    grounding.check_markers([draft.answer], draft.citations, numbers)
+    if not draft.insufficient and not draft.citations:
         raise ValueError("回答没有引用任何证据；证据不足时应将 insufficient 设为 true")
-    if draft.insufficient and cited:
-        raise ValueError("insufficient 为 true 时不应引用证据")
     return draft
-
-
-def strip_markers(text: str) -> str:
-    return _MARKER.sub("", text).strip()
 
 
 def user_prompt(
@@ -107,14 +86,7 @@ def user_prompt(
     if project.goal:
         lines.append(f"项目目标：{project.goal}")
     lines.append("\n证据：")
-    for item in trace["evidence"]:
-        kind = "个人记录" if item["type"] == "thought" else "外部资料"
-        label = {"thought": "想法", "url": "网页", "image": "截图"}[item["type"]]
-        title = f" · {item['title']}" if item["title"] else ""
-        lines.append(
-            f"[{item['n']}]（{kind} · {label}{title} · 记录于 {item['created_at'][:10]}）\n"
-            f"{item['text'][:EVIDENCE_CHARS]}"
-        )
+    lines += grounding.evidence_block(trace["evidence"], EVIDENCE_CHARS)
     if trace["navigation"]:
         lines.append("\n导航上下文（不可引用）：")
         lines += [
@@ -237,6 +209,7 @@ class Pipeline(JobPipeline):
                     "type": entry.type,
                     "title": str(card.get("title") or ""),
                     "created_at": entry.created_at.isoformat(),
+                    "source": chunk.source,
                     "start_offset": chunk.start_offset,
                     "end_offset": chunk.end_offset,
                     "text": chunk.display_text,
@@ -275,7 +248,7 @@ class Pipeline(JobPipeline):
                 model = None
             else:
                 history = [
-                    (role, strip_markers(content))
+                    (role, grounding.strip_markers(content))
                     for role, content in db.execute(
                         select(Message.role, Message.content)
                         .where(
@@ -300,26 +273,14 @@ class Pipeline(JobPipeline):
             {"role": "system", "content": SYSTEM},
             {"role": "user", "content": prompt},
         ]
-        content, route = self.models.router.chat_json(
-            "heavy", messages, TASK, self.record
+        return grounding.ask(
+            self.models.router,
+            "heavy",
+            messages,
+            TASK,
+            self.record,
+            lambda content: validate(content, numbers),
         )
-        try:
-            return validate(content, numbers), route.model
-        except ValueError as error:
-            messages += [
-                {"role": "assistant", "content": content},
-                {
-                    "role": "user",
-                    "content": f"上一次输出不合格：{error}。请只输出修正后的 JSON。",
-                },
-            ]
-        content, route = self.models.router.chat_json(
-            "heavy", messages, TASK, self.record
-        )
-        try:
-            return validate(content, numbers), route.model
-        except ValueError as error:
-            raise jobs.Permanent("invalid_output") from error
 
     def publish(self, state: AnswerState) -> dict[str, Any]:
         """Write the answer and its citations once."""
@@ -353,6 +314,7 @@ class Pipeline(JobPipeline):
                             entry_id=UUID(item["entry_id"]),
                             revision=item["revision"],
                             chunk_id=UUID(item["chunk_id"]),
+                            source=item.get("source", "text"),
                             start_offset=item["start_offset"],
                             end_offset=item["end_offset"],
                             snippet=item["text"],
