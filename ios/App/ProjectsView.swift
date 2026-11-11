@@ -149,12 +149,7 @@ private struct ProjectDetailView: View {
                 Text(project.goal.isEmpty ? "还没有设置目标" : project.goal)
                 LabeledContent("状态", value: project.status.title)
             }
-            Section("记录") {
-                NavigationLink("查看项目记录") {
-                    CaptureEntriesView(session: session, capture: capture, project: project)
-                }
-            }
-            ProjectConversationsSection(session: session, capture: capture, project: project)
+            ProjectSummarySection(session: session, capture: capture, project: project)
             Section("待解问题") {
                 ForEach(questions) { question in
                     Button {
@@ -181,6 +176,14 @@ private struct ProjectDetailView: View {
                     showsQuestionEditor = true
                 }
                 .disabled(isLoading)
+            }
+            ProjectDecisionsSection(session: session, capture: capture, project: project)
+            ProjectReviewsSection(session: session, capture: capture, project: project)
+            ProjectConversationsSection(session: session, capture: capture, project: project)
+            Section("记录") {
+                NavigationLink("查看项目记录") {
+                    CaptureEntriesView(session: session, capture: capture, project: project)
+                }
             }
         }
         .navigationTitle(project.name)
@@ -334,6 +337,9 @@ private struct QuestionEditor: View {
                     }
                 }
                 if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
+                if let question {
+                    QuestionRelationsSection(session: session, projectID: project.id, questionID: question.id)
+                }
             }
             .disabled(isSaving)
             .navigationTitle(question == nil ? "添加待解问题" : "编辑待解问题")
