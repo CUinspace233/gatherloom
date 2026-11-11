@@ -31,6 +31,7 @@ CONFIGS: dict[str, dict[str, Any]] = {
     "hybrid": {"card_weight": 0.0},
     "hybrid+card0.5": {"card_weight": 0.5},
     "hybrid+card1.0": {"card_weight": 1.0},
+    "search (cutoff)": {"card_weight": 1.0, "max_distance": search.SEARCH_MAX_DISTANCE},
 }
 
 

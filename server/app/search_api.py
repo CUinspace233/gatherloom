@@ -108,6 +108,7 @@ def search_entries(
         filters=search.Filters(project_id, type, since, until),
         embedder=embedder,
         record=record,
+        max_distance=search.SEARCH_MAX_DISTANCE,
     )
     page = result.hits[offset : offset + limit]
     entries = {
