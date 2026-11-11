@@ -39,6 +39,10 @@ struct APIError: LocalizedError {
         case (422, "goal"): "项目目标不能超过 4000 个字符。"
         case (422, "text"): "内容须为 1–2000 个字符。"
         case (422, _): "请检查输入内容和长度。"
+        case (429, "daily entries limit reached"): "今天的记录数已达上限，记录已保留在本机，明天会自动上传。"
+        case (429, "daily questions limit reached"): "今天的提问次数已用完，明天再试。"
+        case (429, "daily reviews limit reached"): "今天的手动回顾次数已用完，明天再试。"
+        case (429, "daily model budget reached"): "今天的 AI 用量已达上限，明天再试。"
         case (429, _): "操作太频繁，请稍后再试。"
         default: "请求失败（HTTP \(status)）。"
         }

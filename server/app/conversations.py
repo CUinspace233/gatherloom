@@ -13,8 +13,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import sources
-from app.auth import AUTH_ERROR, Db, Owner
+from app import quotas, sources
+from app.auth import AUTH_ERROR, RATE_ERROR, Db, Owner
 from app.contracts import (
     AnswerAccepted,
     CitationView,
@@ -196,7 +196,7 @@ def list_messages(conversation_id: UUID, owner: Owner, db: Db) -> list[MessageVi
 @router.post(
     "/conversations/{conversation_id}/messages",
     status_code=202,
-    responses={**NOT_FOUND, **CONFLICT},
+    responses={**NOT_FOUND, **CONFLICT, **RATE_ERROR},
 )
 def ask(
     conversation_id: UUID, body: MessageCreate, owner: Owner, db: Db
@@ -206,6 +206,16 @@ def ask(
     Reusing client_message_id returns the original question and run.
     """
     conversation = get_conversation(db, owner.id, conversation_id)
+    if (
+        db.scalar(
+            select(Message.id).where(
+                Message.owner_id == owner.id,
+                Message.client_message_id == body.client_message_id,
+            )
+        )
+        is None
+    ):
+        quotas.check(db, owner.id, quotas.QUESTIONS, datetime.now(UTC))
     message_id = db.scalar(
         insert(Message)
         .values(

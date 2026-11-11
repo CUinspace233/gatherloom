@@ -22,8 +22,8 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import decisions, deletion, events, grounding, jobs
-from app.auth import AUTH_ERROR, Db, Owner
+from app import decisions, deletion, events, grounding, jobs, quotas
+from app.auth import AUTH_ERROR, RATE_ERROR, Db, Owner
 from app.contracts import CitationView, SummaryPoint
 from app.graphs import JobPipeline
 from app.models import (
@@ -556,13 +556,18 @@ def list_reviews(project_id: UUID, owner: Owner, db: Db) -> list[ReviewListItem]
     ]
 
 
-@router.post("/projects/{project_id}/reviews", status_code=202, responses=NOT_FOUND)
+@router.post(
+    "/projects/{project_id}/reviews",
+    status_code=202,
+    responses={**NOT_FOUND, **RATE_ERROR},
+)
 def request_review(project_id: UUID, owner: Owner, db: Db) -> ReviewRun:
     """Review the time since the last review (or since the project began).
 
     Poll GET /v1/runs/{run_id}; its review_id points to the result.
     """
     project = get_project(db, owner.id, project_id)
+    quotas.check(db, owner.id, quotas.REVIEWS, datetime.now(UTC))
     last_end = db.scalar(
         select(func.max(Review.period_end)).where(Review.project_id == project_id)
     )

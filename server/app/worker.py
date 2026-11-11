@@ -23,7 +23,7 @@ from psycopg.rows import dict_row
 from sqlalchemy import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import answering, ingestion, jobs, maintenance, reviews, tokenizer
+from app import answering, ingestion, jobs, maintenance, quotas, reviews, tokenizer
 from app.db import DATABASE_URL, SessionLocal
 from app.graphs import JobPipeline
 from app.providers import Models, build_models
@@ -138,8 +138,31 @@ def work(
             if claim is None:
                 stopping.wait(IDLE_SECONDS)
                 continue
+            if postpone(sessions, claim, worker_id):
+                continue
             with Heartbeat(sessions, claim, worker_id):
                 pipelines[claim.kind].run(claim)
+
+
+def postpone(
+    sessions: sessionmaker[Session], claim: jobs.Claim, worker_id: str
+) -> bool:
+    """Background jobs wait for the next day once the account's model budget
+    is spent. Answers already accepted still run; new questions are refused
+    by the API."""
+    if claim.kind == jobs.ANSWER:
+        return False
+    now = jobs.utcnow()
+    with sessions() as db:
+        until = quotas.over_budget(db, claim.owner_id, now)
+        if until is None:
+            return False
+        jobs.defer(db, claim, worker_id, until, now)
+    log.info(
+        "job postponed: daily model budget reached",
+        extra={"job_id": str(claim.id), "stage": claim.kind},
+    )
+    return True
 
 
 def main() -> None:

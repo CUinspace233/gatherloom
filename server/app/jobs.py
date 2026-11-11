@@ -23,6 +23,7 @@ from sqlalchemy import (
     select,
     update,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.contracts import ProcessingStatus
@@ -301,3 +302,27 @@ def record_cancelled(db: Session, claim: Claim, worker_id: str, now: datetime) -
         )
     )
     db.commit()
+
+
+def defer(
+    db: Session, claim: Claim, worker_id: str, until: datetime, now: datetime
+) -> bool:
+    """Put a claimed job back in the queue until ``until`` without counting
+    the attempt (the account's model budget is spent for today). Returns False
+    if the lease was already lost."""
+    job = db.scalar(select(Job).where(Job.id == claim.id).with_for_update())
+    if job is None or job.status != "running" or job.lease_owner != worker_id:
+        db.rollback()
+        return False
+    settle(job, "queued", now, code="daily_budget", step=job.stage)
+    job.attempts -= 1
+    job.run_after = until
+    try:
+        with db.begin_nested():
+            db.flush()
+    except IntegrityError:
+        # A newer maintenance job is already queued for the project and will
+        # cover these changes: this one is not needed.
+        settle(job, "cancelled", now, code="daily_budget", step=job.stage)
+    db.commit()
+    return True
