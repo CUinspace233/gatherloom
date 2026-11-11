@@ -1,6 +1,6 @@
 from base64 import urlsafe_b64decode, urlsafe_b64encode
 from binascii import Error as Base64Error
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Query, Response
 from sqlalchemy import Select, select, tuple_, update
 from sqlalchemy.orm import Session
 
-from app import events
+from app import deletion, events
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import (
     ErrorDetail,
@@ -150,6 +150,8 @@ def delete_project(project_id: UUID, owner: Owner, db: Db) -> Response:
     if db.scalar(locked) is None:
         raise HTTPException(404, "project not found")
     purge_project(db, owner.id, project_id)
+    # Projects are purged right away; the ledger is for replay after a restore.
+    deletion.record(db, owner.id, "project", project_id, datetime.now(UTC), purged=True)
     db.commit()
     return Response(status_code=204)
 

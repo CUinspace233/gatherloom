@@ -737,3 +737,30 @@ class Review(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Deletion(Base):
+    """The deletion ledger: what the user deleted and whether it is purged.
+
+    Purging happens later (``app.deletion.purge_due``), after any worker still
+    holding a lease has lost it. The same list is appended to the deletion log
+    file, so deletions can be replayed after restoring an older backup.
+    """
+
+    __tablename__ = "deletions"
+    __table_args__ = (
+        CheckConstraint("kind IN ('entry', 'project')", name="ck_deletions_kind"),
+        UniqueConstraint("kind", "subject_id", name="uq_deletions_subject"),
+        Index(
+            "ix_deletions_unpurged",
+            "requested_at",
+            postgresql_where=text("purged_at IS NULL"),
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    kind: Mapped[str] = mapped_column(String(8))
+    subject_id: Mapped[UUID]
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

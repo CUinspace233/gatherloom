@@ -1,5 +1,6 @@
+import tempfile
 from collections.abc import Iterator
-from os import environ
+from os import environ, getpid
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -23,6 +24,7 @@ from app.models import (
     Conversation,
     Decision,
     DecisionRevision,
+    Deletion,
     Entry,
     EntryRevision,
     Job,
@@ -41,6 +43,9 @@ from app.models import (
 from app.worker import checkpointer, setup_checkpoints
 
 COMMITTED_PREFIX = "worker_"
+environ["GATHERLOOM_DELETION_LOG"] = str(
+    Path(tempfile.gettempdir()) / f"gatherloom-test-deletions-{getpid()}.jsonl"
+)
 
 
 @pytest.fixture(scope="session")
@@ -123,6 +128,7 @@ def purge_committed(sessions: sessionmaker[Session]) -> None:
             Review,
             ProjectQuestion,
             Project,
+            Deletion,
         ):
             db.execute(delete(model).where(model.owner_id.in_(owners)))
         db.execute(delete(LoginSession).where(LoginSession.owner_id.in_(owners)))

@@ -24,7 +24,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import grounding, jobs, search
+from app import deletion, grounding, jobs, search
 from app.graphs import JobPipeline
 from app.models import Artifact, Chunk, Citation, Conversation, Entry, Message, Project
 
@@ -290,13 +290,17 @@ class Pipeline(JobPipeline):
             question, conversation, _project = self.question(db)
             trace = question.trace or {}
             draft = trace["draft"]
+            cited_items = [
+                item for item in trace["evidence"] if item["n"] in draft["citations"]
+            ]
+            masked = bool(deletion.deleted_among(db, question.owner_id, cited_items))
             answer_id = db.scalar(
                 insert(Message)
                 .values(
                     owner_id=question.owner_id,
                     conversation_id=question.conversation_id,
                     role="assistant",
-                    content=draft["answer"],
+                    content=deletion.MASKED_ANSWER if masked else draft["answer"],
                     reply_to=question.id,
                     insufficient=draft["insufficient"],
                 )
@@ -304,7 +308,12 @@ class Pipeline(JobPipeline):
                 .returning(Message.id)
             )
             if answer_id is not None:
-                evidence = {item["n"]: item for item in trace["evidence"]}
+                evidence = {
+                    item["n"]: item
+                    for item in deletion.without_deleted(
+                        db, question.owner_id, trace["evidence"]
+                    )
+                }
                 for n in sorted(set(draft["citations"])):
                     item = evidence[n]
                     db.add(

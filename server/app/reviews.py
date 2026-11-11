@@ -22,7 +22,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import decisions, events, grounding, jobs
+from app import decisions, deletion, events, grounding, jobs
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import CitationView, SummaryPoint
 from app.graphs import JobPipeline
@@ -447,7 +447,11 @@ class Pipeline(JobPipeline):
                     period_start=datetime.fromisoformat(payload["period_start"]),
                     period_end=datetime.fromisoformat(payload["period_end"]),
                     content=draft,
-                    sources=[i for i in payload["evidence"] if i["n"] in cited],
+                    sources=deletion.without_deleted(
+                        db,
+                        self.claim.owner_id,
+                        [i for i in payload["evidence"] if i["n"] in cited],
+                    ),
                     input_snapshot=payload["snapshot"],
                     model=payload.get("model"),
                 )
