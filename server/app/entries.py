@@ -10,8 +10,8 @@ from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import deletion, events
-from app.auth import AUTH_ERROR, Db, Owner
+from app import deletion, events, quotas
+from app.auth import AUTH_ERROR, RATE_ERROR, Db, Owner
 from app.contracts import (
     AttachmentView,
     CardView,
@@ -215,6 +215,7 @@ def flag_duplicate(db: Session, owner_id: UUID, entry: Entry, fingerprint: str) 
         },
         **NOT_FOUND,
         **CONFLICT,
+        **RATE_ERROR,
     },
 )
 def create_entry(
@@ -225,6 +226,16 @@ def create_entry(
     Reusing a submission ID returns the original entry for this account. Image
     entries reference an attachment uploaded with the same submission ID.
     """
+    if (
+        db.scalar(
+            select(Entry.id).where(
+                Entry.owner_id == owner.id,
+                Entry.client_submission_id == body.client_submission_id,
+            )
+        )
+        is None
+    ):
+        quotas.check(db, owner.id, quotas.ENTRIES, datetime.now(UTC))
     entry = db.scalar(
         insert(Entry)
         .values(
