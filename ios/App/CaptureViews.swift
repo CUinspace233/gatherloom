@@ -350,6 +350,7 @@ struct EntryDetailView: View {
     @State private var processing: ProcessingState?
     @State private var pollGeneration = 0
     @State private var showsFullExtract = false
+    @State private var relations: [RelationSuggestion] = []
 
     init(capture: CaptureQueue, entry: CaptureEntry) {
         self.capture = capture
@@ -362,6 +363,9 @@ struct EntryDetailView: View {
             if let card = entry.card {
                 cardSection(card)
             }
+            EntryRelationsSection(
+                session: session, capture: capture, entryID: entry.id, relations: relations
+            ) { await loadRelations() }
             if !entry.note.isEmpty {
                 Section("我的备注") { Text(entry.note).textSelection(.enabled) }
             }
@@ -481,7 +485,12 @@ struct EntryDetailView: View {
         }
     }
 
+    private func loadRelations() async {
+        relations = await EntryRelationsSection.load(session: session, capture: capture, entryID: entry.id) ?? relations
+    }
+
     private func reload() async {
+        await loadRelations()
         do {
             entry = try await session.request(CaptureEntry.self, "v1/entries/\(entry.id.uuidString)", scope: capture.scope)
             errorMessage = nil

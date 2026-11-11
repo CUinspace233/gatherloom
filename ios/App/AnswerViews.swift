@@ -347,7 +347,7 @@ func answerText(_ content: String, cited: Set<Int>) -> AttributedString {
     return result
 }
 
-private struct CitationSheet: View {
+struct CitationSheet: View {
     let session: AccountSession
     let capture: CaptureQueue
     let citation: Citation
