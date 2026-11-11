@@ -294,3 +294,20 @@ def test_query_terms_drop_stopwords_and_punctuation() -> None:
     )
     assert text.startswith("前文") and "关键结论" in text
     assert [text[a:b] for a, b in marks] == ["关键", "结论"]
+
+
+def test_search_drops_unrelated_semantic_matches(
+    client: TestClient, connection: Connection, embedder: FakeEmbedder
+) -> None:
+    a = Account(client, connection, "search_f")
+    only = a.entry("刚加的一条资料")
+    a.index(only, "刚加的一条资料", basis(20))
+    # Unrelated query: orthogonal vector (distance 1.0), no shared keywords.
+    assert search_api(a, q="天气怎么样")["items"] == []
+    # Close in meaning but no shared keywords: still found.
+    near = [0.0] * len(basis(0))
+    near[20], near[21] = 1.0, 0.5  # cosine distance ≈ 0.106
+    embedder.vectors = {"新增的记录": near}
+    page = search_api(a, q="新增的记录")
+    assert ids(page) == [str(only)]
+    assert page["items"][0]["matched_by"] == ["semantic"]

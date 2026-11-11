@@ -28,6 +28,11 @@ from app.models import Chunk, Entry, ProjectEntry
 from app.providers import Embedder, Recorder
 
 CANDIDATES = 50
+# Search drops semantic matches farther than this cosine distance, so unrelated
+# queries do not list every entry; keyword matches are kept regardless. Measured
+# with qwen3.7-text-embedding-flash: related queries ≈ 0.40, unrelated ≥ 0.60
+# (docs/evaluation/results). Answers do not use it; the model judges sufficiency.
+SEARCH_MAX_DISTANCE = 0.55
 RRF_K = 60
 SNIPPET_CHARS = 160
 SNIPPET_LEAD = 40
