@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_vali
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import decisions, events, grounding, jobs, relations, search
+from app import decisions, deletion, events, grounding, jobs, relations, search
 from app.graphs import JobPipeline
 from app.models import (
     Artifact,
@@ -540,7 +540,11 @@ class Pipeline(JobPipeline):
                         key: summary[key]
                         for key in ("understanding", "key_points", "uncertainties")
                     },
-                    sources=[i for i in payload["evidence"] if i["n"] in cited],
+                    sources=deletion.without_deleted(
+                        db,
+                        self.claim.owner_id,
+                        [i for i in payload["evidence"] if i["n"] in cited],
+                    ),
                     watermark=payload["watermark"],
                     coverage=payload["coverage"],
                     change_note=summary["change_note"],

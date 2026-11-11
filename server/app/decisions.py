@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import events, grounding
+from app import deletion, events, grounding
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import CitationView, ErrorResponses, Input
 from app.models import Decision, DecisionRevision, Project, User
@@ -217,6 +217,10 @@ def store(
     db: Session, owner_id: UUID, project_id: UUID, drafts: list[dict[str, Any]]
 ) -> None:
     for draft in drafts:
+        draft = {
+            **draft,
+            "sources": deletion.without_deleted(db, owner_id, draft["sources"]),
+        }
         db.add(
             Decision(owner_id=owner_id, project_id=project_id, status="draft", **draft)
         )

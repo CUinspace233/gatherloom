@@ -2,13 +2,14 @@ import argparse
 import secrets
 from datetime import UTC, datetime, timedelta
 from getpass import getpass
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import Field, SecretStr, TypeAdapter, ValidationError
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import Session
 
-from app import storage
+from app import deletion, storage
 from app.auth import digest, password_hasher
 from app.contracts import Password, Username
 from app.db import SessionLocal
@@ -124,6 +125,18 @@ def main() -> None:
         "cleanup-attachments",
         help="Delete uploads not linked to an entry within 24 hours.",
     )
+    replay = actions.add_parser(
+        "replay-deletions",
+        help="After restoring a backup: delete again everything in the deletion "
+        "log, then purge. Run before starting the API, worker and scheduler.",
+    )
+    replay.add_argument(
+        "--log", type=Path, default=None, help="Deletion log (default: configured)"
+    )
+    actions.add_parser(
+        "purge-deleted",
+        help="Purge deleted entries now instead of waiting for the scheduler.",
+    )
     actions.add_parser(
         "check-models",
         help="Call the embedding, light and heavy models once and print usage.",
@@ -138,6 +151,19 @@ def main() -> None:
         with SessionLocal() as db:
             removed = cleanup_attachments(db, datetime.now(UTC))
         print(f"Removed {removed} files.")
+        return
+
+    if args.action == "replay-deletions":
+        log = args.log or deletion.log_path()
+        if not log.exists():
+            parser.error(f"deletion log not found: {log}")
+        purged = deletion.replay(SessionLocal, log, datetime.now(UTC))
+        print(f"Replayed {log}. Purged {purged.entries} entries.")
+        return
+
+    if args.action == "purge-deleted":
+        purged = deletion.purge_due(SessionLocal, datetime.now(UTC))
+        print(f"Purged {purged.entries} entries.")
         return
 
     if args.action == "invite":

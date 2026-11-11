@@ -6,11 +6,11 @@ from urllib.parse import urlsplit, urlunsplit
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Response
-from sqlalchemy import Select, and_, delete, func, select, update
+from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import events
+from app import deletion, events
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import (
     AttachmentView,
@@ -27,7 +27,6 @@ from app.contracts import (
     RevisionDetail,
     RevisionView,
 )
-from app.ingestion import delete_entry_chunks
 from app.jobs import ACTIVE, INGESTION, failed_step, processing_status
 from app.models import Artifact, Attachment, Entry, EntryRevision, Job, ProjectEntry
 from app.projects import NOT_FOUND, Cursor, Limit, get_project, paginate
@@ -384,32 +383,13 @@ def update_entry(entry_id: UUID, body: EntryUpdate, owner: Owner, db: Db) -> Ent
 
 @router.delete("/entries/{entry_id}", status_code=204, responses=NOT_FOUND)
 def delete_entry(entry_id: UUID, owner: Owner, db: Db) -> Response:
-    """Remove an entry from every list and cancel its pending processing.
+    """Remove an entry from every list and search, and cancel its processing.
 
-    Stored files and derived data are purged by the deletion lifecycle (S6).
+    Its content and everything derived from it are purged shortly after
+    (app.deletion).
     """
     entry = get_entry(db, owner.id, entry_id, lock=True)
-    now = datetime.now(UTC)
-    entry.deleted_at = now
-    events.record_for_entry(db, owner.id, entry.id, events.ENTRY_DELETED)
-    # A worker holding a lease on a running job loses it here: its fenced
-    # writes check the status and give up.
-    db.execute(
-        update(Job)
-        .where(
-            Job.owner_id == owner.id,
-            Job.entry_id == entry.id,
-            Job.status.in_(ACTIVE),
-        )
-        .values(
-            status="cancelled",
-            lease_owner=None,
-            lease_expires_at=None,
-            finished_at=now,
-            updated_at=now,
-        )
-    )
-    delete_entry_chunks(db, owner.id, entry.id)
+    deletion.mark_entry_deleted(db, entry, datetime.now(UTC))
     db.commit()
     return Response(status_code=204)
 

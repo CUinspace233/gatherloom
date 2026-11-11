@@ -1,13 +1,15 @@
 """Scheduler: ``python -m app.scheduler``.
 
-Every few minutes, queues the weekly reviews that are due (app.reviews.scan).
-Running two schedulers is safe: duplicate jobs publish at most one review.
+Every few minutes, queues the weekly reviews that are due (app.reviews.scan)
+and purges deleted entries (app.deletion.purge_due). Running two schedulers is
+safe: duplicate jobs publish at most one review, and purges skip locked rows.
 """
 
 import logging
 import signal
 import threading
 
+from app import deletion
 from app.db import SessionLocal
 from app.jobs import utcnow
 from app.reviews import scan
@@ -37,6 +39,15 @@ def main() -> None:
                 log.info("weekly reviews queued", extra={"status": f"queued={queued}"})
         except Exception:
             log.exception("scan failed")
+        try:
+            purged = deletion.purge_due(SessionLocal, utcnow())
+            if purged.entries:
+                log.info(
+                    "deleted entries purged",
+                    extra={"status": f"entries={purged.entries}"},
+                )
+        except Exception:
+            log.exception("purge failed")
         stopping.wait(INTERVAL_SECONDS)
     log.info("scheduler stopped")
 
