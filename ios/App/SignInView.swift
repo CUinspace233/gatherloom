@@ -53,6 +53,14 @@ struct SignInView: View {
                             .onSubmit { focusedField = nil }
                     }
                 }
+                if isRegistering {
+                    Section("数据去向") {
+                        Text("你保存的想法、链接正文和截图文字会存放在海外/港澳的 Gatherloom 服务器上，并发送给阿里云百炼（通义千问）和 DeepSeek，用于生成摘要、建立检索、回答问题和写总结与回顾。截图图片本身不会发送给模型服务。")
+                        Text("删除资料后，它会立即从搜索和问答中移除，几分钟内从服务器清除；备份会保留最多 14 天，从备份恢复时会再次执行删除。")
+                    }
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
                 if let message = errorMessage ?? session.notice {
                     Text(message).foregroundStyle(.red)
                 }
