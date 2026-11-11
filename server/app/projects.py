@@ -5,9 +5,10 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Response
-from sqlalchemy import Select, delete, select, tuple_, update
+from sqlalchemy import Select, select, tuple_, update
 from sqlalchemy.orm import Session
 
+from app import events
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import (
     ErrorDetail,
@@ -21,7 +22,8 @@ from app.contracts import (
     QuestionUpdate,
     QuestionView,
 )
-from app.models import Conversation, Entry, Project, ProjectEntry, ProjectQuestion
+from app.models import Conversation, Entry, Project, ProjectQuestion
+from app.purge import purge_project
 
 router = APIRouter(prefix="/v1", tags=["projects"], responses=AUTH_ERROR)
 NOT_FOUND: ErrorResponses = {
@@ -139,22 +141,15 @@ def update_project(
 
 @router.delete("/projects/{project_id}", status_code=204, responses=NOT_FOUND)
 def delete_project(project_id: UUID, owner: Owner, db: Db) -> Response:
-    """Delete a project and its questions.
+    """Delete a project with its questions, conversations, summaries and
+    other derived data.
 
     Entries are kept; those not in another project return to the inbox.
     """
     locked = owned_projects(owner.id).where(Project.id == project_id).with_for_update()
     if db.scalar(locked) is None:
         raise HTTPException(404, "project not found")
-    for model in (ProjectEntry, ProjectQuestion):
-        db.execute(
-            delete(model).where(
-                model.owner_id == owner.id, model.project_id == project_id
-            )
-        )
-    db.execute(
-        delete(Project).where(Project.owner_id == owner.id, Project.id == project_id)
-    )
+    purge_project(db, owner.id, project_id)
     db.commit()
     return Response(status_code=204)
 
@@ -179,6 +174,8 @@ def create_question(
     get_project(db, owner.id, project_id)
     question = ProjectQuestion(owner_id=owner.id, project_id=project_id, text=body.text)
     db.add(question)
+    db.flush()
+    events.record(db, owner.id, project_id, events.QUESTION_ADDED, question.id)
     db.commit()
     return QuestionView.model_validate(question)
 
@@ -195,5 +192,8 @@ def update_question(
     )
     if question is None:
         raise HTTPException(404, "question not found")
+    events.record(
+        db, owner.id, question.project_id, events.QUESTION_CHANGED, question.id
+    )
     db.commit()
     return QuestionView.model_validate(question)

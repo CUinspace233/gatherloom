@@ -10,6 +10,7 @@ from sqlalchemy import Select, and_, delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app import events
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import (
     AttachmentView,
@@ -255,6 +256,7 @@ def create_entry(
                 owner_id=owner.id, project_id=body.project_id, entry_id=entry.id
             )
         )
+        events.record(db, owner.id, body.project_id, events.ENTRY_ADDED, entry.id)
 
     if body.attachment_id is not None:
         attachment = db.scalar(
@@ -389,6 +391,7 @@ def delete_entry(entry_id: UUID, owner: Owner, db: Db) -> Response:
     entry = get_entry(db, owner.id, entry_id, lock=True)
     now = datetime.now(UTC)
     entry.deleted_at = now
+    events.record_for_entry(db, owner.id, entry.id, events.ENTRY_DELETED)
     # A worker holding a lease on a running job loses it here: its fenced
     # writes check the status and give up.
     db.execute(
@@ -543,11 +546,14 @@ def add_to_project(project_id: UUID, entry_id: UUID, owner: Owner, db: Db) -> Re
     """Add an entry to a project. Adding it again has no effect."""
     get_project(db, owner.id, project_id)
     get_entry(db, owner.id, entry_id)
-    db.execute(
+    added = db.scalar(
         insert(ProjectEntry)
         .values(owner_id=owner.id, project_id=project_id, entry_id=entry_id)
         .on_conflict_do_nothing()
+        .returning(ProjectEntry.entry_id)
     )
+    if added is not None:
+        events.record(db, owner.id, project_id, events.ENTRY_ADDED, entry_id)
     db.commit()
     return Response(status_code=204)
 
@@ -561,12 +567,16 @@ def remove_from_project(
     """Remove an entry from a project. The entry itself is kept."""
     get_project(db, owner.id, project_id)
     get_entry(db, owner.id, entry_id)
-    db.execute(
-        delete(ProjectEntry).where(
+    removed = db.scalar(
+        delete(ProjectEntry)
+        .where(
             ProjectEntry.owner_id == owner.id,
             ProjectEntry.project_id == project_id,
             ProjectEntry.entry_id == entry_id,
         )
+        .returning(ProjectEntry.entry_id)
     )
+    if removed is not None:
+        events.record(db, owner.id, project_id, events.ENTRY_REMOVED, entry_id)
     db.commit()
     return Response(status_code=204)

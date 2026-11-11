@@ -26,11 +26,14 @@ from sqlalchemy import (
 from sqlalchemy.orm import Session
 
 from app.contracts import ProcessingStatus
-from app.models import Entry, Job, Message
+from app.models import Entry, Job, Message, Project
 
 INGESTION = "entry_ingestion"
 ANSWER = "project_answer"
-KINDS = (ANSWER, INGESTION)  # claim order: answers first
+MAINTENANCE = "project_maintenance"
+REVIEW = "project_review"
+KINDS = (ANSWER, INGESTION, MAINTENANCE, REVIEW)  # claim order: answers first
+PROJECT_KINDS = (MAINTENANCE, REVIEW)
 LEASE = timedelta(seconds=60)
 MAX_ATTEMPTS = 3
 BACKOFF = timedelta(seconds=30)
@@ -90,6 +93,7 @@ class Claim:
     entry_id: UUID | None
     revision: int | None
     message_id: UUID | None
+    project_id: UUID | None
     generation: int
     attempts: int
 
@@ -102,8 +106,9 @@ def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
-def owner_lock_key(owner_id: UUID, kind: str) -> int:
-    digest = sha256(b"jobs" + owner_id.bytes + kind.encode()).digest()
+def owner_lock_key(owner_id: UUID, kind: str, project_id: UUID | None = None) -> int:
+    scope = project_id.bytes if project_id is not None else b""
+    digest = sha256(b"jobs" + owner_id.bytes + kind.encode() + scope).digest()
     return int.from_bytes(digest[:8], signed=True)
 
 
@@ -118,34 +123,37 @@ def claimable(now: datetime) -> ColumnElement[bool]:
 
 
 def claim(db: Session, worker_id: str, now: datetime) -> Claim | None:
-    """Lease the next runnable job, at most one running job per account and kind.
+    """Lease the next runnable job.
 
-    Answers are claimed before ingestion so questions do not wait behind a
-    backlog of entries.
+    At most one job runs per account and kind, or per project and kind for
+    project jobs, so a project's maintenance is serial. Answers are claimed
+    first so questions do not wait behind a backlog of entries.
     """
     candidates = db.execute(
-        select(Job.id, Job.owner_id, Job.kind)
+        select(Job.id, Job.owner_id, Job.kind, Job.project_id)
         .where(claimable(now))
         .order_by(case((Job.kind == ANSWER, 0), else_=1), Job.run_after, Job.created_at)
         .limit(20)
     ).all()
-    for job_id, owner_id, kind in candidates:
-        # Serialize claims per account and kind so the busy check cannot race.
+    for job_id, owner_id, kind, project_id in candidates:
+        scope = project_id if kind in PROJECT_KINDS else None
+        # Serialize claims per scope so the busy check cannot race.
         if not db.scalar(
-            select(func.pg_try_advisory_xact_lock(owner_lock_key(owner_id, kind)))
+            select(
+                func.pg_try_advisory_xact_lock(owner_lock_key(owner_id, kind, scope))
+            )
         ):
             continue
-        busy = db.scalar(
-            select(Job.id)
-            .where(
-                Job.owner_id == owner_id,
-                Job.kind == kind,
-                Job.status == "running",
-                Job.lease_expires_at >= now,
-                Job.id != job_id,
-            )
-            .limit(1)
-        )
+        busy_filter = [
+            Job.owner_id == owner_id,
+            Job.kind == kind,
+            Job.status == "running",
+            Job.lease_expires_at >= now,
+            Job.id != job_id,
+        ]
+        if scope is not None:
+            busy_filter.append(Job.project_id == scope)
+        busy = db.scalar(select(Job.id).where(*busy_filter).limit(1))
         if busy is not None:
             continue
         job = db.scalar(
@@ -172,6 +180,7 @@ def claim(db: Session, worker_id: str, now: datetime) -> Claim | None:
             entry_id=job.entry_id,
             revision=job.revision,
             message_id=job.message_id,
+            project_id=job.project_id,
             generation=job.generation,
             attempts=job.attempts,
         )
@@ -199,7 +208,18 @@ def fence(db: Session, claim: Claim, worker_id: str) -> Job:
 
     Lock order matches the API (subject first, then job) to avoid deadlocks.
     """
-    if claim.kind == ANSWER:
+    if claim.kind in PROJECT_KINDS:
+        subject_live = (
+            db.scalar(
+                select(Project.id)
+                .where(
+                    Project.owner_id == claim.owner_id, Project.id == claim.project_id
+                )
+                .with_for_update(read=True)
+            )
+            is not None
+        )
+    elif claim.kind == ANSWER:
         subject_live = (
             db.scalar(
                 select(Message.id)

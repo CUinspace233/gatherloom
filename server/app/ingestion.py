@@ -15,7 +15,7 @@ from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import cards, chunking, jobs, tokenizer
+from app import cards, chunking, events, jobs, tokenizer
 from app.graphs import Hook, JobPipeline
 from app.models import INDEX_VERSION, Artifact, Chunk, Entry, EntryRevision
 
@@ -154,7 +154,13 @@ class Pipeline(JobPipeline):
                     )
             if self.models is None and job.indexed_at is None:
                 job.indexed_at = self.clock()
+                self.became_searchable(db, claim)
         return {}
+
+    def became_searchable(self, db: Session, claim: jobs.Claim) -> None:
+        """Tell the entry's projects that new material is ready."""
+        assert claim.entry_id is not None
+        events.record_for_entry(db, claim.owner_id, claim.entry_id, events.ENTRY_READY)
 
     def embed(self, state: IngestionState) -> dict[str, Any]:
         """Embed source chunks batch by batch; finished batches survive a crash.
@@ -184,9 +190,10 @@ class Pipeline(JobPipeline):
                         .where(Chunk.id == chunk_id, Chunk.embedding.is_(None))
                         .values(embedding=vector)
                     )
-        with self.step("embed") as (_db, job):
+        with self.step("embed") as (db, job):
             if job.indexed_at is None:
                 job.indexed_at = self.clock()
+                self.became_searchable(db, claim)
         return {}
 
     def card(self, state: IngestionState) -> dict[str, Any]:
