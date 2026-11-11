@@ -1,0 +1,109 @@
+# Production: Caddy (HTTPS) is the only published service. PostgreSQL sits on
+# an internal network with no route out; the app services also join the web
+# network to reach Caddy and the model APIs. No volume is published.
+#
+#   cp deploy/env.prod.example deploy/.env.prod   # fill in, keep private
+#   docker compose -f deploy/compose.prod.yaml --env-file deploy/.env.prod up -d --build
+#
+# See docs/operations.md for invitations, backups and restore.
+name: gatherloom-prod
+
+x-app: &app
+  build:
+    context: ../server
+  image: gatherloom-server:${GATHERLOOM_VERSION:-local}
+  restart: unless-stopped
+  env_file: .env.prod
+  environment:
+    GATHERLOOM_DATABASE_URL: postgresql+psycopg://gatherloom:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/gatherloom
+  volumes:
+    - storage:/data/storage
+    - state:/data/state
+  networks: [db, web]
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  logging: &logging
+    driver: json-file
+    options:
+      max-size: 20m
+      max-file: "5"
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gatherloom
+      POSTGRES_USER: gatherloom
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks: [db]
+    shm_size: 256mb
+    mem_limit: ${POSTGRES_MEMORY:-1g}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gatherloom -d gatherloom"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    logging: *logging
+
+  migrate:
+    <<: *app
+    restart: "no"
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    <<: *app
+    mem_limit: ${API_MEMORY:-512m}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "app.worker"]
+    mem_limit: ${WORKER_MEMORY:-1g}
+    stop_grace_period: 60s
+
+  scheduler:
+    <<: *app
+    command: ["python", "-m", "app.scheduler"]
+    mem_limit: 256m
+
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      GATHERLOOM_DOMAIN: ${GATHERLOOM_DOMAIN:?set GATHERLOOM_DOMAIN}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [web]
+    depends_on:
+      api:
+        condition: service_healthy
+    logging: *logging
+
+networks:
+  db:
+    internal: true
+  web: {}
+
+volumes:
+  postgres-data:
+  storage:
+  state:
+  caddy-data:
+  caddy-config:

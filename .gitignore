@@ -9,3 +9,4 @@ __pycache__/
 .ruff_cache/
 /server/var/
 /server/.env
+/deploy/.env.prod
