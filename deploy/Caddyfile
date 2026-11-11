@@ -1,4 +1,12 @@
 # The only public entry point. Caddy obtains and renews the certificate.
+# Behind another reverse proxy (see docs/operations.md), requests arrive from
+# a private address and the proxy's X-Forwarded-For is kept.
+{
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
 {$GATHERLOOM_DOMAIN} {
 	encode zstd gzip
 	request_body {
