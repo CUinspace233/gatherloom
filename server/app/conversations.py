@@ -129,6 +129,7 @@ def message_views(
             title=title,
             type=summary.type,
             created_at=entry.created_at,
+            source=citation.source,
             snippet=citation.snippet,
             start_offset=citation.start_offset,
             end_offset=citation.end_offset,

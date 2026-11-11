@@ -26,6 +26,7 @@
 		B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B04686A26FFB0C58713DFD4E /* ProjectsView.swift */; };
 		B98C940B053E0278D7028EC8 /* Preprocess.js in Resources */ = {isa = PBXBuildFile; fileRef = 6DAA5113237E8F9F9F3F6023 /* Preprocess.js */; };
 		CAC54E8984BD9277A1E70332 /* CaptureViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A990189CE0ED3C67575111B6 /* CaptureViews.swift */; };
+		CEB1624BE6E6D9A2A2963613 /* SourceTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAF01F04BF13BE6D61189234 /* SourceTextView.swift */; };
 		D485748AF7CD45E81443C500 /* TextRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 564364766B21B952C4C06492 /* TextRecognizer.swift */; };
 		DFB1DF6489D9A11D3A92623B /* GatherloomShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 1091DD311D87D3CB56803DB5 /* GatherloomShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E76B5591F0D2D97F0960FDB4 /* CaptureUploader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375508EEC9EA14F965126BA0 /* CaptureUploader.swift */; };
@@ -85,6 +86,7 @@
 		BF8AE52EB08AD6310F158FBF /* Gatherloom.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Gatherloom.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C09375365574EE945DBA7904 /* ImagePayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagePayload.swift; sourceTree = "<group>"; };
 		CA6715717B3B44EC25F30AC3 /* ShareExtension-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "ShareExtension-Info.plist"; sourceTree = "<group>"; };
+		EAF01F04BF13BE6D61189234 /* SourceTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SourceTextView.swift; sourceTree = "<group>"; };
 		FC0C70C540BB2F5A1FC0DE94 /* AccountSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSession.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -101,6 +103,7 @@
 				B04686A26FFB0C58713DFD4E /* ProjectsView.swift */,
 				08A9ABF9020DEE734156EE7E /* SearchView.swift */,
 				93430B4D552A53A2D7B1D758 /* SignInView.swift */,
+				EAF01F04BF13BE6D61189234 /* SourceTextView.swift */,
 				122EF11F326AAC9AB2133256 /* SwipeToDeleteCard.swift */,
 			);
 			path = App;
@@ -291,6 +294,7 @@
 				B02B25A365F31F9F0B6D9805 /* ProjectsView.swift in Sources */,
 				2F0A75CD82D49F4D9944F14E /* SearchView.swift in Sources */,
 				387A8845F4476985B301FB43 /* SignInView.swift in Sources */,
+				CEB1624BE6E6D9A2A2963613 /* SourceTextView.swift in Sources */,
 				918F70D31E3D93F2393AE01B /* SwipeToDeleteCard.swift in Sources */,
 				D485748AF7CD45E81443C500 /* TextRecognizer.swift in Sources */,
 			);

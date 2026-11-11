@@ -288,6 +288,29 @@ class ProcessingView(BaseModel):
     updated_at: datetime
 
 
+class OCRLineView(BaseModel):
+    text: str
+    box: list[float] = Field(description="Normalized x, y, width, height, top-left.")
+    start: int | None = Field(description="Offset of the line in ocr_text, if known.")
+    end: int | None
+
+
+class RevisionDetail(BaseModel):
+    """One revision's full text, for locating citations in the original."""
+
+    revision: int
+    current_revision: int
+    type: EntryType
+    text: str
+    note: str
+    title: str | None
+    extract_text: str | None
+    ocr_text: str | None
+    ocr_lines: list[OCRLineView]
+    attachment_id: UUID | None
+    created_at: datetime
+
+
 class RevisionView(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -366,6 +389,9 @@ class CitationView(BaseModel):
     title: str
     type: EntryType
     created_at: datetime
+    source: str = Field(
+        description="Which text the offsets refer to: text, extract, ocr or meta."
+    )
     snippet: str = Field(description="The cited source text as it was when answered.")
     start_offset: int
     end_offset: int

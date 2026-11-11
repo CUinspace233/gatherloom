@@ -181,7 +181,7 @@ def test_answers_use_only_the_project_and_record_citations(
         assert (run.provider, run.model, run.prompt_version) == (
             "deepseek",
             "deepseek-flash",
-            1,
+            answering.PROMPT_VERSION,
         )
     # The card is navigation only: it has no number in the evidence list.
     assert all(item["text"] != "" for item in trace["evidence"])
@@ -279,3 +279,21 @@ def test_answers_are_claimed_before_ingestion_and_run_per_kind(
     # The account's answer job is running; its ingestion job is still claimable.
     second = claim(committed, "w2", clock() + timedelta(seconds=1))
     assert second.kind == jobs.INGESTION
+
+
+def test_insufficient_answers_may_cite_partial_evidence() -> None:
+    partial = answering.validate(
+        '{"answer": "只知道搜索先上线 [2]，没有日期。", "citations": [2], '
+        '"insufficient": true}',
+        {1, 2},
+    )
+    assert partial.insufficient and partial.citations == [2]
+    with pytest.raises(ValueError, match="不一致"):
+        answering.validate(
+            '{"answer": "只知道搜索先上线。", "citations": [2], "insufficient": true}',
+            {1, 2},
+        )
+    with pytest.raises(ValueError, match="没有引用"):
+        answering.validate(
+            '{"answer": "结论如此。", "citations": [], "insufficient": false}', {1}
+        )

@@ -28,7 +28,10 @@ struct Citation: Decodable, Identifiable, Hashable {
     let title: String
     let type: EntryKind
     let createdAt: Date
+    let source: String
     let snippet: String
+    let startOffset: Int
+    let endOffset: Int
     let stale: Bool
 
     var id: Int { n }
@@ -285,7 +288,7 @@ private struct AnswerBubble: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if message.insufficient {
-                Label("资料不足", systemImage: "questionmark.circle")
+                Label(message.citations.isEmpty ? "资料不足" : "资料不足 · 以下为部分相关内容", systemImage: "questionmark.circle")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -367,6 +370,9 @@ private struct CitationSheet: View {
                     Text(citation.snippet).textSelection(.enabled)
                 }
                 Section {
+                    NavigationLink("在原文中查看") {
+                        SourceTextView(session: session, capture: capture, citation: citation)
+                    }
                     NavigationLink("打开资料") {
                         CitedEntryView(session: session, capture: capture, entryID: citation.entryId)
                     }
@@ -379,7 +385,7 @@ private struct CitationSheet: View {
     }
 }
 
-private struct CitedEntryView: View {
+struct CitedEntryView: View {
     let session: AccountSession
     let capture: CaptureQueue
     let entryID: UUID

@@ -349,6 +349,7 @@ struct EntryDetailView: View {
     @State private var confirmsDelete = false
     @State private var processing: ProcessingState?
     @State private var pollGeneration = 0
+    @State private var showsFullExtract = false
 
     init(capture: CaptureQueue, entry: CaptureEntry) {
         self.capture = capture
@@ -461,7 +462,12 @@ struct EntryDetailView: View {
                 if !entry.text.isEmpty { Text(entry.text).textSelection(.enabled) }
             }
             if let text = entry.extractText, !text.isEmpty {
-                Section("分享时页面正文") { Text(text).lineLimit(20).textSelection(.enabled) }
+                Section("分享时页面正文") {
+                    Text(text).lineLimit(showsFullExtract ? nil : 20).textSelection(.enabled)
+                    if text.count > 600 {
+                        Button(showsFullExtract ? "收起" : "展开全文") { showsFullExtract.toggle() }
+                    }
+                }
             }
         case .image:
             Section("截图") {
@@ -633,9 +639,11 @@ private struct EntryEditor: View {
 }
 
 /// Loads a private attachment with the signed-in session.
-private struct AttachmentImage: View {
+struct AttachmentImage: View {
     let scope: CaptureScope
     let attachmentID: UUID
+    /// Normalized boxes (x, y, width, height, top-left origin) to highlight.
+    var highlights: [[Double]] = []
     @Environment(AccountSession.self) private var session
     @State private var image: UIImage?
     @State private var failed = false
@@ -643,7 +651,21 @@ private struct AttachmentImage: View {
     var body: some View {
         Group {
             if let image {
-                Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 420).frame(maxWidth: .infinity)
+                Image(uiImage: image).resizable().scaledToFit()
+                    .overlay {
+                        GeometryReader { geometry in
+                            ForEach(Array(highlights.enumerated()), id: \.offset) { _, box in
+                                if box.count == 4 {
+                                    Rectangle()
+                                        .fill(Color.yellow.opacity(0.25))
+                                        .stroke(Color.orange, lineWidth: 2)
+                                        .frame(width: box[2] * geometry.size.width, height: box[3] * geometry.size.height)
+                                        .offset(x: box[0] * geometry.size.width, y: box[1] * geometry.size.height)
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxHeight: 420).frame(maxWidth: .infinity)
             } else if failed {
                 Text("无法加载图片").foregroundStyle(.secondary)
             } else {
