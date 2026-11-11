@@ -7,12 +7,13 @@ related ones, at most three, each with a one-sentence reason. An entry
 revision is suggested once: dismissed suggestions do not come back.
 """
 
+import re
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from sqlalchemy import and_, exists, func, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -31,6 +32,7 @@ CANDIDATES = 5
 KEEP = 3
 QUESTION_MAX_DISTANCE = 0.6
 TEXT_CHARS = 400
+LABEL = re.compile(r"(?<![A-Za-z])[EQ]\d+")
 
 router = APIRouter(prefix="/v1", tags=["relations"], responses=AUTH_ERROR)
 
@@ -50,12 +52,18 @@ class Pick(BaseModel):
 class Picks(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    @field_validator("relations", mode="before")
+    @classmethod
+    def keep_first(cls, value: Any) -> Any:
+        return value[:KEEP] if isinstance(value, list) else value
+
     relations: Annotated[list[Pick], Field(max_length=KEEP)]
 
 
 SYSTEM = """你帮用户整理一个项目里的资料。给出一条新资料和若干候选：其他资料（E 开头）和待解问题（Q 开头）。
 只挑出与新资料确实相关的候选，最多 3 个；没有就返回空列表。
 每个写一句中文理由（不超过 40 字），说明具体关联点，不要泛泛而谈，不要编造资料里没有的内容。
+理由会直接展示给用户：不要出现 E1、Q1 这样的候选编号，也不要说“新资料”，直接说内容。
 只输出 JSON：{"relations": [{"target": "E1", "reason": "理由"}]}。"""
 
 
@@ -174,6 +182,8 @@ def suggest(
         picks = grounding.parse(content, Picks)
         if unknown := [p.target for p in picks.relations if p.target not in labels]:
             raise ValueError(f"未知的候选：{unknown}")
+        if leaked := [p.reason for p in picks.relations if LABEL.search(p.reason)]:
+            raise ValueError(f"理由里不要出现候选编号：{leaked}")
         return picks
 
     picks, _model = grounding.ask(
@@ -246,6 +256,17 @@ def store(
 ) -> None:
     revision = db.get_one(Entry, entry_id).current_revision
     for item in suggestions:
+        target = item["target_entry_id"]
+        if target and db.scalar(
+            select(
+                exists().where(
+                    Relation.project_id == project_id,
+                    Relation.entry_id == UUID(target),
+                    Relation.target_entry_id == entry_id,
+                )
+            )
+        ):
+            continue  # the pair is already linked the other way
         statement = insert(Relation).values(
             owner_id=owner_id,
             project_id=project_id,

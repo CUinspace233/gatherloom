@@ -16,7 +16,7 @@ from typing import Annotated, Any, ClassVar, TypedDict
 from uuid import UUID
 
 from langgraph.graph import END, START, StateGraph
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -62,6 +62,17 @@ class KeyPoint(BaseModel):
 class SummaryDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    @field_validator("key_points", mode="before")
+    @classmethod
+    def keep_first_points(cls, value: Any) -> Any:
+        # Too many points is not worth failing a summary over: keep the first.
+        return value[:8] if isinstance(value, list) else value
+
+    @field_validator("uncertainties", mode="before")
+    @classmethod
+    def keep_first_uncertainties(cls, value: Any) -> Any:
+        return value[:6] if isinstance(value, list) else value
+
     understanding: Annotated[Text, StringConstraints(max_length=1500)]
     key_points: Annotated[list[KeyPoint], Field(max_length=8)]
     uncertainties: Annotated[
@@ -82,6 +93,7 @@ SYSTEM = """你维护一个个人项目的“当前认识”总结。只能依�
 3. 证据之间有矛盾时并列说明；同一件事前后变化时，以较新的记录为准并说明变化。
 4. uncertainties 写目前仍不清楚、证据不足或相互矛盾的地方，可结合待解问题。
 5. change_note 用一句话说明相对上一版总结的变化；没有上一版时写“首次总结”。
+7. 篇幅：understanding 不超过 600 字；key_points 最多 8 条，挑最重要的；uncertainties 最多 6 条。
 6. 不使用材料以外的知识，不编造来源。“导航上下文”只帮助理解，不能引用。
 只输出 JSON：{"understanding": 段落, "key_points": [{"text": 要点, "citations": [编号]}], "uncertainties": [不确定项], "change_note": 变化说明}。"""
 
@@ -401,6 +413,7 @@ class Pipeline(JobPipeline):
             return {}
         assert self.models is not None
         numbers = {item["n"] for item in payload["evidence"]}
+        self.save("summarize", lambda _p: None)  # record the stage before calling
         if not numbers:
             summary: dict[str, Any] = {
                 "understanding": EMPTY,
@@ -471,14 +484,16 @@ class Pipeline(JobPipeline):
         return {}
 
     def draft_decisions(self, state: MaintenanceState) -> dict[str, Any]:
-        """Propose decision drafts, only when this run saw new material."""
+        """Propose decision drafts when this run saw new material, or on the
+        project's first summary (which reads all existing material)."""
         self.hook("draft_decisions")
         payload = self.payload()
         new_material = any(
             kind in (events.ENTRY_READY, events.ENTRY_ADDED)
             for kind, _subject in payload.get("changes", [])
         )
-        if payload["noop"] or payload.get("drafted") or not new_material:
+        first_run = payload.get("since") == 0
+        if payload["noop"] or payload.get("drafted") or not (new_material or first_run):
             return {}
         assert self.models is not None and self.claim is not None
         owner_id, project_id = self.claim.owner_id, self.project_id
