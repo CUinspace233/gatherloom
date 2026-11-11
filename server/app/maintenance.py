@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import events, grounding, jobs, search
+from app import events, grounding, jobs, relations, search
 from app.graphs import JobPipeline
 from app.models import (
     Artifact,
@@ -108,9 +108,10 @@ def latest_summary(db: Session, project_id: UUID) -> SummaryRevision | None:
 class Pipeline(JobPipeline):
     """Maintenance jobs (kind ``project_maintenance``). Requires models."""
 
-    PROMPT_VERSIONS: ClassVar[dict[str, int]] = {TASK: PROMPT_VERSION}
-    #: Extra nodes between summarize and publish, added by later stages.
-    EXTRA_NODES: ClassVar[list[str]] = []
+    PROMPT_VERSIONS: ClassVar[dict[str, int]] = {
+        TASK: PROMPT_VERSION,
+        relations.TASK: relations.PROMPT_VERSION,
+    }
 
     def initial_state(self, claim: jobs.Claim) -> dict[str, Any]:
         assert claim.project_id is not None
@@ -122,7 +123,7 @@ class Pipeline(JobPipeline):
 
     def build(self) -> StateGraph[Any]:
         graph = StateGraph(MaintenanceState)
-        steps = ["load", "gather", "summarize", *self.EXTRA_NODES, "publish", "finish"]
+        steps = ["load", "gather", "summarize", "relate", "publish", "finish"]
         for name in steps:
             graph.add_node(name, getattr(self, name))
         graph.add_edge(START, steps[0])
@@ -221,6 +222,7 @@ class Pipeline(JobPipeline):
             )
         changed = [e for e in dict.fromkeys(changed) if e in set(db.scalars(live))]
         chosen: list[tuple[UUID, UUID]] = []  # (entry, chunk)
+        changed_ready: list[UUID] = []
         for entry_id in changed[:CHANGED_ENTRIES]:
             chunk_id = db.scalar(
                 select(Chunk.id)
@@ -235,6 +237,7 @@ class Pipeline(JobPipeline):
             )
             if chunk_id is not None:
                 chosen.append((entry_id, chunk_id))
+                changed_ready.append(entry_id)
         questions = list(
             db.scalars(
                 select(ProjectQuestion)
@@ -274,6 +277,7 @@ class Pipeline(JobPipeline):
         )
         return {
             "evidence": evidence,
+            "changed_entries": [str(entry_id) for entry_id in changed_ready],
             "changes": [
                 [kind, str(subject) if subject else None] for kind, subject in changes
             ],
@@ -418,6 +422,44 @@ class Pipeline(JobPipeline):
             p["model"] = model
 
         self.save("summarize", update)
+        return {}
+
+    def relate(self, state: MaintenanceState) -> dict[str, Any]:
+        """Suggest related entries and questions for this run's changed entries."""
+        self.hook("relate")
+        payload = self.payload()
+        if payload["noop"]:
+            return {}
+        assert self.models is not None and self.claim is not None
+        done = set(payload.get("related", []))
+        pending = [e for e in payload.get("changed_entries", []) if e not in done]
+        if not pending:
+            return {}
+        owner_id, project_id = self.claim.owner_id, self.project_id
+        with self.sessions() as db:
+            questions = relations.embed_questions(
+                db, project_id, self.models.embedder, self.record
+            )
+            for entry_text in pending:
+                entry_id = UUID(entry_text)
+                suggestions = (
+                    []
+                    if relations.already_suggested(db, project_id, entry_id)
+                    else relations.suggest(
+                        db,
+                        owner_id,
+                        project_id,
+                        entry_id,
+                        questions,
+                        self.models.router,
+                        self.record,
+                    )
+                )
+                with self.step("relate") as (write, job):
+                    relations.store(write, owner_id, project_id, entry_id, suggestions)
+                    updated = dict(job.payload or {})
+                    updated["related"] = [*updated.get("related", []), entry_text]
+                    job.payload = updated
         return {}
 
     def publish(self, state: MaintenanceState) -> dict[str, Any]:

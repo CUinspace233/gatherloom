@@ -14,6 +14,7 @@ from app.auth import router as auth_router
 from app.conversations import router as conversations_router
 from app.entries import router as entries_router
 from app.projects import router as projects_router
+from app.relations import router as relations_router
 from app.search_api import router as search_router
 from app.summaries import router as summaries_router
 
@@ -25,6 +26,7 @@ app.include_router(attachments_router)
 app.include_router(search_router)
 app.include_router(conversations_router)
 app.include_router(summaries_router)
+app.include_router(relations_router)
 # Multipart framing and form fields add a little to the file itself.
 MAX_UPLOAD_REQUEST = storage.MAX_ATTACHMENT_BYTES + 64 * 1024
 allowed_clients = frozenset(

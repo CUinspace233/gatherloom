@@ -30,6 +30,10 @@ class FakeAPI:
         self.chat: list[Reply] = []
         self.embeddings: list[Reply] = []
         self.requests: list[tuple[str, dict[str, Any]]] = []
+        # Relation suggestions default to none; tests script them when needed.
+        self.defaults: list[tuple[str, Reply]] = [
+            ("帮用户整理一个项目里的资料", chat_reply({"relations": []})),
+        ]
 
     def handle(self, request: httpx.Request) -> httpx.Response:
         body = json.loads(request.content)
@@ -40,12 +44,20 @@ class FakeAPI:
             if reply is None:
                 reply = embedding_reply(len(body["input"]))
         else:
-            reply = self.chat.pop(0) if self.chat else chat_reply(CARD)
+            reply = self.chat.pop(0) if self.chat else self.default_chat(body)
         if isinstance(reply, Exception):
             raise reply
         if isinstance(reply, int):
             return httpx.Response(reply, json={"error": {"message": "scripted"}})
         return httpx.Response(200, json=reply)
+
+    def default_chat(self, body: dict[str, Any]) -> Reply:
+        """Unscripted replies, chosen by the task's system prompt."""
+        system = body["messages"][0]["content"] if body.get("messages") else ""
+        for marker, reply in self.defaults:
+            if marker in system:
+                return reply
+        return chat_reply(CARD)
 
     def count(self, path: str) -> int:
         return sum(1 for name, _ in self.requests if name == path)
