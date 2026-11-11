@@ -34,7 +34,7 @@ from app.models import (
     SummaryRevision,
 )
 
-PROMPT_VERSION = 1
+PROMPT_VERSION = 2
 TASK = "project_summary"
 EVIDENCE_LIMIT = 16
 EVIDENCE_CHARS = 600
@@ -93,8 +93,9 @@ SYSTEM = """你维护一个个人项目的“当前认识”总结。只能依�
 3. 证据之间有矛盾时并列说明；同一件事前后变化时，以较新的记录为准并说明变化。
 4. uncertainties 写目前仍不清楚、证据不足或相互矛盾的地方，可结合待解问题。
 5. change_note 用一句话说明相对上一版总结的变化；没有上一版时写“首次总结”。
-7. 篇幅：understanding 不超过 600 字；key_points 最多 8 条，挑最重要的；uncertainties 最多 6 条。
 6. 不使用材料以外的知识，不编造来源。“导航上下文”只帮助理解，不能引用。
+7. 篇幅：understanding 不超过 600 字；key_points 最多 8 条，挑最重要的；uncertainties 最多 6 条。
+8. 与项目主题无关的资料不写进总结，也不要专门指出它无关。
 只输出 JSON：{"understanding": 段落, "key_points": [{"text": 要点, "citations": [编号]}], "uncertainties": [不确定项], "change_note": 变化说明}。"""
 
 

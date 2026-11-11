@@ -339,3 +339,15 @@ def test_basis_changes_and_isolation(
         ).status_code
         == 422
     )
+
+
+def test_drafts_state_the_option_and_need_an_alternative() -> None:
+    reply = drafts_reply(
+        draft("路线", choice="建议选择 A 线"),
+        draft("装备", choice="建议带雨衣", alternatives=[]),
+    )
+    content = reply["choices"][0]["message"]["content"]
+    result = decisions.validate_drafts(content, {1})
+    assert [(d.title, d.choice) for d in result.drafts] == [("路线", "A 线")]
+    assert decisions.plain_choice("推荐：用 X") == "用 X"
+    assert decisions.plain_choice("建议") == "建议"
