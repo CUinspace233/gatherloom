@@ -180,8 +180,8 @@ private struct ProjectDetailView: View {
             ProjectDecisionsSection(session: session, capture: capture, project: project)
             ProjectReviewsSection(session: session, capture: capture, project: project)
             ProjectConversationsSection(session: session, capture: capture, project: project)
-            Section("记录") {
-                NavigationLink("查看项目记录") {
+            Section("资料") {
+                NavigationLink("全部资料") {
                     CaptureEntriesView(session: session, capture: capture, project: project)
                 }
             }

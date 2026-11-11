@@ -232,7 +232,7 @@ struct CaptureEntriesView: View {
                 ContentUnavailableView("还没有记录", systemImage: "tray")
             }
         }
-        .navigationTitle(project == nil ? "收集箱" : "项目记录")
+        .navigationTitle(project == nil ? "收集箱" : "项目资料")
         .task(id: capture.confirmationCount) { await load() }
         .refreshable {
             capture.retry()
