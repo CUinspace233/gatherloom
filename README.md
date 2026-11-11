@@ -95,7 +95,20 @@ Worker 需要 `server/.env` 中的百炼与 DeepSeek key，缺少时拒绝启动
 
 项目问答：`POST /v1/conversations/{id}/messages` 返回 202 和 `run_id`，Worker 只用本项目的资料回答（heavy 模型），回答里的 `[n]` 指向原文片段，客户端轮询 `GET /v1/runs/{id}`。资料不足时直接说明，不联网补充。知识卡片只作导航，不能被引用。
 
-评测集与命令见 [docs/evaluation](docs/evaluation/README.md)：`python -m evaluation.load`、`evaluation.retrieval`、`evaluation.answers`。
+### 项目认识：总结、关联建议、决定与回顾
+
+资料可检索、加入或移出项目、删除，以及待解问题和正式决定发生变化时，服务端记录一条项目事件，并安排一次维护（2 分钟内的变化合并成一次）。维护由 Worker 执行：更新项目的 AI 总结（每次一个新版本，可回看历史），为新资料提出「相关资料」「与待解问题相关」的建议，并在资料里出现明确的选项与倾向时提出决定草稿（每项目每天最多 3 个）。草稿只有在你确认后才成为正式决定；正式决定的修订保留历史。AI 生成的内容不会再触发维护。
+
+周回顾需要单独启动 scheduler，它每 5 分钟检查一次，在每个账号时区的周一 09:00 之后，为上一周有变化的项目生成回顾：
+
+```sh
+cd server
+uv run --locked --env-file .env python -m app.scheduler
+```
+
+项目页的「生成阶段回顾」可以随时生成从上次回顾结束到现在的回顾。
+
+评测集与命令见 [docs/evaluation](docs/evaluation/README.md)：`python -m evaluation.load`、`evaluation.retrieval`、`evaluation.answers`、`evaluation.understanding`。
 
 ### 检查与测试
 

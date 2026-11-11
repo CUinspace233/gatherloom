@@ -33,6 +33,7 @@ cd server
 uv run --locked --env-file .env python -m evaluation.load       # 导入并整理（eval_a、eval_b 账号）
 uv run --locked --env-file .env python -m evaluation.retrieval  # 检索评测，写入 results/<日期>-retrieval.md
 uv run --locked --env-file .env python -m evaluation.answers    # 问答评测（无答案题、范围题），写入 results/<日期>-answers.md
+uv run --locked --env-file .env python -m evaluation.understanding  # 总结、关联建议、决定草稿与回顾，写入 results/<日期>-understanding.md
 ```
 
 截图材料只有 OCR 文字，附件记录没有图片文件。

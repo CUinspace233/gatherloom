@@ -75,7 +75,8 @@ def test_suggestions_stay_in_the_project_and_are_made_once(
     assert all("咖啡" not in prompt for prompt in prompts)
     assert all("状态管理选哪个方案" in prompt for prompt in prompts)
     rows = stored(committed, app_project)
-    assert len(rows) == 3
+    # The second entry's pick points back at the first: same pair, skipped.
+    assert len(rows) == 2
     assert {r.target_question_id for r in rows if r.target_question_id} == {question_id}
     with committed() as db:
         in_app = {
@@ -97,7 +98,7 @@ def test_suggestions_stay_in_the_project_and_are_made_once(
     api.chat.append(summary_reply("新一版 [1]。"))
     assert run_maintenance(committed, saver, api, clock) == "succeeded"
     assert len(relation_prompts(api)) == 3
-    assert len(stored(committed, app_project)) == 3
+    assert len(stored(committed, app_project)) == 2
 
 
 def test_relation_api_accepts_dismisses_and_hides(
@@ -203,3 +204,53 @@ def test_relation_api_accepts_dismisses_and_hides(
         .where(Entry.id == UUID(target))
         .values(deleted_at=datetime.now(UTC))
     )
+
+
+def test_reasons_must_not_show_candidate_labels() -> None:
+    from app import relations
+
+    assert relations.LABEL.search("与 E2 观点相反")
+    assert relations.LABEL.search("回答了Q1")
+    assert not relations.LABEL.search("都讨论 SwiftUI 状态管理")
+    assert not relations.LABEL.search("都提到 iOS17 和 SE2")
+
+
+def test_a_pair_is_suggested_in_one_direction_only(
+    committed: sessionmaker[Session],
+    ready_project: tuple[UUID, UUID, FakeAPI, Clock],
+) -> None:
+    from app import relations
+
+    owner, project_id, _api, _clock = ready_project
+    with committed() as db:
+        first, second = db.scalars(
+            select(Entry.id).where(Entry.owner_id == owner).order_by(Entry.created_at)
+        ).all()
+    with committed.begin() as db:
+        relations.store(
+            db,
+            owner,
+            project_id,
+            first,
+            [
+                {
+                    "target_entry_id": str(second),
+                    "target_question_id": None,
+                    "reason": "同主题",
+                }
+            ],
+        )
+        relations.store(
+            db,
+            owner,
+            project_id,
+            second,
+            [
+                {
+                    "target_entry_id": str(first),
+                    "target_question_id": None,
+                    "reason": "同主题",
+                }
+            ],
+        )
+    assert len(stored(committed, project_id)) == 1

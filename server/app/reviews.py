@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Response
 from langgraph.graph import END, START, StateGraph
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -179,6 +179,18 @@ Section = Annotated[list[Item], Field(max_length=6)]
 class ReviewDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    @field_validator(
+        "new_information",
+        "understanding_changes",
+        "decisions",
+        "open_questions",
+        "next_steps",
+        mode="before",
+    )
+    @classmethod
+    def keep_first(cls, value: Any) -> Any:
+        return value[:6] if isinstance(value, list) else value
+
     new_information: Section
     understanding_changes: Section
     decisions: Section
@@ -193,7 +205,7 @@ decisions（本期确认或修订的正式决定）、open_questions（仍未解
 1. 事实后用 [n] 标注证据编号，每条的 citations 必须与该条正文中的 [n] 一致；没有对应证据的条目 citations 为空。
 2. 只有“本期正式决定”列表里的内容可以写成决定；不要把建议或草稿写成已决定。
 3. next_steps 是建议，用“建议……”开头。
-4. 没有内容的部分返回空列表，不要凑数；不使用材料以外的知识。
+4. 没有内容的部分返回空列表，不要凑数；每部分最多 6 条；不使用材料以外的知识。
 只输出 JSON：{"new_information": [{"text": ..., "citations": [...]}], "understanding_changes": [...], "decisions": [...], "open_questions": [...], "next_steps": [...]}。"""
 
 
