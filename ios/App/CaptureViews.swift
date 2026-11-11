@@ -408,6 +408,12 @@ struct EntryDetailView: View {
             }
             Section {
                 Button("删除记录", role: .destructive) { confirmsDelete = true }
+                    // Anchored here so the dialog points at this button.
+                    .confirmationDialog("删除这条记录？", isPresented: $confirmsDelete, titleVisibility: .visible) {
+                        Button("删除", role: .destructive) { Task { await delete() } }
+                    } message: {
+                        Text("记录会从收集箱、项目和搜索中移除。")
+                    }
             }
         }
         .disabled(isWorking)
@@ -419,11 +425,6 @@ struct EntryDetailView: View {
         .refreshable { await reload() }
         .sheet(isPresented: $isEditing) {
             EntryEditor(entry: entry) { text, note in try await save(text: text, note: note) }
-        }
-        .confirmationDialog("删除这条记录？", isPresented: $confirmsDelete, titleVisibility: .visible) {
-            Button("删除", role: .destructive) { Task { await delete() } }
-        } message: {
-            Text("记录会从收集箱、项目和搜索中移除。")
         }
     }
 

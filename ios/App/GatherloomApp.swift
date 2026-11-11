@@ -88,6 +88,15 @@ private struct AccountSettingsView: View {
                         Text("有 \(capture.pending.count) 条记录尚未同步。退出后会保存在本机，下次登录同一账号时继续上传，不会提交到其他账号。")
                             .foregroundStyle(.secondary)
                         Button("删除本机未同步记录", role: .destructive) { confirmsDiscard = true }
+                            .confirmationDialog(
+                                "删除 \(capture.pending.count) 条未同步记录？",
+                                isPresented: $confirmsDiscard,
+                                titleVisibility: .visible
+                            ) {
+                                Button("删除本机副本", role: .destructive) { Task { await capture.discardPending() } }
+                            } message: {
+                                Text("这些记录还没有上传到服务器，删除后无法恢复。")
+                            }
                     }
                 }
                 Button("退出登录", role: .destructive) {
@@ -105,13 +114,6 @@ private struct AccountSettingsView: View {
             .navigationTitle("账号设置")
             .toolbar { Button("完成") { dismiss() }.disabled(session.isSigningOut) }
             .interactiveDismissDisabled(session.isSigningOut)
-            .confirmationDialog(
-                "删除 \(capture.pending.count) 条未同步记录？", isPresented: $confirmsDiscard, titleVisibility: .visible
-            ) {
-                Button("删除本机副本", role: .destructive) { Task { await capture.discardPending() } }
-            } message: {
-                Text("这些记录还没有上传到服务器，删除后无法恢复。")
-            }
         }
     }
 }
