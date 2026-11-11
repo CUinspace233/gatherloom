@@ -26,8 +26,8 @@ from app.contracts import (
     RunView,
 )
 from app.entries import CONFLICT
-from app.jobs import ACTIVE, ANSWER
-from app.models import Citation, Conversation, Job, Message
+from app.jobs import ACTIVE, ANSWER, REVIEW
+from app.models import Citation, Conversation, Job, Message, Project
 from app.projects import BAD_CURSOR, NOT_FOUND, Cursor, Limit, get_project, paginate
 
 router = APIRouter(prefix="/v1", tags=["conversations"], responses=AUTH_ERROR)
@@ -49,7 +49,7 @@ def get_conversation(
 
 def get_run(db: Session, owner_id: UUID, run_id: UUID, *, lock: bool = False) -> Job:
     query = select(Job).where(
-        Job.owner_id == owner_id, Job.id == run_id, Job.kind == ANSWER
+        Job.owner_id == owner_id, Job.id == run_id, Job.kind.in_((ANSWER, REVIEW))
     )
     job = db.scalar(query.with_for_update() if lock else query)
     if job is None:
@@ -66,6 +66,7 @@ def run_view(job: Job, answer_id: UUID | None) -> RunView:
         attempts=job.attempts,
         can_retry=job.status == "failed",
         answer_message_id=answer_id,
+        review_id=(job.payload or {}).get("review_id") if job.kind == REVIEW else None,
         updated_at=job.updated_at,
     )
 
@@ -241,17 +242,27 @@ def ask(
 
 @router.get("/runs/{run_id}", responses=NOT_FOUND)
 def run_status(run_id: UUID, owner: Owner, db: Db) -> RunView:
-    """State of a question's answer run."""
+    """State of an answer or review run, with what it produced."""
     job = get_run(db, owner.id, run_id)
-    assert job.message_id is not None
+    if job.message_id is None:
+        return run_view(job, None)
     return run_view(job, answer_ids(db, owner.id, [job.message_id]).get(job.message_id))
 
 
 @router.post("/runs/{run_id}/retry", responses={**NOT_FOUND, **CONFLICT})
 def retry_run(run_id: UUID, owner: Owner, db: Db) -> RunView:
-    """Run a failed answer again. Queued or running runs are returned as is."""
+    """Run a failed answer or review again. Active runs are returned as is."""
     job = get_run(db, owner.id, run_id)
-    db.scalar(select(Message.id).where(Message.id == job.message_id).with_for_update())
+    if job.message_id is not None:
+        db.scalar(
+            select(Message.id).where(Message.id == job.message_id).with_for_update()
+        )
+    else:
+        db.scalar(
+            select(Project.id)
+            .where(Project.id == job.project_id)
+            .with_for_update(read=True)
+        )
     job = get_run(db, owner.id, run_id, lock=True)
     if job.status == "failed":
         now = datetime.now(UTC)

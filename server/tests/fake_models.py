@@ -35,6 +35,18 @@ class FakeAPI:
         self.defaults: list[tuple[str, Reply]] = [
             ("帮用户整理一个项目里的资料", chat_reply({"relations": []})),
             ("值得做出决定", chat_reply({"drafts": []})),
+            (
+                "阶段回顾",
+                chat_reply(
+                    {
+                        "new_information": [],
+                        "understanding_changes": [],
+                        "decisions": [],
+                        "open_questions": [],
+                        "next_steps": [],
+                    }
+                ),
+            ),
         ]
 
     def handle(self, request: httpx.Request) -> httpx.Response:
