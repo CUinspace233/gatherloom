@@ -28,6 +28,7 @@ from app.models import (
     ProjectEntry,
     ProjectEvent,
     ProjectQuestion,
+    Relation,
     Run,
     SummaryRevision,
     User,
@@ -99,6 +100,7 @@ def purge_committed(sessions: sessionmaker[Session]) -> None:
             return
         for model in (
             Run,
+            Relation,
             Artifact,
             Chunk,
             Job,

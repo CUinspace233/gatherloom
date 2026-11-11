@@ -20,13 +20,13 @@ from app.models import (
     ProjectEntry,
     ProjectEvent,
     ProjectQuestion,
+    Relation,
     Run,
     SummaryRevision,
 )
 
 #: Extra tables owned by a project, deleted before the project itself.
-#: Later stages append their models here (relations, decisions, reviews).
-PROJECT_TABLES: list[type] = [ProjectEvent, SummaryRevision]
+PROJECT_TABLES: list[type] = [Relation, ProjectEvent, SummaryRevision]
 
 
 def purge_project(db: Session, owner_id: UUID, project_id: UUID) -> None:

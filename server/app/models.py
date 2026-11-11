@@ -94,6 +94,7 @@ class ProjectQuestion(Base):
             ["projects.owner_id", "projects.id"],
             name="fk_questions_project_owner",
         ),
+        UniqueConstraint("owner_id", "id", name="uq_questions_owner_id_id"),
         CheckConstraint("status IN ('open', 'resolved')", name="ck_questions_status"),
         Index(
             "ix_questions_owner_project_created_id",
@@ -556,3 +557,70 @@ class SummaryRevision(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Relation(Base):
+    """An AI-suggested link from an entry revision to another entry or to an
+    open question in the same project. Accepting keeps it; dismissing hides
+    it, and the same entry revision never gets suggestions again."""
+
+    __tablename__ = "relations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_relations_project_owner",
+        ),
+        revision_key("fk_relations_entry_revision_owner"),
+        ForeignKeyConstraint(
+            ["owner_id", "target_entry_id"],
+            ["entries.owner_id", "entries.id"],
+            name="fk_relations_target_entry_owner",
+        ),
+        ForeignKeyConstraint(
+            ["owner_id", "target_question_id"],
+            ["project_questions.owner_id", "project_questions.id"],
+            name="fk_relations_target_question_owner",
+        ),
+        CheckConstraint(
+            "(target_entry_id IS NULL) <> (target_question_id IS NULL)",
+            name="ck_relations_one_target",
+        ),
+        CheckConstraint(
+            "status IN ('suggested', 'accepted', 'dismissed')",
+            name="ck_relations_status",
+        ),
+        Index(
+            "uq_relations_entry_target",
+            "project_id",
+            "entry_id",
+            "revision",
+            "target_entry_id",
+            unique=True,
+            postgresql_where=text("target_entry_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_relations_question_target",
+            "project_id",
+            "entry_id",
+            "revision",
+            "target_question_id",
+            unique=True,
+            postgresql_where=text("target_question_id IS NOT NULL"),
+        ),
+        Index("ix_relations_owner_entry", "owner_id", "entry_id"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    project_id: Mapped[UUID]
+    entry_id: Mapped[UUID]
+    revision: Mapped[int]
+    target_entry_id: Mapped[UUID | None]
+    target_question_id: Mapped[UUID | None]
+    reason: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(16), server_default="suggested")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
