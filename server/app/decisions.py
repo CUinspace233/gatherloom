@@ -95,6 +95,9 @@ def fingerprint(sources: list[dict[str, Any]]) -> str:
 def validate_drafts(content: str, numbers: set[int]) -> DraftList:
     drafts = grounding.parse(content, DraftList)
     for draft in drafts.drafts:
+        draft.rationale, draft.citations = grounding.reconcile(
+            draft.rationale, draft.citations
+        )
         grounding.check_markers([draft.rationale], draft.citations, numbers)
         text = draft.title + draft.choice + draft.rationale
         if found := [word for word in FORBIDDEN if word in text]:

@@ -210,7 +210,7 @@ def test_invalid_citations_are_repaired_once_then_fail(
 
     failing = question(committed, owner, app_project, "还有什么？")
     api.chat += [
-        reply("见 [1]。", []),  # marker without citation
+        reply("见 [1]。", [2]),  # marker and citation disagree
         chat_reply("not json"),
     ]
     assert answer_with(committed, saver, api, clock) == "failed"
@@ -290,10 +290,26 @@ def test_insufficient_answers_may_cite_partial_evidence() -> None:
     assert partial.insufficient and partial.citations == [2]
     with pytest.raises(ValueError, match="不一致"):
         answering.validate(
-            '{"answer": "只知道搜索先上线。", "citations": [2], "insufficient": true}',
+            '{"answer": "只知道搜索先上线 [1]。", "citations": [2], '
+            '"insufficient": true}',
             {1, 2},
         )
+    # A missing side is filled in rather than rejected.
+    filled = answering.validate(
+        '{"answer": "只知道搜索先上线。", "citations": [2], "insufficient": true}',
+        {1, 2},
+    )
+    assert filled.answer.endswith("[2]")
     with pytest.raises(ValueError, match="没有引用"):
         answering.validate(
             '{"answer": "结论如此。", "citations": [], "insufficient": false}', {1}
         )
+
+
+def test_reconcile_fills_in_a_missing_side_only() -> None:
+    from app import grounding
+
+    assert grounding.reconcile("结论。", [2, 1]) == ("结论。[1][2]", [2, 1])
+    assert grounding.reconcile("结论 [3]。", []) == ("结论 [3]。", [3])
+    assert grounding.reconcile("结论 [3]。", [1]) == ("结论 [3]。", [1])
+    assert grounding.reconcile("结论。", []) == ("结论。", [])

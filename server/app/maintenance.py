@@ -104,6 +104,7 @@ def validate_summary(content: str, numbers: set[int]) -> SummaryDraft:
         [draft.understanding], grounding.markers(draft.understanding), numbers
     )
     for point in draft.key_points:
+        point.text, point.citations = grounding.reconcile(point.text, point.citations)
         grounding.check_markers([point.text], point.citations, numbers)
     return draft
 
