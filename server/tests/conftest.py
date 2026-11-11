@@ -33,6 +33,7 @@ from app.models import (
     ProjectEvent,
     ProjectQuestion,
     Relation,
+    Review,
     Run,
     SummaryRevision,
     User,
@@ -119,6 +120,7 @@ def purge_committed(sessions: sessionmaker[Session]) -> None:
             Entry,
             ProjectEvent,
             SummaryRevision,
+            Review,
             ProjectQuestion,
             Project,
         ):

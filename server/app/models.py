@@ -698,3 +698,42 @@ class DecisionRevision(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class Review(Base):
+    """A stage review of one period. Automatic reviews are unique per
+    project and period, so scheduler retries publish once ([T7])."""
+
+    __tablename__ = "reviews"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_reviews_project_owner",
+        ),
+        CheckConstraint("kind IN ('auto', 'manual')", name="ck_reviews_kind"),
+        Index(
+            "uq_reviews_auto_period",
+            "project_id",
+            "period_start",
+            "period_end",
+            unique=True,
+            postgresql_where=text("kind = 'auto'"),
+        ),
+        Index("ix_reviews_project_created", "project_id", "created_at"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    project_id: Mapped[UUID]
+    kind: Mapped[str] = mapped_column(String(8))
+    period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    period_end: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    sources: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    input_snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    model: Mapped[str | None] = mapped_column(String(128))
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

@@ -378,6 +378,9 @@ class RunView(BaseModel):
     attempts: int
     can_retry: bool
     answer_message_id: UUID | None
+    review_id: UUID | None = Field(
+        default=None, description="The review a review run produced."
+    )
     updated_at: datetime
 
 
