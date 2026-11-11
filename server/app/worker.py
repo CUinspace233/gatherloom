@@ -23,7 +23,7 @@ from psycopg.rows import dict_row
 from sqlalchemy import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import answering, ingestion, jobs, tokenizer
+from app import answering, ingestion, jobs, maintenance, tokenizer
 from app.db import DATABASE_URL, SessionLocal
 from app.graphs import JobPipeline
 from app.providers import Models, build_models
@@ -123,6 +123,9 @@ def work(
                 sessions, saver, worker_id, models=models
             ),
             jobs.ANSWER: answering.Pipeline(sessions, saver, worker_id, models=models),
+            jobs.MAINTENANCE: maintenance.Pipeline(
+                sessions, saver, worker_id, models=models
+            ),
         }
         while not stopping.is_set():
             try:

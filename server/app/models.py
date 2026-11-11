@@ -227,12 +227,26 @@ class Job(Base):
             name="fk_jobs_message_owner",
         ),
         UniqueConstraint("message_id", name="uq_jobs_message"),
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_jobs_project_owner",
+        ),
         CheckConstraint(
             "(kind = 'entry_ingestion' AND entry_id IS NOT NULL"
-            " AND revision IS NOT NULL AND message_id IS NULL)"
+            " AND revision IS NOT NULL AND message_id IS NULL AND project_id IS NULL)"
             " OR (kind = 'project_answer' AND message_id IS NOT NULL"
-            " AND entry_id IS NULL AND revision IS NULL)",
+            " AND entry_id IS NULL AND revision IS NULL AND project_id IS NULL)"
+            " OR (kind IN ('project_maintenance', 'project_review')"
+            " AND project_id IS NOT NULL AND entry_id IS NULL"
+            " AND revision IS NULL AND message_id IS NULL)",
             name="ck_jobs_subject",
+        ),
+        Index(
+            "uq_jobs_queued_maintenance",
+            "project_id",
+            unique=True,
+            postgresql_where=text("kind = 'project_maintenance' AND status = 'queued'"),
         ),
         ForeignKeyConstraint(
             ["owner_id", "entry_id", "revision"],
@@ -266,6 +280,8 @@ class Job(Base):
     entry_id: Mapped[UUID | None]
     revision: Mapped[int | None]
     message_id: Mapped[UUID | None]
+    project_id: Mapped[UUID | None]
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     kind: Mapped[str] = mapped_column(String(32))
     status: Mapped[str] = mapped_column(String(16), server_default="queued")
     attempts: Mapped[int] = mapped_column(server_default="0")
@@ -485,3 +501,58 @@ class Citation(Base):
     start_offset: Mapped[int]
     end_offset: Mapped[int]
     snippet: Mapped[str] = mapped_column(Text)
+
+
+class ProjectEvent(Base):
+    """A user-made change to a project's material; ``seq`` is the watermark.
+
+    AI-derived output (cards, summaries, relations, drafts, reviews) never
+    writes events, so maintenance cannot trigger itself.
+    """
+
+    __tablename__ = "project_events"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_project_events_project_owner",
+        ),
+        Index("ix_project_events_project_seq", "project_id", "seq"),
+    )
+
+    seq: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    owner_id: Mapped[UUID]
+    project_id: Mapped[UUID]
+    kind: Mapped[str] = mapped_column(String(32))
+    subject_id: Mapped[UUID | None]
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
+class SummaryRevision(Base):
+    """One published version of a project's AI-maintained summary."""
+
+    __tablename__ = "summary_revisions"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["owner_id", "project_id"],
+            ["projects.owner_id", "projects.id"],
+            name="fk_summary_revisions_project_owner",
+        ),
+        UniqueConstraint("project_id", "version", name="uq_summary_revisions_version"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[UUID]
+    project_id: Mapped[UUID]
+    version: Mapped[int]
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    sources: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
+    watermark: Mapped[int] = mapped_column(BigInteger)
+    coverage: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    change_note: Mapped[str] = mapped_column(Text, server_default="")
+    model: Mapped[str | None] = mapped_column(String(128))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

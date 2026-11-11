@@ -414,3 +414,44 @@ class MessageView(BaseModel):
 class AnswerAccepted(BaseModel):
     message: MessageView
     run_id: UUID
+
+
+class SummaryPoint(BaseModel):
+    text: str = Field(description="Marks citations as [n].")
+    citations: list[int]
+
+
+class SummaryCoverage(BaseModel):
+    entries: int = Field(description="Live entries in the project.")
+    ready: int = Field(description="Entries already indexed.")
+    represented: int = Field(description="Entries whose text the summary saw.")
+    partial: bool = Field(description="Not every ready entry fit in this run.")
+
+
+class SummaryView(BaseModel):
+    """AI-maintained understanding of a project at one watermark."""
+
+    version: int
+    understanding: str
+    key_points: list[SummaryPoint]
+    uncertainties: list[str]
+    change_note: str
+    sources: list[CitationView]
+    coverage: SummaryCoverage
+    based_on: datetime | None = Field(
+        description="Time of the latest change this version includes."
+    )
+    model: str | None
+    created_at: datetime
+
+
+class SummaryListItem(BaseModel):
+    version: int
+    change_note: str
+    created_at: datetime
+
+
+class ProjectSummaries(BaseModel):
+    current: SummaryView | None
+    history: list[SummaryListItem]
+    updating: bool = Field(description="A summary update is queued or running.")

@@ -26,8 +26,10 @@ from app.models import (
     Message,
     Project,
     ProjectEntry,
+    ProjectEvent,
     ProjectQuestion,
     Run,
+    SummaryRevision,
     User,
 )
 from app.worker import checkpointer, setup_checkpoints
@@ -107,6 +109,8 @@ def purge_committed(sessions: sessionmaker[Session]) -> None:
             Attachment,
             EntryRevision,
             Entry,
+            ProjectEvent,
+            SummaryRevision,
             ProjectQuestion,
             Project,
         ):

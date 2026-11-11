@@ -228,3 +228,34 @@ def test_revision_detail_returns_original_text_and_ocr_offsets(
         ).status_code
         == 404
     )
+
+
+def test_projects_with_conversations_and_summaries_can_be_deleted(
+    client: TestClient, connection: Connection
+) -> None:
+    a = setup_account(client, connection, "chat_f")
+    conversation = client.post(
+        f"/v1/projects/{a['project']}/conversations", json={}, headers=a["headers"]
+    ).json()
+    client.post(
+        f"/v1/conversations/{conversation['id']}/messages",
+        json={"client_message_id": str(uuid4()), "text": "问题"},
+        headers=a["headers"],
+    )
+    client.post(
+        f"/v1/projects/{a['project']}/questions",
+        json={"text": "待解问题"},
+        headers=a["headers"],
+    )
+    summaries = client.get(
+        f"/v1/projects/{a['project']}/summaries", headers=a["headers"]
+    ).json()
+    assert summaries["current"] is None and summaries["updating"] is True
+    deleted = client.delete(f"/v1/projects/{a['project']}", headers=a["headers"])
+    assert deleted.status_code == 204, deleted.text
+    assert (
+        client.get(
+            f"/v1/conversations/{conversation['id']}/messages", headers=a["headers"]
+        ).status_code
+        == 404
+    )

@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from app import sources
 from app.auth import AUTH_ERROR, Db, Owner
 from app.contracts import (
     AnswerAccepted,
@@ -24,9 +25,9 @@ from app.contracts import (
     Page,
     RunView,
 )
-from app.entries import CONFLICT, views
+from app.entries import CONFLICT
 from app.jobs import ACTIVE, ANSWER
-from app.models import Citation, Conversation, Entry, Job, Message, ProjectEntry
+from app.models import Citation, Conversation, Job, Message
 from app.projects import BAD_CURSOR, NOT_FOUND, Cursor, Limit, get_project, paginate
 
 router = APIRouter(prefix="/v1", tags=["conversations"], responses=AUTH_ERROR)
@@ -99,43 +100,25 @@ def message_views(
         .order_by(Citation.n)
     ):
         citations[citation.message_id].append(citation)
-    cited = {c.entry_id for group in citations.values() for c in group}
-    entries = {
-        entry.id: entry
-        for entry in db.scalars(
-            select(Entry).where(Entry.owner_id == owner_id, Entry.id.in_(cited))
-        )
-    }
-    in_project = set(
-        db.scalars(
-            select(ProjectEntry.entry_id).where(
-                ProjectEntry.owner_id == owner_id,
-                ProjectEntry.project_id == conversation.project_id,
-                ProjectEntry.entry_id.in_(cited),
-            )
-        )
-    )
-    summaries = {view.id: view for view in views(db, owner_id, list(entries.values()))}
 
-    def citation_view(citation: Citation) -> CitationView:
-        entry = entries[citation.entry_id]
-        summary = summaries[entry.id]
-        title = summary.title or summary.text[:TITLE_CHARS] or summary.source_url or ""
-        return CitationView(
-            n=citation.n,
-            entry_id=citation.entry_id,
-            revision=citation.revision,
-            chunk_id=citation.chunk_id,
-            title=title,
-            type=summary.type,
-            created_at=entry.created_at,
-            source=citation.source,
-            snippet=citation.snippet,
-            start_offset=citation.start_offset,
-            end_offset=citation.end_offset,
-            stale=entry.deleted_at is not None
-            or entry.current_revision != citation.revision
-            or entry.id not in in_project,
+    def citation_views_for(message_id: UUID) -> list[CitationView]:
+        return sources.citation_views(
+            db,
+            owner_id,
+            conversation.project_id,
+            [
+                sources.SourceRef(
+                    n=c.n,
+                    entry_id=c.entry_id,
+                    revision=c.revision,
+                    chunk_id=c.chunk_id,
+                    source=c.source,
+                    start_offset=c.start_offset,
+                    end_offset=c.end_offset,
+                    snippet=c.snippet,
+                )
+                for c in citations[message_id]
+            ],
         )
 
     return [
@@ -148,7 +131,7 @@ def message_views(
             run=run_view(job, answers.get(message.id))
             if (job := runs.get(message.id)) is not None
             else None,
-            citations=[citation_view(c) for c in citations[message.id]],
+            citations=citation_views_for(message.id),
             created_at=message.created_at,
         )
         for message in messages
