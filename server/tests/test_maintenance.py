@@ -9,8 +9,8 @@ from fake_models import FakeAPI, chat_reply
 from langgraph.checkpoint.postgres import PostgresSaver
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session, sessionmaker
-from test_answering import ingest_all, material, project
-from test_worker import Clock, Crash, Hooks, account
+from test_answering import project
+from test_worker import Clock, Crash, Hooks
 
 from app import events, jobs, maintenance
 from app.models import Job, ProjectEvent, SummaryRevision
@@ -86,21 +86,8 @@ def summary_calls(api: FakeAPI) -> int:
     return sum(
         1
         for path, body in api.requests
-        if path == "completions" and body["model"] == "deepseek-flash"
+        if path == "completions" and "当前认识" in body["messages"][0]["content"]
     )
-
-
-@pytest.fixture
-def ready_project(
-    committed: sessionmaker[Session], saver: PostgresSaver
-) -> tuple[UUID, UUID, FakeAPI, Clock]:
-    owner = account(committed)
-    project_id = project(committed, owner, "知识库 App")
-    material(committed, owner, project_id, "SwiftUI 状态管理改用 @Observable 宏。")
-    material(committed, owner, project_id, "上传队列用幂等键防止重复提交。")
-    api, clock = FakeAPI(), Clock()
-    ingest_all(committed, saver, api, clock)
-    return owner, project_id, api, clock
 
 
 def test_ready_entries_merge_into_one_maintenance_run(

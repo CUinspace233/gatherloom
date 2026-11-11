@@ -14,6 +14,8 @@ from app.jobs import PROJECT_KINDS
 from app.models import (
     Citation,
     Conversation,
+    Decision,
+    DecisionRevision,
     Job,
     Message,
     Project,
@@ -55,7 +57,15 @@ def purge_project(db: Session, owner_id: UUID, project_id: UUID) -> None:
             Conversation.owner_id == owner_id, Conversation.project_id == project_id
         )
     )
-    for model in [*PROJECT_TABLES, ProjectEntry, ProjectQuestion]:
+    db.execute(
+        delete(DecisionRevision).where(
+            DecisionRevision.owner_id == owner_id,
+            DecisionRevision.decision_id.in_(
+                select(Decision.id).where(Decision.project_id == project_id)
+            ),
+        )
+    )
+    for model in [*PROJECT_TABLES, Decision, ProjectEntry, ProjectQuestion]:
         db.execute(
             delete(model).where(
                 model.owner_id == owner_id,  # type: ignore[attr-defined]
