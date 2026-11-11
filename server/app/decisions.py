@@ -29,7 +29,7 @@ from app.providers import Recorder, Router
 from app.sources import SourceRef, citation_views
 
 TASK = "decision_drafts"
-PROMPT_VERSION = 1
+PROMPT_VERSION = 2
 DAILY_LIMIT = 3
 FORBIDDEN = ("已决定", "已确认", "已经决定", "最终决定", "已拍板")
 STATUSES = ("draft", "confirmed", "rejected", "superseded")
@@ -74,13 +74,21 @@ class DraftList(BaseModel):
 
 SYSTEM = """你帮用户发现项目里“值得做出决定”的事项，并起草决定建议，交给用户确认。
 规则：
-1. 只有当证据里出现明确的选项，并且有倾向或理由时，才起草；没有就返回空列表，不要硬凑。
-2. 这是建议，不是用户的决定：不要写“已决定”“已确认”“最终决定”等字样，choice 写成“建议……”。
+1. 只有当证据里实际出现了两个以上可比较的方案，并且有倾向或理由时，才起草；证据里只有一个做法、或只是待办与提醒的，不起草。没有就返回空列表，不要硬凑。
+2. 这是建议，不是用户的决定：不要写“已决定”“已确认”“最终决定”等字样。choice 只写倾向的方案本身（如“选 A 线”），不加“建议”等前缀；界面会把草稿标为建议。
 3. 不要重复“已有决定与草稿”中的主题。
 4. rationale 中的事实后用 [n] 标注证据编号，citations 必须与 rationale 中的 [n] 一致。
-5. alternatives 写其他可选方案；premises 写这个建议成立的前提。
+5. alternatives 只写证据里出现过的其他方案，不要自己编；premises 写这个建议成立的前提。
 6. 不使用证据以外的知识。
-只输出 JSON：{"drafts": [{"title": 主题, "choice": 建议选择, "rationale": 理由, "alternatives": [...], "premises": [...], "citations": [编号]}]}。"""
+只输出 JSON：{"drafts": [{"title": 主题, "choice": 倾向的方案, "rationale": 理由, "alternatives": [...], "premises": [...], "citations": [编号]}]}。"""
+
+
+SUGGEST_PREFIX = re.compile(r"^(建议|推荐)(选择|采用|选)?[：:，,\s]*")
+
+
+def plain_choice(choice: str) -> str:
+    """The option itself: a confirmed decision must not read as a suggestion."""
+    return SUGGEST_PREFIX.sub("", choice.strip(), count=1) or choice
 
 
 def topic_key(title: str) -> str:
@@ -99,9 +107,12 @@ def validate_drafts(content: str, numbers: set[int]) -> DraftList:
             draft.rationale, draft.citations
         )
         grounding.check_markers([draft.rationale], draft.citations, numbers)
+        draft.choice = plain_choice(draft.choice)
         text = draft.title + draft.choice + draft.rationale
         if found := [word for word in FORBIDDEN if word in text]:
             raise ValueError(f"草稿措辞不能写成已经决定：{found}")
+    # One option is a to-do, not a decision.
+    drafts.drafts = [draft for draft in drafts.drafts if draft.alternatives]
     return drafts
 
 
@@ -394,6 +405,7 @@ def act_on_decision(
     if body.action == "confirm" and decision.status == "draft":
         for key, value in edits.items():
             setattr(decision, key, value)
+        decision.choice = plain_choice(decision.choice)
         decision.status = "confirmed"
         decision.confirmed_at = now
         add_revision(db, decision)
