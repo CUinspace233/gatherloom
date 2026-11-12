@@ -5,6 +5,9 @@ enum AppGroup {
     static let defaults = UserDefaults(suiteName: identifier) ?? .standard
     static let serverKey = "GatherloomServerURL"
     static let accountKey = "GatherloomActiveAccount"
+    /// The production backend. Release builds always use it; debug builds
+    /// default to it and may point at a local server instead.
+    static let productionServer = "https://gatherloom.cuinspace.com"
 
     /// The account the main app is signed in to, shared with the extension.
     static var activeScope: CaptureScope? {

@@ -13,7 +13,11 @@ final class AccountSession {
     private(set) var isRestoring = true
     private(set) var isSigningOut = false
     private(set) var notice: String?
-    var serverAddress = AccountSession.defaults.string(forKey: AppGroup.serverKey) ?? ""
+    #if DEBUG
+    var serverAddress = AccountSession.defaults.string(forKey: AppGroup.serverKey) ?? AppGroup.productionServer
+    #else
+    var serverAddress = AppGroup.productionServer
+    #endif
     var account: Account? { credentials?.account }
     var captureScope: CaptureScope? {
         guard let client, let account else { return nil }

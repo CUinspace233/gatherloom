@@ -34,7 +34,7 @@ GATHERLOOM_DEV_CLIENTS='<Mac IPv4>,<iPhone IPv4>' \
   uv run --locked uvicorn app.main:app --host '<Mac IPv4>' --port 8000 --reload --no-proxy-headers
 ```
 
-在登录页的「服务地址」填写 `http://<Mac 的局域网 IPv4>:8000`，再登录或注册。首次访问时按 iPhone 的提示允许本地网络访问。连接失败时登录页会显示错误。模拟器可直接使用 `http://127.0.0.1:8000`。
+App 默认连接正式服务器 `https://gatherloom.cuinspace.com`；Release 版只用这个地址，不显示「服务地址」。连接本地服务时，在 Debug 版登录页的「服务地址」填写 `http://<Mac 的局域网 IPv4>:8000`，再登录或注册（「使用正式服务器」可切回）。首次访问时按 iPhone 的提示允许本地网络访问。连接失败时登录页会显示错误。模拟器可直接使用 `http://127.0.0.1:8000`。
 
 ### 记录与分享
 

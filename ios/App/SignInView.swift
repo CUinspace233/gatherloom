@@ -19,6 +19,7 @@ struct SignInView: View {
     var body: some View {
         NavigationStack {
             Form {
+                #if DEBUG
                 Section("服务地址") {
                     TextField("https://", text: $session.serverAddress)
                         .keyboardType(.URL)
@@ -27,7 +28,10 @@ struct SignInView: View {
                         .focused($focusedField, equals: .server)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .username }
+                    Button("使用正式服务器") { session.serverAddress = AppGroup.productionServer }
+                        .disabled(session.serverAddress == AppGroup.productionServer)
                 }
+                #endif
                 Section(isRegistering ? "创建账号" : "登录") {
                     TextField("用户名", text: $username)
                         .textContentType(.username)
