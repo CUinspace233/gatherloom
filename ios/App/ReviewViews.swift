@@ -10,7 +10,7 @@ struct ReviewSummary: Decodable, Identifiable, Hashable {
 
     var title: String {
         let range = "\(periodStart.formatted(.dateTime.month().day()))–\(periodEnd.formatted(.dateTime.month().day()))"
-        return kind == "auto" ? "周回顾 \(range)" : "阶段回顾 \(range)"
+        return kind == "auto" ? String(localized: "周回顾 \(range)") : String(localized: "阶段回顾 \(range)")
     }
 }
 
@@ -58,7 +58,7 @@ struct ProjectReviewsSection: View {
                 } label: {
                     HStack {
                         if review.unread {
-                            Circle().fill(Color.accentColor).frame(width: 8, height: 8)
+                            Circle().fill(.warm).frame(width: 8, height: 8)
                         }
                         Text(review.title)
                     }
@@ -102,7 +102,7 @@ struct ProjectReviewsSection: View {
                 )
                 if state.status == "succeeded" { break }
                 if state.status == "failed" || state.status == "cancelled" {
-                    errorMessage = "回顾生成失败，可以稍后再试。"
+                    errorMessage = String(localized: "回顾生成失败，可以稍后再试。")
                     break
                 }
             }
@@ -132,11 +132,11 @@ struct ReviewDetailView: View {
                     } footer: {
                         Text("AI 整理，可能有误；点 [n] 查看依据。")
                     }
-                    section("本期新增信息", review.sections.newInformation, review.sources)
-                    section("认识变化", review.sections.understandingChanges, review.sources)
-                    section("正式决定", review.sections.decisions, review.sources)
-                    section("未解决问题", review.sections.openQuestions, review.sources)
-                    section("下一阶段建议（AI 建议）", review.sections.nextSteps, review.sources)
+                    section(String(localized: "本期新增信息"), review.sections.newInformation, review.sources)
+                    section(String(localized: "认识变化"), review.sections.understandingChanges, review.sources)
+                    section(String(localized: "正式决定"), review.sections.decisions, review.sources)
+                    section(String(localized: "未解决问题"), review.sections.openQuestions, review.sources)
+                    section(String(localized: "下一阶段建议（AI 建议）"), review.sections.nextSteps, review.sources)
                 }
             } else if let errorMessage {
                 ContentUnavailableView("无法打开回顾", systemImage: "doc.questionmark", description: Text(errorMessage))
@@ -144,7 +144,8 @@ struct ReviewDetailView: View {
                 ProgressView()
             }
         }
-        .navigationTitle(review?.kind == "auto" ? "周回顾" : "阶段回顾")
+        .canvas(grouped: true)
+        .navigationTitle(review?.kind == "auto" ? String(localized: "周回顾") : String(localized: "阶段回顾"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selected) { citation in
             CitationSheet(session: session, capture: capture, citation: citation)

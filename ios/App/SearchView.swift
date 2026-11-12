@@ -32,6 +32,8 @@ struct SearchView: View {
     @State private var searchedQuery: String?
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var selectedEntry: CaptureEntry?
+    @FocusState private var searchFocused: Bool
 
     enum Period: String, CaseIterable, Identifiable {
         case week, month, all
@@ -39,9 +41,9 @@ struct SearchView: View {
         var id: Self { self }
         var title: String {
             switch self {
-            case .week: "近 7 天"
-            case .month: "近 30 天"
-            case .all: "全部时间"
+            case .week: String(localized: "近 7 天")
+            case .month: String(localized: "近 30 天")
+            case .all: String(localized: "全部时间")
             }
         }
         var since: Date? {
@@ -68,33 +70,48 @@ struct SearchView: View {
                 Label("语义检索暂不可用，仅按关键词匹配。", systemImage: "exclamationmark.triangle")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .padding(.vertical, Theme.Space.s)
+                    .plainRow()
             }
             ForEach(hits) { hit in
-                NavigationLink {
-                    EntryDetailView(capture: capture, entry: hit.entry)
-                } label: {
-                    SearchHitRow(hit: hit, projectNames: projectNames(for: hit.entry))
+                Button { selectedEntry = hit.entry } label: {
+                    EntryRow(
+                        kind: hit.entry.type,
+                        headline: hit.entry.headline,
+                        detail: detail(for: hit.entry),
+                        snippet: highlighted(hit.snippet, hit.highlights)
+                    )
                 }
+                .buttonStyle(.plain)
+                .plainRow()
             }
             if isLoading {
-                ProgressView()
+                ProgressView().frame(maxWidth: .infinity).plainRow()
             } else if let errorMessage {
-                Text(errorMessage).foregroundStyle(.secondary)
-                Button("重试") { Task { await search() } }
+                Text(errorMessage).foregroundStyle(.secondary).plainRow()
+                Button("重试") { Task { await search() } }.plainRow()
             } else if let nextCursor {
-                Button("加载更多") { Task { await search(after: nextCursor) } }
-            } else if trimmedQuery.isEmpty {
+                Button("加载更多") { Task { await search(after: nextCursor) } }.plainRow()
+            }
+        }
+        .listStyle(.plain)
+        .canvas()
+        .scrollDismissesKeyboard(.immediately)
+        .overlay {
+            if trimmedQuery.isEmpty {
                 ContentUnavailableView(
                     "搜索资料", systemImage: "magnifyingglass",
                     description: Text("按关键词或意思查找想法、链接和截图。")
                 )
-            } else if searchedQuery == trimmedQuery && hits.isEmpty {
+            } else if !isLoading, errorMessage == nil, searchedQuery == trimmedQuery, hits.isEmpty {
                 ContentUnavailableView.search(text: trimmedQuery)
             }
         }
+        .safeAreaInset(edge: .bottom) { searchBar }
         .navigationTitle("搜索")
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "搜索资料")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar { filterMenu }
+        .navigationDestination(item: $selectedEntry) { EntryDetailView(capture: capture, entry: $0) }
         .task(id: SearchKey(query: trimmedQuery, projectID: projectID, kind: kind, period: period)) {
             // Wait for typing to pause before searching.
             try? await Task.sleep(for: .milliseconds(400))
@@ -102,6 +119,35 @@ struct SearchView: View {
             await search()
         }
         .task { await capture.refreshProjects() }
+        .onAppear { searchFocused = true }
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: Theme.Space.s) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+            TextField("搜索资料", text: $query)
+                .focused($searchFocused)
+                .submitLabel(.search)
+            if !query.isEmpty {
+                Button("清除", systemImage: "xmark.circle.fill") { query = "" }
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, Theme.Space.l)
+        .frame(height: 50)
+        .glassEffect(.regular, in: .capsule)
+        .padding(.horizontal, Theme.Space.xl)
+        .padding(.bottom, Theme.Space.s)
+    }
+
+    /// Type, age, and where the entry lives.
+    private func detail(for entry: CaptureEntry) -> String {
+        let names = projectNames(for: entry)
+        let place = names.isEmpty ? String(localized: "收集箱") : names.joined(separator: "、")
+        return [entry.type.title, entry.createdAt.formatted(.relative(presentation: .named)), place]
+            .joined(separator: " · ")
     }
 
     private var filterMenu: some View {
@@ -127,7 +173,7 @@ struct SearchView: View {
             let filtered = projectID != nil || kind != nil || period != .all
             Label("筛选", systemImage: filtered
                 ? "line.3.horizontal.decrease.circle.fill"
-                : "line.3.horizontal.decrease.circle")
+                : "line.3.horizontal.decrease")
         }
     }
 
@@ -164,31 +210,7 @@ struct SearchView: View {
             searchedQuery = text
         } catch {
             guard !(error is CancellationError) else { return }
-            errorMessage = "搜索失败。\(error.localizedDescription)"
-        }
-    }
-}
-
-private struct SearchHitRow: View {
-    let hit: SearchHit
-    let projectNames: [String]
-
-    var body: some View {
-        Label {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(hit.entry.headline).font(.headline).lineLimit(2)
-                Text(highlighted(hit.snippet, hit.highlights))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
-                if !projectNames.isEmpty {
-                    Text(projectNames.joined(separator: " · "))
-                        .font(.caption)
-                        .foregroundStyle(.tint)
-                }
-            }
-        } icon: {
-            Image(systemName: hit.entry.type.symbol).foregroundStyle(.secondary)
+            errorMessage = String(localized: "搜索失败。\(error.localizedDescription)")
         }
     }
 }

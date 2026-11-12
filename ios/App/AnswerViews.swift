@@ -74,7 +74,7 @@ struct ProjectConversationsSection: View {
                     ConversationView(session: session, capture: capture, project: project, conversation: conversation)
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(conversation.title.isEmpty ? "未命名对话" : conversation.title).lineLimit(1)
+                        Text(conversation.title.isEmpty ? String(localized: "未命名对话") : conversation.title).lineLimit(1)
                         Text(conversation.updatedAt.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -160,7 +160,8 @@ struct ConversationView: View {
             }
         }
         .safeAreaInset(edge: .bottom) { composer }
-        .navigationTitle(conversation.map { $0.title.isEmpty ? "问答" : $0.title } ?? "新问题")
+        .canvas()
+        .navigationTitle(conversation.map { $0.title.isEmpty ? String(localized: "问答") : $0.title } ?? String(localized: "新问题"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await reload() }
         .task(id: pollGeneration) { await poll() }
@@ -174,19 +175,24 @@ struct ConversationView: View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField("向这个项目提问", text: $draft, axis: .vertical)
                 .lineLimit(1...5)
-                .textFieldStyle(.roundedBorder)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .glassEffect(.regular, in: .rect(cornerRadius: 22))
                 .disabled(isSending)
             Button {
                 Task { await send() }
             } label: {
-                Image(systemName: "arrow.up.circle.fill").font(.title2)
+                Image(systemName: "arrow.up").fontWeight(.semibold)
             }
+            .buttonStyle(.glassProminent)
+            .buttonBorderShape(.circle)
+            .controlSize(.large)
+            .foregroundStyle(.onAccent)
             .disabled(trimmedDraft.isEmpty || isSending || isWaiting)
             .accessibilityLabel("发送")
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.bar)
     }
 
     private func answer(to question: ChatMessage) -> ChatMessage? {
@@ -242,7 +248,7 @@ struct ConversationView: View {
             }
             pollGeneration += 1
         } catch {
-            errorMessage = "提问没有发送成功，可以再试一次。\(error.localizedDescription)"
+            errorMessage = String(localized: "提问没有发送成功，可以再试一次。\(error.localizedDescription)")
         }
     }
 
@@ -266,8 +272,9 @@ private struct QuestionBubble: View {
     var body: some View {
         VStack(alignment: .trailing, spacing: 6) {
             Text(message.content)
-                .padding(12)
-                .background(Color.accentColor.opacity(0.15), in: RoundedRectangle(cornerRadius: 16))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color.primary.opacity(0.07), in: .rect(cornerRadius: Theme.Radius.bubble))
                 .textSelection(.enabled)
             if !answered, let run = message.run, run.status == "failed" {
                 HStack {
@@ -288,11 +295,12 @@ private struct AnswerBubble: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             if message.insufficient {
-                Label(message.citations.isEmpty ? "资料不足" : "资料不足 · 以下为部分相关内容", systemImage: "questionmark.circle")
+                Label(message.citations.isEmpty ? String(localized: "资料不足") : String(localized: "资料不足 · 以下为部分相关内容"), systemImage: "questionmark.circle")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Text(answerText(message.content, cited: Set(message.citations.map(\.n))))
+                .readingText()
                 .textSelection(.enabled)
                 .environment(\.openURL, OpenURLAction { url in
                     guard url.scheme == "gatherloom-citation", let n = Int(url.host() ?? ""),
@@ -303,7 +311,8 @@ private struct AnswerBubble: View {
                     return .handled
                 })
             if !message.citations.isEmpty {
-                VStack(alignment: .leading, spacing: 4) {
+                Divider()
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(message.citations) { citation in
                         Button {
                             onCitation(citation)
@@ -313,7 +322,7 @@ private struct AnswerBubble: View {
                                 Image(systemName: citation.type.symbol)
                                 Text(citation.title.isEmpty ? citation.type.title : citation.title).lineLimit(1)
                                 if citation.stale {
-                                    Text("已变化").foregroundStyle(.orange)
+                                    Text("已变化").foregroundStyle(.warm)
                                 }
                             }
                             .font(.caption)
@@ -323,8 +332,6 @@ private struct AnswerBubble: View {
                 }
             }
         }
-        .padding(12)
-        .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 16))
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -363,7 +370,7 @@ struct CitationSheet: View {
                     if citation.stale {
                         Text("这条资料在回答之后被修改、删除或移出了项目，下面是回答时引用的原文。")
                             .font(.footnote)
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.warm)
                     }
                 }
                 Section("引用的原文") {

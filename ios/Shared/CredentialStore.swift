@@ -46,7 +46,7 @@ enum CredentialStore {
             throw NSError(
                 domain: NSOSStatusErrorDomain,
                 code: Int(status),
-                userInfo: [NSLocalizedDescriptionKey: "无法访问登录凭证（Keychain \(status)）。"]
+                userInfo: [NSLocalizedDescriptionKey: String(localized: "无法访问登录凭证（Keychain \(status)）。")]
             )
         }
     }

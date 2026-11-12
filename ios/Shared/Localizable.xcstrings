@@ -1,0 +1,3196 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "strings": {
+    "%@ 至 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ to %@"
+          }
+        }
+      }
+    },
+    "%@，%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@, %2$@"
+          }
+        }
+      }
+    },
+    "%lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    "%lld 条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld"
+          }
+        }
+      }
+    },
+    "%lld 条未同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld not synced"
+          }
+        }
+      }
+    },
+    "%lld 条资料仍在整理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sources still processing"
+          }
+        }
+      }
+    },
+    "AI 在资料里发现明确的选项与倾向时，会在这里提出草稿。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When AI finds clear options and a leaning in your sources, it drafts a decision here."
+          }
+        }
+      }
+    },
+    "AI 建议，接受后保留，忽略后不再出现。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested by AI. Accept to keep it, or ignore to hide it for good."
+          }
+        }
+      }
+    },
+    "AI 总结": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AI summary"
+          }
+        }
+      }
+    },
+    "AI 整理，可能有误；原文以上方内容为准。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organized by AI and may contain mistakes. The original above is authoritative."
+          }
+        }
+      }
+    },
+    "AI 整理，可能有误；点 [n] 查看依据。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Organized by AI and may contain mistakes. Tap [n] to see the source."
+          }
+        }
+      }
+    },
+    "Gatherloom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gatherloom"
+          }
+        }
+      }
+    },
+    "Gatherloom 已切换账号。请重新分享，以免保存到错误的账号。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gatherloom switched accounts. Share again so this isn't saved to the wrong account."
+          }
+        }
+      }
+    },
+    "Gatherloom 账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gatherloom account"
+          }
+        }
+      }
+    },
+    "[%lld]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[%lld]"
+          }
+        }
+      }
+    },
+    "[%lld] %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[%lld] %@"
+          }
+        }
+      }
+    },
+    "https://": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://"
+          }
+        }
+      }
+    },
+    "一次保存一张。请选择要保存的图片，其他图片不会保存。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One image at a time. Choose the image to save; the others won't be saved."
+          }
+        }
+      }
+    },
+    "下一阶段建议（AI 建议）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested next steps (AI)"
+          }
+        }
+      }
+    },
+    "下午好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good afternoon"
+          }
+        }
+      }
+    },
+    "不确定项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uncertainties"
+          }
+        }
+      }
+    },
+    "与待解问题相关：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Related to open question: %@"
+          }
+        }
+      }
+    },
+    "与服务器上的内容冲突，本机记录已保留。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This conflicts with the server. Your local copy was kept."
+          }
+        }
+      }
+    },
+    "个人想法": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thought"
+          }
+        }
+      }
+    },
+    "中午好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good afternoon"
+          }
+        }
+      }
+    },
+    "主题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Topic"
+          }
+        }
+      }
+    },
+    "今天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
+    "今天的 AI 用量已达上限，明天再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's AI usage limit is reached. Try again tomorrow."
+          }
+        }
+      }
+    },
+    "今天的手动回顾次数已用完，明天再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've used today's manual reviews. Try again tomorrow."
+          }
+        }
+      }
+    },
+    "今天的提问次数已用完，明天再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You've used today's questions. Try again tomorrow."
+          }
+        }
+      }
+    },
+    "今天的记录数已达上限，记录已保留在本机，明天会自动上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's entry limit is reached. The entry is kept on this device and will upload tomorrow."
+          }
+        }
+      }
+    },
+    "你保存的想法、链接正文和截图文字会存放在海外/港澳的 Gatherloom 服务器上，并发送给阿里云百炼（通义千问）和 DeepSeek，用于生成摘要、建立检索、回答问题和写总结与回顾。截图图片本身不会发送给模型服务。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The thoughts, link text, and screenshot text you save are stored on Gatherloom servers outside mainland China and sent to Alibaba Cloud Bailian (Qwen) and DeepSeek to create summaries, build search, answer questions, and write summaries and reviews. Screenshot images themselves are not sent to model services."
+          }
+        }
+      }
+    },
+    "你在做什么？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What are you working on?"
+          }
+        }
+      }
+    },
+    "使用正式服务器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use production server"
+          }
+        }
+      }
+    },
+    "使用邀请码注册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign up with an invite code"
+          }
+        }
+      }
+    },
+    "依据": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basis"
+          }
+        }
+      }
+    },
+    "依据已变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basis changed"
+          }
+        }
+      }
+    },
+    "依据已变化：引用的资料在起草后被修改或删除。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Basis changed: a cited source was edited or deleted after this was drafted."
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "保存修订": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save revision"
+          }
+        }
+      }
+    },
+    "保存到": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save to"
+          }
+        }
+      }
+    },
+    "保存到本机失败。内容仍在输入框里，可以重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save to this device. Your text is still in the field, so you can try again."
+          }
+        }
+      }
+    },
+    "保存后在本机识别截图文字，再上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After saving, text is recognized on this device, then uploaded."
+          }
+        }
+      }
+    },
+    "保存后生成新版本，旧版本仍保留。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving creates a new version. Earlier versions are kept."
+          }
+        }
+      }
+    },
+    "保存时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved"
+          }
+        }
+      }
+    },
+    "保存状态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save status"
+          }
+        }
+      }
+    },
+    "保存记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save entry"
+          }
+        }
+      }
+    },
+    "修订历史": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revision history"
+          }
+        }
+      }
+    },
+    "全部时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any time"
+          }
+        }
+      }
+    },
+    "全部类型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All types"
+          }
+        }
+      }
+    },
+    "全部资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All sources"
+          }
+        }
+      }
+    },
+    "全部项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All projects"
+          }
+        }
+      }
+    },
+    "关于": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "关联建议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested links"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "关闭菜单": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close menu"
+          }
+        }
+      }
+    },
+    "其他项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Other projects"
+          }
+        }
+      }
+    },
+    "内容须为 1–2000 个字符。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text must be 1–2,000 characters."
+          }
+        }
+      }
+    },
+    "决定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decision"
+          }
+        }
+      }
+    },
+    "决定草稿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draft decision"
+          }
+        }
+      }
+    },
+    "分享时页面正文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page text when shared"
+          }
+        }
+      }
+    },
+    "创建账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create account"
+          }
+        }
+      }
+    },
+    "删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "删除 %lld 条未同步记录？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete %lld unsynced entries?"
+          }
+        }
+      }
+    },
+    "删除本机副本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete local copies"
+          }
+        }
+      }
+    },
+    "删除本机未同步记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete unsynced entries on this device"
+          }
+        }
+      }
+    },
+    "删除记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete entry"
+          }
+        }
+      }
+    },
+    "删除资料后，它会立即从搜索和问答中移除，几分钟内从服务器清除；备份会保留最多 14 天，从备份恢复时会再次执行删除。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you delete a source, it's removed from search and answers right away and cleared from the server within minutes. Backups keep it for up to 14 days, and the deletion is applied again if a backup is restored."
+          }
+        }
+      }
+    },
+    "删除这条记录？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this entry?"
+          }
+        }
+      }
+    },
+    "刷新记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh entries"
+          }
+        }
+      }
+    },
+    "加入资料后，这里会自动总结项目的当前认识。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Once you add sources, the project's current understanding is summarized here."
+          }
+        }
+      }
+    },
+    "加入项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to project"
+          }
+        }
+      }
+    },
+    "加载更多": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Load more"
+          }
+        }
+      }
+    },
+    "历史版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earlier versions"
+          }
+        }
+      }
+    },
+    "原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original"
+          }
+        }
+      }
+    },
+    "原文已可检索，其余步骤可以重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The original is searchable. You can retry the remaining steps."
+          }
+        }
+      }
+    },
+    "发送": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send"
+          }
+        }
+      }
+    },
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes"
+          }
+        }
+      }
+    },
+    "只支持 JPEG、PNG、HEIC 和 WebP 图片。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only JPEG, PNG, HEIC, and WebP images are supported."
+          }
+        }
+      }
+    },
+    "只根据这个项目里的资料回答，并标注来源。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answers use only this project's sources and cite them."
+          }
+        }
+      }
+    },
+    "可能与已有记录重复": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "May duplicate an existing entry"
+          }
+        }
+      }
+    },
+    "可能与已有记录重复，已作为新记录保存。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This may duplicate an existing entry. It was saved as a new one."
+          }
+        }
+      }
+    },
+    "同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        }
+      }
+    },
+    "向「%@」提问": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask “%@”"
+          }
+        }
+      }
+    },
+    "向这个项目提问": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask this project"
+          }
+        }
+      }
+    },
+    "向项目提问": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask the project"
+          }
+        }
+      }
+    },
+    "周回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly review"
+          }
+        }
+      }
+    },
+    "周回顾 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly review %@"
+          }
+        }
+      }
+    },
+    "回答失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer failed"
+          }
+        }
+      }
+    },
+    "回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reviews"
+          }
+        }
+      }
+    },
+    "回顾生成失败，可以稍后再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't generate the review. Try again later."
+          }
+        }
+      }
+    },
+    "围绕项目收集、整理与回顾。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collect, organize, and review around your projects."
+          }
+        }
+      }
+    },
+    "图片超过 10 MB，无法上传。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The image is over 10 MB and can't be uploaded."
+          }
+        }
+      }
+    },
+    "在原文中查看": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View in original"
+          }
+        }
+      }
+    },
+    "在收集箱中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Inbox"
+          }
+        }
+      }
+    },
+    "基于截至 %@ 的已处理内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Based on content processed up to %@"
+          }
+        }
+      }
+    },
+    "处理状态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing status"
+          }
+        }
+      }
+    },
+    "备注": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note"
+          }
+        }
+      }
+    },
+    "备注（可选）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note (optional)"
+          }
+        }
+      }
+    },
+    "备选项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alternatives"
+          }
+        }
+      }
+    },
+    "夜深了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's late"
+          }
+        }
+      }
+    },
+    "失败步骤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed steps"
+          }
+        }
+      }
+    },
+    "存到 Gatherloom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save to Gatherloom"
+          }
+        }
+      }
+    },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "完成编辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done editing"
+          }
+        }
+      }
+    },
+    "完整总结与历史版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Full summary and earlier versions"
+          }
+        }
+      }
+    },
+    "密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password"
+          }
+        }
+      }
+    },
+    "密码须为 8–128 个字符。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password must be 8–128 characters."
+          }
+        }
+      }
+    },
+    "将作为链接保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Will be saved as a link"
+          }
+        }
+      }
+    },
+    "展开全文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show full text"
+          }
+        }
+      }
+    },
+    "已保存到服务器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to server"
+          }
+        }
+      }
+    },
+    "已保存到服务器，正在整理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to server, processing"
+          }
+        }
+      }
+    },
+    "已保存，整理失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved, processing failed"
+          }
+        }
+      }
+    },
+    "已保存，部分整理失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved, some processing failed"
+          }
+        }
+      }
+    },
+    "已全部同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All synced"
+          }
+        }
+      }
+    },
+    "已变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changed"
+          }
+        }
+      }
+    },
+    "已可检索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searchable"
+          }
+        }
+      }
+    },
+    "已存到本机，上传需要处理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved on this device, upload needs attention"
+          }
+        }
+      }
+    },
+    "已存到本机，打开 Gatherloom 后继续上传": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved on this device. Open Gatherloom to finish uploading."
+          }
+        }
+      }
+    },
+    "已存到本机，等待上传": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved on this device, waiting to upload"
+          }
+        }
+      }
+    },
+    "已归档": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archived"
+          }
+        }
+      }
+    },
+    "已归档的项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archived project"
+          }
+        }
+      }
+    },
+    "已有账号，去登录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Have an account? Sign in"
+          }
+        }
+      }
+    },
+    "已确认关联": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmed links"
+          }
+        }
+      }
+    },
+    "已被后续决定替代": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Superseded by a later decision"
+          }
+        }
+      }
+    },
+    "已解决": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resolved"
+          }
+        }
+      }
+    },
+    "已读取页面正文 %lld 字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read %lld characters of page text"
+          }
+        }
+      }
+    },
+    "已选截图": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screenshot selected"
+          }
+        }
+      }
+    },
+    "建立检索索引": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Build search index"
+          }
+        }
+      }
+    },
+    "建议选择": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggested choice"
+          }
+        }
+      }
+    },
+    "引用 [%lld]": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Citation [%lld]"
+          }
+        }
+      }
+    },
+    "引用 [%lld] 原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Citation [%lld] original"
+          }
+        }
+      }
+    },
+    "引用的内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cited text"
+          }
+        }
+      }
+    },
+    "引用的原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cited original"
+          }
+        }
+      }
+    },
+    "引用的资料在起草后被修改或删除，确认前请重新检查。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A cited source was edited or deleted after this was drafted. Check again before confirming."
+          }
+        }
+      }
+    },
+    "归入项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to project"
+          }
+        }
+      }
+    },
+    "归属": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Destination"
+          }
+        }
+      }
+    },
+    "当前认识": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current understanding"
+          }
+        }
+      }
+    },
+    "待确认决定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decisions to confirm"
+          }
+        }
+      }
+    },
+    "待解决": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
+    "待解问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open questions"
+          }
+        }
+      }
+    },
+    "忽略": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ignore"
+          }
+        }
+      }
+    },
+    "想法": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thought"
+          }
+        }
+      }
+    },
+    "想达成什么？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What are you trying to achieve?"
+          }
+        }
+      }
+    },
+    "我的备注": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My note"
+          }
+        }
+      }
+    },
+    "截图": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screenshot"
+          }
+        }
+      }
+    },
+    "所选项目已不可用，请重新选择归属。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That project is no longer available. Choose a destination again."
+          }
+        }
+      }
+    },
+    "打开资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open source"
+          }
+        }
+      }
+    },
+    "找不到该项目或待解问题。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't find that project or open question."
+          }
+        }
+      }
+    },
+    "找不到这个对话。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't find that conversation."
+          }
+        }
+      }
+    },
+    "找不到这条记录。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't find that entry."
+          }
+        }
+      }
+    },
+    "拒绝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reject"
+          }
+        }
+      }
+    },
+    "按关键词或意思查找想法、链接和截图。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find thoughts, links, and screenshots by keyword or meaning."
+          }
+        }
+      }
+    },
+    "接受": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accept"
+          }
+        }
+      }
+    },
+    "描述项目、目标、主题等…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Describe your project, goals, subject, etc."
+          }
+        }
+      }
+    },
+    "提问没有发送成功，可以再试一次。%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your question wasn't sent. You can try again. %@"
+          }
+        }
+      }
+    },
+    "搜索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
+    "搜索失败。%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search failed. %@"
+          }
+        }
+      }
+    },
+    "搜索收集箱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Inbox"
+          }
+        }
+      }
+    },
+    "搜索资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search sources"
+          }
+        }
+      }
+    },
+    "搜索项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search projects"
+          }
+        }
+      }
+    },
+    "搜索项目资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search project sources"
+          }
+        }
+      }
+    },
+    "操作太频繁，请稍后再试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many requests. Try again shortly."
+          }
+        }
+      }
+    },
+    "收起": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Collapse"
+          }
+        }
+      }
+    },
+    "收起备注": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide note"
+          }
+        }
+      }
+    },
+    "收集箱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inbox"
+          }
+        }
+      }
+    },
+    "收集箱已清空": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inbox is clear"
+          }
+        }
+      }
+    },
+    "数据": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Data"
+          }
+        }
+      }
+    },
+    "数据去向": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where your data goes"
+          }
+        }
+      }
+    },
+    "整理完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processed"
+          }
+        }
+      }
+    },
+    "文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
+          }
+        }
+      }
+    },
+    "新建项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New project"
+          }
+        }
+      }
+    },
+    "新草稿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New drafts"
+          }
+        }
+      }
+    },
+    "新记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New entry"
+          }
+        }
+      }
+    },
+    "新记录会先出现在这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New entries show up here first."
+          }
+        }
+      }
+    },
+    "新问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New question"
+          }
+        }
+      }
+    },
+    "无法保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't save"
+          }
+        }
+      }
+    },
+    "无法加载图片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't load image"
+          }
+        }
+      }
+    },
+    "无法存到本机。请重试，或打开 Gatherloom 保存。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save to this device. Try again, or open Gatherloom to save."
+          }
+        }
+      }
+    },
+    "无法打开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't open"
+          }
+        }
+      }
+    },
+    "无法打开原文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't open original"
+          }
+        }
+      }
+    },
+    "无法打开回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't open review"
+          }
+        }
+      }
+    },
+    "无法打开本机记录。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't open entries on this device."
+          }
+        }
+      }
+    },
+    "无法打开资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't open source"
+          }
+        }
+      }
+    },
+    "无法访问登录凭证（Keychain %d）。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't access sign-in credentials (Keychain %d)."
+          }
+        }
+      }
+    },
+    "无法读取本机文件，记录已保留。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't read the local file. The entry was kept."
+          }
+        }
+      }
+    },
+    "无法读取这张图片。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't read this image."
+          }
+        }
+      }
+    },
+    "早上好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good morning"
+          }
+        }
+      }
+    },
+    "时区": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time zone"
+          }
+        }
+      }
+    },
+    "时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Time"
+          }
+        }
+      }
+    },
+    "昨天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yesterday"
+          }
+        }
+      }
+    },
+    "晚上好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Good evening"
+          }
+        }
+      }
+    },
+    "暂无": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None yet"
+          }
+        }
+      }
+    },
+    "暂时无法刷新服务器记录。%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't refresh entries from the server right now. %@"
+          }
+        }
+      }
+    },
+    "更多选项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More options"
+          }
+        }
+      }
+    },
+    "最近项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent projects"
+          }
+        }
+      }
+    },
+    "有新变化，正在更新…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New changes, updating…"
+          }
+        }
+      }
+    },
+    "服务器已接收，无法更新本机队列。可以安全重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server received it, but the local queue couldn't be updated. It's safe to retry."
+          }
+        }
+      }
+    },
+    "服务地址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Server address"
+          }
+        }
+      }
+    },
+    "未同步 %lld 条 · 重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld not synced · Retry"
+          }
+        }
+      }
+    },
+    "未命名对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Untitled conversation"
+          }
+        }
+      }
+    },
+    "未解决问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unresolved questions"
+          }
+        }
+      }
+    },
+    "本期新增信息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New this period"
+          }
+        }
+      }
+    },
+    "查看最新版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View latest version"
+          }
+        }
+      }
+    },
+    "查看记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "View entry"
+          }
+        }
+      }
+    },
+    "标记为被替代…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark as superseded…"
+          }
+        }
+      }
+    },
+    "正在上传": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uploading"
+          }
+        }
+      }
+    },
+    "正在存到本机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saving to this device"
+          }
+        }
+      }
+    },
+    "正在查找资料并回答…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding sources and answering…"
+          }
+        }
+      }
+    },
+    "正在生成回顾…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generating review…"
+          }
+        }
+      }
+    },
+    "正在生成第一版总结…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generating the first summary…"
+          }
+        }
+      }
+    },
+    "正在识别截图文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recognizing screenshot text"
+          }
+        }
+      }
+    },
+    "正在读取内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading content"
+          }
+        }
+      }
+    },
+    "正在读取图片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading image"
+          }
+        }
+      }
+    },
+    "正在读取登录状态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Checking sign-in"
+          }
+        }
+      }
+    },
+    "正式决定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirmed decisions"
+          }
+        }
+      }
+    },
+    "每周一自动回顾上一周有变化的项目；手动回顾覆盖上次回顾结束至今。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects that changed are reviewed automatically each Monday. A manual review covers everything since the last one."
+          }
+        }
+      }
+    },
+    "没有可保存的文字、链接或图片。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "There's no text, link, or image to save."
+          }
+        }
+      }
+    },
+    "没有已归档的项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No archived projects"
+          }
+        }
+      }
+    },
+    "没有待确认的决定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No decisions to confirm"
+          }
+        }
+      }
+    },
+    "没有符合筛选的记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No entries match this filter"
+          }
+        }
+      }
+    },
+    "没有进行中的项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No active projects"
+          }
+        }
+      }
+    },
+    "注册并登录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign up and sign in"
+          }
+        }
+      }
+    },
+    "添加备注": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add note"
+          }
+        }
+      }
+    },
+    "添加待解问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add open question"
+          }
+        }
+      }
+    },
+    "清除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "点「新建项目」创建第一个项目。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap New project to create your first one."
+          }
+        }
+      }
+    },
+    "版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "状态": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "理由": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rationale"
+          }
+        }
+      }
+    },
+    "生成知识卡片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create knowledge card"
+          }
+        }
+      }
+    },
+    "生成阶段回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generate review"
+          }
+        }
+      }
+    },
+    "用户名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username"
+          }
+        }
+      }
+    },
+    "用户名或密码错误。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrong username or password."
+          }
+        }
+      }
+    },
+    "用户名须为 3–32 位字母、数字、下划线、点或连字符。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username must be 3–32 letters, digits, underscores, dots, or hyphens."
+          }
+        }
+      }
+    },
+    "登录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in"
+          }
+        }
+      }
+    },
+    "登录已过期，请重新登录。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your session expired. Sign in again."
+          }
+        }
+      }
+    },
+    "相关资料（AI 建议）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Related sources (AI suggested)"
+          }
+        }
+      }
+    },
+    "相关资料：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Related source: %@"
+          }
+        }
+      }
+    },
+    "知识卡片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knowledge card"
+          }
+        }
+      }
+    },
+    "确认为正式决定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm decision"
+          }
+        }
+      }
+    },
+    "确认删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confirm delete"
+          }
+        }
+      }
+    },
+    "确认的草稿会出现在这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drafts you confirm appear here."
+          }
+        }
+      }
+    },
+    "移出": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "移出项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from project"
+          }
+        }
+      }
+    },
+    "移除截图": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove screenshot"
+          }
+        }
+      }
+    },
+    "稍后再说": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not now"
+          }
+        }
+      }
+    },
+    "第 %lld 次 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Revision %lld · %@"
+          }
+        }
+      }
+    },
+    "第 %lld 版": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %lld"
+          }
+        }
+      }
+    },
+    "第 %lld 版 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version %lld · %@"
+          }
+        }
+      }
+    },
+    "筛选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter"
+          }
+        }
+      }
+    },
+    "类型": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Type"
+          }
+        }
+      }
+    },
+    "给项目起个名字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name your project"
+          }
+        }
+      }
+    },
+    "编辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "编辑待解问题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit open question"
+          }
+        }
+      }
+    },
+    "编辑记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit entry"
+          }
+        }
+      }
+    },
+    "编辑项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit project"
+          }
+        }
+      }
+    },
+    "网页正文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page text"
+          }
+        }
+      }
+    },
+    "网页正文 · %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page text · %@"
+          }
+        }
+      }
+    },
+    "菜单": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menu"
+          }
+        }
+      }
+    },
+    "认识变化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Changes in understanding"
+          }
+        }
+      }
+    },
+    "记下想法，或粘贴链接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Note a thought, or paste a link"
+          }
+        }
+      }
+    },
+    "记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entry"
+          }
+        }
+      }
+    },
+    "记录会从收集箱、项目和搜索中移除。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The entry will be removed from Inbox, projects, and search."
+          }
+        }
+      }
+    },
+    "记录已在别处修改，请刷新后再编辑。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This entry was changed elsewhere. Refresh before editing."
+          }
+        }
+      }
+    },
+    "记录时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Captured"
+          }
+        }
+      }
+    },
+    "记录详情": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Entry"
+          }
+        }
+      }
+    },
+    "设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "识别文字": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recognized text"
+          }
+        }
+      }
+    },
+    "该用户名已被使用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That username is taken."
+          }
+        }
+      }
+    },
+    "语义检索暂不可用，仅按关键词匹配。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Semantic search is unavailable. Matching by keyword only."
+          }
+        }
+      }
+    },
+    "请先打开 Gatherloom 登录，再从这里保存。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Gatherloom and sign in first, then save from here."
+          }
+        }
+      }
+    },
+    "请检查正文和备注。正文最多 20,000 字，备注最多 4,000 字。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the text and note. Text can be up to 20,000 characters and the note up to 4,000."
+          }
+        }
+      }
+    },
+    "请检查输入内容和长度。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check what you entered and its length."
+          }
+        }
+      }
+    },
+    "请求失败（HTTP %lld）。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request failed (HTTP %lld)."
+          }
+        }
+      }
+    },
+    "请输入有效长度的邀请码。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter an invite code of valid length."
+          }
+        }
+      }
+    },
+    "账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
+    "资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources"
+          }
+        }
+      }
+    },
+    "资料不足": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough sources"
+          }
+        }
+      }
+    },
+    "资料不足 · 以下为部分相关内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not enough sources · Partly related content below"
+          }
+        }
+      }
+    },
+    "近 30 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 30 days"
+          }
+        }
+      }
+    },
+    "近 7 天": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last 7 days"
+          }
+        }
+      }
+    },
+    "还没有建议。加入新资料后会自动发现。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No suggestions yet. They're found automatically as you add sources."
+          }
+        }
+      }
+    },
+    "还没有正式决定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No confirmed decisions yet"
+          }
+        }
+      }
+    },
+    "还没有记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No entries yet"
+          }
+        }
+      }
+    },
+    "还没有设置目标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No goal set"
+          }
+        }
+      }
+    },
+    "还没有项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No projects yet"
+          }
+        }
+      }
+    },
+    "还需要弄清楚什么？": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What still needs figuring out?"
+          }
+        }
+      }
+    },
+    "这一版": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This version"
+          }
+        }
+      }
+    },
+    "这个问题已经回答完成。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This question has already been answered."
+          }
+        }
+      }
+    },
+    "这些记录还没有上传到服务器，删除后无法恢复。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These entries haven't been uploaded. Deleting them can't be undone."
+          }
+        }
+      }
+    },
+    "这是 AI 提出的草稿，确认后才会成为正式决定。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is a draft from AI. It becomes a decision only after you confirm it."
+          }
+        }
+      }
+    },
+    "这是回答时引用的第 %lld 版，资料之后已经修改。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is version %lld, cited when the answer was written. The source has changed since."
+          }
+        }
+      }
+    },
+    "这条记录已在服务器上删除。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This entry was deleted on the server."
+          }
+        }
+      }
+    },
+    "这条记录已经整理完成。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This entry has already been processed."
+          }
+        }
+      }
+    },
+    "这条资料在回答之后被修改、删除或移出了项目，下面是回答时引用的原文。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This source was edited, deleted, or removed from the project after the answer. Below is the original cited at the time."
+          }
+        }
+      }
+    },
+    "进行中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active"
+          }
+        }
+      }
+    },
+    "退出后未同步的记录会保存在本机，下次登录同一账号时继续上传，不会提交到其他账号。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After you sign out, unsynced entries stay on this device and upload the next time you sign in to the same account. They're never sent to another account."
+          }
+        }
+      }
+    },
+    "退出登录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out"
+          }
+        }
+      }
+    },
+    "适用前提": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Assumptions"
+          }
+        }
+      }
+    },
+    "选择": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choice"
+          }
+        }
+      }
+    },
+    "选择截图": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose screenshot"
+          }
+        }
+      }
+    },
+    "邀请码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invite code"
+          }
+        }
+      }
+    },
+    "邀请码无效、已使用或已过期。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The invite code is invalid, used, or expired."
+          }
+        }
+      }
+    },
+    "部分本机记录无法读取，文件已保留。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Some entries on this device can't be read. The files were kept."
+          }
+        }
+      }
+    },
+    "部分覆盖：参考了 %lld / %lld 条资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Partial coverage: used %lld of %lld sources"
+          }
+        }
+      }
+    },
+    "重要依据": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key evidence"
+          }
+        }
+      }
+    },
+    "重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
+    "重试上传": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry upload"
+          }
+        }
+      }
+    },
+    "链接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Link"
+          }
+        }
+      }
+    },
+    "问答": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Q&A"
+          }
+        }
+      }
+    },
+    "阶段回顾": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review"
+          }
+        }
+      }
+    },
+    "阶段回顾 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Review %@"
+          }
+        }
+      }
+    },
+    "项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Projects"
+          }
+        }
+      }
+    },
+    "项目名称须为 1–120 个字符。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project name must be 1–120 characters."
+          }
+        }
+      }
+    },
+    "项目目标": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project goal"
+          }
+        }
+      }
+    },
+    "项目目标不能超过 4000 个字符。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project goal can't exceed 4,000 characters."
+          }
+        }
+      }
+    },
+    "项目资料": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Project sources"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -43,9 +43,9 @@ final class CaptureQueue {
         do {
             let stored = try outbox.load()
             pending = stored.drafts
-            storageError = stored.unreadable ? "部分本机记录无法读取，文件已保留。" : nil
+            storageError = stored.unreadable ? String(localized: "部分本机记录无法读取，文件已保留。") : nil
         } catch {
-            storageError = "无法打开本机记录。"
+            storageError = String(localized: "无法打开本机记录。")
         }
         if projects.isEmpty { projects = (try? outbox.savedProjects()) ?? [] }
         recentProjectIDs = outbox.recentProjectIDs()
@@ -142,12 +142,12 @@ final class CaptureQueue {
     }
 
     func status(for id: UUID) -> String {
-        if recognizingID == id { return "正在识别截图文字" }
-        if uploadingID == id { return "正在上传" }
-        if uploadErrors[id] != nil { return "已存到本机，上传需要处理" }
-        if pending.contains(where: { $0.id == id }) { return "已存到本机，等待上传" }
+        if recognizingID == id { return String(localized: "正在识别截图文字") }
+        if uploadingID == id { return String(localized: "正在上传") }
+        if uploadErrors[id] != nil { return String(localized: "已存到本机，上传需要处理") }
+        if pending.contains(where: { $0.id == id }) { return String(localized: "已存到本机，等待上传") }
         if let lastReceipt, lastReceipt.clientSubmissionId == id { return lastReceipt.statusText }
-        return "已保存到服务器"
+        return String(localized: "已保存到服务器")
     }
 
     private var canUpload: Bool {
@@ -197,7 +197,7 @@ final class CaptureQueue {
                     continue
                 }
                 if error is CocoaError {
-                    uploadErrors[draft.id] = "无法读取本机文件，记录已保留。"
+                    uploadErrors[draft.id] = String(localized: "无法读取本机文件，记录已保留。")
                     continue
                 }
                 scheduleRetry()
@@ -207,7 +207,7 @@ final class CaptureQueue {
             do {
                 try outbox.acknowledge(draft.id)
             } catch {
-                uploadErrors[draft.id] = "服务器已接收，无法更新本机队列。可以安全重试。"
+                uploadErrors[draft.id] = String(localized: "服务器已接收，无法更新本机队列。可以安全重试。")
                 continue
             }
             pending.removeAll { $0.id == draft.id }

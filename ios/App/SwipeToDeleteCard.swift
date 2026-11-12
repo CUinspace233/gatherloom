@@ -10,6 +10,8 @@ struct SwipeToDeleteCard<Content: View>: View {
     /// Called for a tap on a closed card. A tap on an open card closes it.
     let onTap: () -> Void
     let onDelete: () -> Void
+    /// A plain row keeps the page background instead of a raised card.
+    var showsCard = true
     @ViewBuilder let content: Content
 
     @State private var dragOffset: CGFloat = 0
@@ -28,7 +30,10 @@ struct SwipeToDeleteCard<Content: View>: View {
                 .opacity(offset < -8 ? 1 : 0)
             content
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 24))
+                .background(
+                    showsCard ? Color(.secondarySystemGroupedBackground) : Color.canvas,
+                    in: .rect(cornerRadius: showsCard ? Theme.Radius.card : 0)
+                )
                 .contentShape(.rect)
                 .onTapGesture { isOpen ? onOpenChange(false) : onTap() }
                 .accessibilityAddTraits(.isButton)
@@ -40,7 +45,7 @@ struct SwipeToDeleteCard<Content: View>: View {
         .onChange(of: isOpen) { _, open in
             if !open { isConfirming = false }
         }
-        .accessibilityAction(named: isConfirming ? "确认删除" : "删除") { tapDelete() }
+        .accessibilityAction(named: isConfirming ? String(localized: "确认删除") : String(localized: "删除")) { tapDelete() }
     }
 
     private var deleteButton: some View {
@@ -57,7 +62,7 @@ struct SwipeToDeleteCard<Content: View>: View {
             .background(.red, in: .capsule)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(isConfirming ? "确认删除" : "删除")
+        .accessibilityLabel(isConfirming ? String(localized: "确认删除") : String(localized: "删除"))
     }
 
     private var swipe: some Gesture {
