@@ -47,6 +47,7 @@ struct SourceTextView: View {
                 ProgressView()
             }
         }
+        .canvas(grouped: true)
         .navigationTitle("引用 [\(citation.n)] 原文")
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -80,7 +81,7 @@ struct SourceTextView: View {
                 if revision.revision != revision.currentRevision {
                     Section {
                         Text("这是回答时引用的第 \(revision.revision) 版，资料之后已经修改。")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(.warm)
                         NavigationLink("查看最新版本") {
                             CitedEntryView(session: session, capture: capture, entryID: citation.entryId)
                         }
@@ -99,15 +100,16 @@ struct SourceTextView: View {
                     }
                 }
                 if paragraphs.isEmpty {
-                    Section("引用的内容") { Text(citation.snippet).textSelection(.enabled) }
+                    Section("引用的内容") { Text(citation.snippet).readingText().textSelection(.enabled) }
                 } else {
                     Section(sectionTitle(revision)) {
                         ForEach(paragraphs) { paragraph in
                             Text(highlightedParagraph(paragraph))
+                                .readingText()
                                 .textSelection(.enabled)
                                 .id(paragraph.id)
                                 .listRowBackground(
-                                    paragraph.range.overlaps(range) ? Color.yellow.opacity(0.12) : nil
+                                    paragraph.range.overlaps(range) ? Color.warm.opacity(0.12) : nil
                                 )
                         }
                     }
@@ -123,9 +125,9 @@ struct SourceTextView: View {
 
     private func sectionTitle(_ revision: RevisionText) -> String {
         switch citation.source {
-        case "extract": revision.title.map { "网页正文 · \($0)" } ?? "网页正文"
-        case "ocr": "识别文字"
-        default: "原文"
+        case "extract": revision.title.map { String(localized: "网页正文 · \($0)") } ?? String(localized: "网页正文")
+        case "ocr": String(localized: "识别文字")
+        default: String(localized: "原文")
         }
     }
 

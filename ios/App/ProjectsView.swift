@@ -8,25 +8,43 @@ struct Question: Decodable, Identifiable {
     enum Status: String, Codable, CaseIterable {
         case open, resolved
 
-        var title: String { self == .open ? "待解决" : "已解决" }
+        var title: String { self == .open ? String(localized: "待解决") : String(localized: "已解决") }
     }
 }
 
 private struct ProjectRow: View {
     let project: Project
 
+    private var subtitle: String {
+        let goal = project.goal.trimmingCharacters(in: .whitespacesAndNewlines)
+        return goal.isEmpty ? project.status.title : "\(goal) · \(project.status.title)"
+    }
+
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(project.name).foregroundStyle(.primary)
-                Text(project.status.title).font(.caption).foregroundStyle(.secondary)
+        HStack(spacing: Theme.Space.l) {
+            Image(systemName: "folder")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(width: 36, height: 36)
+                .background(Color.primary.opacity(0.06), in: .rect(cornerRadius: 10))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(project.name).font(.body.weight(.medium)).lineLimit(1)
+                Text(subtitle).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
             }
-            Spacer()
-            Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.vertical, Theme.Space.m)
         .contentShape(.rect)
+    }
+}
+
+/// A rounded, softly outlined container for a text field on a sheet.
+private struct SoftField: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(Theme.Space.l)
+            .background(Color.primary.opacity(0.04), in: .rect(cornerRadius: 22))
+            .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(Color.primary.opacity(0.1)))
     }
 }
 
@@ -40,17 +58,25 @@ struct ProjectsView: View {
     @State private var showsEditor = false
     @State private var openProjectID: UUID?
     @State private var selectedProject: Project?
+    @State private var isSearching = false
+    @State private var query = ""
+    /// Nil shows every project; otherwise the server returns only that status.
+    @State private var statusFilter: Project.Status?
+    @FocusState private var searchFocused: Bool
+    /// A project picked in the drawer, opened as soon as this screen shows.
+    @Binding var projectToOpen: Project?
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(spacing: 12) {
-                    ForEach(projects) { project in
+                LazyVStack(spacing: 0) {
+                    ForEach(visibleProjects) { project in
                         SwipeToDeleteCard(
                             isOpen: openProjectID == project.id,
                             onOpenChange: { openProjectID = $0 ? project.id : nil },
                             onTap: { openProjectID = nil; selectedProject = project },
-                            onDelete: { Task { await delete(project) } }
+                            onDelete: { Task { await delete(project) } },
+                            showsCard: false
                         ) {
                             ProjectRow(project: project)
                         }
@@ -65,22 +91,54 @@ struct ProjectsView: View {
                     } else if let errorMessage {
                         Text(errorMessage).foregroundStyle(.red)
                         Button("重试") { Task { await load() } }
+                    } else if projects.isEmpty, let statusFilter {
+                        ContentUnavailableView(
+                            statusFilter == .active ? "没有进行中的项目" : "没有已归档的项目",
+                            systemImage: "folder"
+                        )
                     } else if projects.isEmpty {
-                        ContentUnavailableView("还没有项目", systemImage: "folder", description: Text("点加号创建第一个项目。"))
+                        ContentUnavailableView("还没有项目", systemImage: "folder", description: Text("点「新建项目」创建第一个项目。"))
+                    } else if visibleProjects.isEmpty {
+                        ContentUnavailableView.search(text: trimmedQuery)
                     }
                 }
-                .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.horizontal, Theme.Space.xl)
+                .padding(.top, Theme.Space.s)
             }
-            .background(Color(.systemGroupedBackground))
             .scrollDismissesKeyboard(.immediately)
+            .safeAreaInset(edge: .bottom) { bottomBar }
+            .canvas()
             .navigationTitle("项目")
+            .navigationBarTitleDisplayMode(.inline)
+            .drawerButton()
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        Picker("状态", selection: $statusFilter) {
+                            Text("全部项目").tag(Project.Status?.none)
+                            ForEach(Project.Status.allCases, id: \.self) { status in
+                                Text(status.title).tag(Project.Status?.some(status))
+                            }
+                        }
+                    } label: {
+                        Label("筛选", systemImage: statusFilter == nil
+                            ? "line.3.horizontal.decrease"
+                            : "line.3.horizontal.decrease.circle.fill")
+                    }
+                }
+            }
+            .onChange(of: statusFilter) { _, _ in
+                projects = []
+                nextCursor = nil
+                Task { await load() }
+            }
+            .onChange(of: projectToOpen, initial: true) { _, project in
+                guard let project else { return }
+                selectedProject = project
+                projectToOpen = nil
+            }
             .navigationDestination(item: $selectedProject) { project in
                 ProjectDetailView(session: session, capture: capture, project: project, onSaved: save)
-            }
-            .toolbar {
-                Button("新建项目", systemImage: "plus") { showsEditor = true }
-                    .disabled(isLoading)
             }
             .sheet(isPresented: $showsEditor) {
                 ProjectEditor(session: session, onSaved: save)
@@ -88,6 +146,55 @@ struct ProjectsView: View {
             .task { await load() }
             .refreshable { await load() }
         }
+    }
+
+    private var trimmedQuery: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// Filters the projects already loaded; it does not query the server.
+    private var visibleProjects: [Project] {
+        guard isSearching, !trimmedQuery.isEmpty else { return projects }
+        return projects.filter {
+            $0.name.localizedCaseInsensitiveContains(trimmedQuery) || $0.goal.localizedCaseInsensitiveContains(trimmedQuery)
+        }
+    }
+
+    private var bottomBar: some View {
+        HStack(spacing: Theme.Space.m) {
+            if isSearching {
+                HStack(spacing: Theme.Space.s) {
+                    Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                    TextField("搜索项目", text: $query)
+                        .focused($searchFocused)
+                        .submitLabel(.search)
+                }
+                .padding(.horizontal, Theme.Space.l)
+                .frame(height: 50)
+                .glassEffect(.regular, in: .capsule)
+                Button("关闭", systemImage: "xmark") {
+                    query = ""
+                    isSearching = false
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+                .controlSize(.large)
+            } else {
+                Button("搜索项目", systemImage: "magnifyingglass") {
+                    isSearching = true
+                    searchFocused = true
+                }
+                .labelStyle(.iconOnly)
+                .buttonStyle(.glass)
+                .buttonBorderShape(.circle)
+                .controlSize(.large)
+                Spacer()
+                Button("新建项目", systemImage: "plus") { showsEditor = true }
+                    .primaryAction()
+                    .disabled(isLoading)
+            }
+        }
+        .padding(.horizontal, Theme.Space.xl)
+        .padding(.bottom, Theme.Space.s)
     }
 
     private func delete(_ project: Project) async {
@@ -102,7 +209,9 @@ struct ProjectsView: View {
     }
 
     private func save(_ project: Project) {
-        if let index = projects.firstIndex(where: { $0.id == project.id }) {
+        if let statusFilter, project.status != statusFilter {
+            projects.removeAll { $0.id == project.id }
+        } else if let index = projects.firstIndex(where: { $0.id == project.id }) {
             projects[index] = project
         } else {
             projects.insert(project, at: 0)
@@ -115,7 +224,8 @@ struct ProjectsView: View {
         errorMessage = nil
         defer { isLoading = false }
         do {
-            let query = cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []
+            var query = cursor.map { [URLQueryItem(name: "cursor", value: $0)] } ?? []
+            if let statusFilter { query.append(URLQueryItem(name: "status", value: statusFilter.rawValue)) }
             let page = try await session.request(Page<Project>.self, "v1/projects", query: query)
             if cursor == nil {
                 projects = page.items
@@ -146,7 +256,7 @@ private struct ProjectDetailView: View {
     var body: some View {
         List {
             Section("项目目标") {
-                Text(project.goal.isEmpty ? "还没有设置目标" : project.goal)
+                Text(project.goal.isEmpty ? String(localized: "还没有设置目标") : project.goal)
                 LabeledContent("状态", value: project.status.title)
             }
             ProjectSummarySection(session: session, capture: capture, project: project)
@@ -186,6 +296,7 @@ private struct ProjectDetailView: View {
                 }
             }
         }
+        .canvas(grouped: true)
         .navigationTitle(project.name)
         .onAppear { capture.markRecent(project.id) }
         .toolbar {
@@ -248,6 +359,7 @@ private struct ProjectEditor: View {
     @State private var status: Project.Status
     @State private var isSaving = false
     @State private var errorMessage: String?
+    @FocusState private var nameFocused: Bool
 
     init(session: AccountSession, project: Project? = nil, onSaved: @escaping (Project) -> Void) {
         self.session = session
@@ -260,29 +372,61 @@ private struct ProjectEditor: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                TextField("项目名称", text: $name)
-                TextField("项目目标", text: $goal, axis: .vertical)
-                if project != nil {
-                    Picker("状态", selection: $status) {
-                        ForEach(Project.Status.allCases, id: \.self) { Text($0.title).tag($0) }
+            ScrollView {
+                VStack(alignment: .leading, spacing: Theme.Space.m) {
+                    prompt("你在做什么？")
+                    TextField("给项目起个名字", text: $name)
+                        .focused($nameFocused)
+                        .modifier(SoftField())
+                    prompt("想达成什么？").padding(.top, Theme.Space.s)
+                    TextField("描述项目、目标、主题等…", text: $goal, axis: .vertical)
+                        .lineLimit(5...12)
+                        .modifier(SoftField())
+                    if project != nil {
+                        HStack {
+                            Text("状态")
+                            Spacer()
+                            Picker("状态", selection: $status) {
+                                ForEach(Project.Status.allCases, id: \.self) { Text($0.title).tag($0) }
+                            }
+                            .labelsHidden()
+                        }
+                        .padding(.leading, Theme.Space.l)
+                        .padding(.vertical, Theme.Space.xs)
+                        .background(Color.primary.opacity(0.04), in: .rect(cornerRadius: 22))
+                        .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(Color.primary.opacity(0.1)))
+                        .padding(.top, Theme.Space.s)
+                    }
+                    if let errorMessage {
+                        Text(errorMessage).font(.footnote).foregroundStyle(.red).padding(.horizontal, Theme.Space.l)
                     }
                 }
-                if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
+                .padding(.horizontal, Theme.Space.l)
+                .padding(.top, Theme.Space.s)
             }
+            .scrollDismissesKeyboard(.interactively)
             .disabled(isSaving)
-            .navigationTitle(project == nil ? "新建项目" : "编辑项目")
+            .navigationTitle(project == nil ? String(localized: "新建项目") : String(localized: "编辑项目"))
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }.disabled(isSaving)
+                    Button("关闭", systemImage: "xmark") { dismiss() }.disabled(isSaving)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("保存") { Task { await save() } }
+                    Button("保存", systemImage: "checkmark") { Task { await save() } }
                         .disabled(isSaving || name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
+            .onAppear { if project == nil { nameFocused = true } }
             .interactiveDismissDisabled(isSaving)
         }
+    }
+
+    private func prompt(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, Theme.Space.l)
     }
 
     private func save() async {
@@ -342,7 +486,7 @@ private struct QuestionEditor: View {
                 }
             }
             .disabled(isSaving)
-            .navigationTitle(question == nil ? "添加待解问题" : "编辑待解问题")
+            .navigationTitle(question == nil ? String(localized: "添加待解问题") : String(localized: "编辑待解问题"))
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("取消") { dismiss() }.disabled(isSaving)

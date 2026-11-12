@@ -33,7 +33,7 @@ struct Project: Codable, Identifiable, Hashable {
     enum Status: String, Codable, CaseIterable {
         case active, archived
 
-        var title: String { self == .active ? "进行中" : "已归档" }
+        var title: String { self == .active ? String(localized: "进行中") : String(localized: "已归档") }
     }
 }
 
@@ -47,9 +47,9 @@ enum EntryKind: String, Codable {
 
     var title: String {
         switch self {
-        case .thought: "个人想法"
-        case .url: "链接"
-        case .image: "截图"
+        case .thought: String(localized: "个人想法")
+        case .url: String(localized: "链接")
+        case .image: String(localized: "截图")
         }
     }
 
@@ -93,7 +93,7 @@ struct CaptureEntry: Decodable, Identifiable, Hashable {
         if let title, !title.isEmpty { return title }
         if !text.isEmpty { return text }
         if let sourceUrl { return sourceUrl }
-        return type == .image ? "截图" : "记录"
+        return type == .image ? String(localized: "截图") : String(localized: "记录")
     }
 
     var statusText: String { ProcessingState.text(for: processing) }
@@ -124,20 +124,20 @@ struct ProcessingState: Decodable, Hashable {
 
     var failedStepText: String? {
         switch failedStep {
-        case "index": "建立检索索引"
-        case "card": "生成知识卡片"
+        case "index": String(localized: "建立检索索引")
+        case "card": String(localized: "生成知识卡片")
         default: nil
         }
     }
 
     static func text(for status: String) -> String {
         switch status {
-        case "queued", "running": "已保存到服务器，正在整理"
-        case "searchable": "已可检索"
-        case "succeeded": "整理完成"
-        case "partial": "已保存，部分整理失败"
-        case "failed": "已保存，整理失败"
-        default: "已保存到服务器"
+        case "queued", "running": String(localized: "已保存到服务器，正在整理")
+        case "searchable": String(localized: "已可检索")
+        case "succeeded": String(localized: "整理完成")
+        case "partial": String(localized: "已保存，部分整理失败")
+        case "failed": String(localized: "已保存，整理失败")
+        default: String(localized: "已保存到服务器")
         }
     }
 }

@@ -18,33 +18,33 @@ struct APIError: LocalizedError {
 
     var errorDescription: String? {
         switch (status, detail) {
-        case (400, "invalid or expired invitation"): "邀请码无效、已使用或已过期。"
-        case (401, "invalid username or password"): "用户名或密码错误。"
-        case (401, _): "登录已过期，请重新登录。"
-        case (404, "entry not found"), (404, "attachment not found"): "找不到这条记录。"
-        case (404, "conversation not found"), (404, "run not found"): "找不到这个对话。"
-        case (404, _): "找不到该项目或待解问题。"
-        case (409, "username already exists"): "该用户名已被使用。"
-        case (409, "entry changed since base_revision"): "记录已在别处修改，请刷新后再编辑。"
-        case (409, "entry for this submission was deleted"): "这条记录已在服务器上删除。"
-        case (409, "processing already finished"): "这条记录已经整理完成。"
-        case (409, "run already finished"): "这个问题已经回答完成。"
-        case (409, _): "与服务器上的内容冲突，本机记录已保留。"
-        case (411, _), (413, _): "图片超过 10 MB，无法上传。"
-        case (415, _): "只支持 JPEG、PNG、HEIC 和 WebP 图片。"
-        case (422, "username"): "用户名须为 3–32 位字母、数字、下划线、点或连字符。"
-        case (422, "password"): "密码须为 8–128 个字符。"
-        case (422, "invite_code"): "请输入有效长度的邀请码。"
-        case (422, "name"): "项目名称须为 1–120 个字符。"
-        case (422, "goal"): "项目目标不能超过 4000 个字符。"
-        case (422, "text"): "内容须为 1–2000 个字符。"
-        case (422, _): "请检查输入内容和长度。"
-        case (429, "daily entries limit reached"): "今天的记录数已达上限，记录已保留在本机，明天会自动上传。"
-        case (429, "daily questions limit reached"): "今天的提问次数已用完，明天再试。"
-        case (429, "daily reviews limit reached"): "今天的手动回顾次数已用完，明天再试。"
-        case (429, "daily model budget reached"): "今天的 AI 用量已达上限，明天再试。"
-        case (429, _): "操作太频繁，请稍后再试。"
-        default: "请求失败（HTTP \(status)）。"
+        case (400, "invalid or expired invitation"): String(localized: "邀请码无效、已使用或已过期。")
+        case (401, "invalid username or password"): String(localized: "用户名或密码错误。")
+        case (401, _): String(localized: "登录已过期，请重新登录。")
+        case (404, "entry not found"), (404, "attachment not found"): String(localized: "找不到这条记录。")
+        case (404, "conversation not found"), (404, "run not found"): String(localized: "找不到这个对话。")
+        case (404, _): String(localized: "找不到该项目或待解问题。")
+        case (409, "username already exists"): String(localized: "该用户名已被使用。")
+        case (409, "entry changed since base_revision"): String(localized: "记录已在别处修改，请刷新后再编辑。")
+        case (409, "entry for this submission was deleted"): String(localized: "这条记录已在服务器上删除。")
+        case (409, "processing already finished"): String(localized: "这条记录已经整理完成。")
+        case (409, "run already finished"): String(localized: "这个问题已经回答完成。")
+        case (409, _): String(localized: "与服务器上的内容冲突，本机记录已保留。")
+        case (411, _), (413, _): String(localized: "图片超过 10 MB，无法上传。")
+        case (415, _): String(localized: "只支持 JPEG、PNG、HEIC 和 WebP 图片。")
+        case (422, "username"): String(localized: "用户名须为 3–32 位字母、数字、下划线、点或连字符。")
+        case (422, "password"): String(localized: "密码须为 8–128 个字符。")
+        case (422, "invite_code"): String(localized: "请输入有效长度的邀请码。")
+        case (422, "name"): String(localized: "项目名称须为 1–120 个字符。")
+        case (422, "goal"): String(localized: "项目目标不能超过 4000 个字符。")
+        case (422, "text"): String(localized: "内容须为 1–2000 个字符。")
+        case (422, _): String(localized: "请检查输入内容和长度。")
+        case (429, "daily entries limit reached"): String(localized: "今天的记录数已达上限，记录已保留在本机，明天会自动上传。")
+        case (429, "daily questions limit reached"): String(localized: "今天的提问次数已用完，明天再试。")
+        case (429, "daily reviews limit reached"): String(localized: "今天的手动回顾次数已用完，明天再试。")
+        case (429, "daily model budget reached"): String(localized: "今天的 AI 用量已达上限，明天再试。")
+        case (429, _): String(localized: "操作太频繁，请稍后再试。")
+        default: String(localized: "请求失败（HTTP \(status)）。")
         }
     }
 }

@@ -19,6 +19,14 @@ struct SignInView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    VStack(alignment: .leading, spacing: Theme.Space.s) {
+                        Text("Gatherloom").font(.wordmark)
+                        Text("围绕项目收集、整理与回顾。").foregroundStyle(.secondary)
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: Theme.Space.xl, leading: Theme.Space.xs, bottom: 0, trailing: Theme.Space.xs))
+                }
                 #if DEBUG
                 Section("服务地址") {
                     TextField("https://", text: $session.serverAddress)
@@ -32,7 +40,7 @@ struct SignInView: View {
                         .disabled(session.serverAddress == AppGroup.productionServer)
                 }
                 #endif
-                Section(isRegistering ? "创建账号" : "登录") {
+                Section(isRegistering ? String(localized: "创建账号") : String(localized: "登录")) {
                     TextField("用户名", text: $username)
                         .textContentType(.username)
                         .textInputAutocapitalization(.never)
@@ -69,13 +77,24 @@ struct SignInView: View {
                     Text(message).foregroundStyle(.red)
                 }
                 Section {
-                    Button(isRegistering ? "注册并登录" : "登录") { Task { await submit() } }
+                    VStack(spacing: Theme.Space.l) {
+                        Button {
+                            Task { await submit() }
+                        } label: {
+                            Text(isRegistering ? String(localized: "注册并登录") : String(localized: "登录")).frame(maxWidth: .infinity)
+                        }
+                        .primaryAction()
                         .disabled(!canSubmit)
-                    Button(isRegistering ? "已有账号，去登录" : "使用邀请码注册") {
-                        focusedField = nil
-                        isRegistering.toggle()
-                        errorMessage = nil
+                        Button(isRegistering ? String(localized: "已有账号，去登录") : String(localized: "使用邀请码注册")) {
+                            focusedField = nil
+                            isRegistering.toggle()
+                            errorMessage = nil
+                        }
+                        .buttonStyle(.borderless)
+                        .font(.subheadline)
                     }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
                 }
             }
             .scrollDismissesKeyboard(.immediately)
@@ -85,7 +104,6 @@ struct SignInView: View {
                     .allowsHitTesting(false)
             }
             .disabled(isSubmitting)
-            .navigationTitle("Gatherloom")
         }
     }
 

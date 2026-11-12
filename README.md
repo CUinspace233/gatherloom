@@ -7,7 +7,7 @@
 A project-driven personal knowledge workspace with iOS capture, source-grounded answers, and continuous reflection.
 
 ## 状态
-Gatherloom 支持邀请码注册、项目与问题管理，以及离线保存的想法、链接和截图（含系统分享扩展与本机文字识别）。保存到服务器后，后台 Worker 自动分块、建立关键词与语义索引，并生成 AI 知识卡片。最低支持 iOS 17。
+Gatherloom 支持邀请码注册、项目与问题管理，以及离线保存的想法、链接和截图（含系统分享扩展与本机文字识别）。保存到服务器后，后台 Worker 自动分块、建立关键词与语义索引，并生成 AI 知识卡片。最低支持 iOS 26。
 
 ## iOS 开发
 
@@ -137,4 +137,4 @@ GATHERLOOM_TEST_DATABASE_URL=postgresql+psycopg://gatherloom:gatherloom-local@12
 - [评测集](docs/evaluation/README.md)
 
 ## 技术路线
-SwiftUI（iOS 17+）· FastAPI · LangGraph · PostgreSQL + pgvector · 百炼 Embedding · DeepSeek / 千问
+SwiftUI（iOS 26+）· FastAPI · LangGraph · PostgreSQL + pgvector · 百炼 Embedding · DeepSeek / 千问

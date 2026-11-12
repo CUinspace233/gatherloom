@@ -60,7 +60,7 @@ final class ShareModel {
 
     private func load() async {
         guard let scope else {
-            phase = .blocked("请先打开 Gatherloom 登录，再从这里保存。")
+            phase = .blocked(String(localized: "请先打开 Gatherloom 登录，再从这里保存。"))
             return
         }
         let outbox = CaptureOutbox(scope: scope)
@@ -106,7 +106,7 @@ final class ShareModel {
             url = link
             if text == link { text = "" }
         } else if text.isEmpty {
-            phase = .blocked("没有可保存的文字、链接或图片。")
+            phase = .blocked(String(localized: "没有可保存的文字、链接或图片。"))
             return
         }
         text = String(text.prefix(20_000))
@@ -124,13 +124,13 @@ final class ShareModel {
         guard let scope, canSave else { return }
         // The app may have switched accounts while the sheet was open.
         guard AppGroup.activeScope == scope else {
-            phase = .blocked("Gatherloom 已切换账号。请重新分享，以免保存到错误的账号。")
+            phase = .blocked(String(localized: "Gatherloom 已切换账号。请重新分享，以免保存到错误的账号。"))
             return
         }
         let remark = String(note.trimmingCharacters(in: .whitespacesAndNewlines).prefix(4000))
         let project = projects.first { $0.id == projectID }
         let outbox = CaptureOutbox(scope: scope)
-        phase = .saving("正在存到本机")
+        phase = .saving(String(localized: "正在存到本机"))
         var draft: CaptureDraft
         do {
             switch kind {
@@ -152,11 +152,11 @@ final class ShareModel {
             if let project { outbox.markRecent(project.id) }
         } catch {
             phase = .ready
-            errorMessage = "无法存到本机。请重试，或打开 Gatherloom 保存。"
+            errorMessage = String(localized: "无法存到本机。请重试，或打开 Gatherloom 保存。")
             return
         }
         let uploaded = await tryUpload(draft, scope: scope, outbox: outbox)
-        phase = .finished(uploaded ? "已保存到服务器" : "已存到本机，打开 Gatherloom 后继续上传")
+        phase = .finished(uploaded ? String(localized: "已保存到服务器") : String(localized: "已存到本机，打开 Gatherloom 后继续上传"))
         try? await Task.sleep(for: .seconds(1.2))
         finish()
     }
@@ -174,10 +174,10 @@ final class ShareModel {
         }
         var draft = draft
         if draft.kind == .image {
-            phase = .saving("正在识别截图文字")
+            phase = .saving(String(localized: "正在识别截图文字"))
             draft = await uploader.recognizeIfNeeded(draft)
         }
-        phase = .saving("正在上传")
+        phase = .saving(String(localized: "正在上传"))
         let attempt = draft
         let delivered = await withTaskGroup(of: Bool.self) { group in
             group.addTask { (try? await uploader.deliver(attempt)) != nil }

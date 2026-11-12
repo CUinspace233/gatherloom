@@ -45,6 +45,7 @@ struct CitedText: View {
 
     var body: some View {
         Text(answerText(text, cited: Set(sources.map(\.n))))
+            .readingText()
             .textSelection(.enabled)
             .environment(\.openURL, OpenURLAction { url in
                 guard url.scheme == "gatherloom-citation", let n = Int(url.host() ?? ""),
@@ -61,13 +62,13 @@ extension ProjectSummary {
     var coverageText: String {
         var parts: [String] = []
         if let basedOn {
-            parts.append("基于截至 \(basedOn.formatted(date: .abbreviated, time: .shortened)) 的已处理内容")
+            parts.append(String(localized: "基于截至 \(basedOn.formatted(date: .abbreviated, time: .shortened)) 的已处理内容"))
         }
         if coverage.partial {
-            parts.append("部分覆盖：参考了 \(coverage.represented) / \(coverage.ready) 条资料")
+            parts.append(String(localized: "部分覆盖：参考了 \(coverage.represented) / \(coverage.ready) 条资料"))
         }
         if coverage.entries > coverage.ready {
-            parts.append("\(coverage.entries - coverage.ready) 条资料仍在整理")
+            parts.append(String(localized: "\(coverage.entries - coverage.ready) 条资料仍在整理"))
         }
         return parts.joined(separator: " · ")
     }
@@ -147,7 +148,7 @@ struct SummaryDetailView: View {
                 }
             }
             Section("这一版") {
-                LabeledContent("版本", value: "第 \(summary.version) 版")
+                LabeledContent("版本", value: String(localized: "第 \(summary.version) 版"))
                 if !summary.changeNote.isEmpty { LabeledContent("变化", value: summary.changeNote) }
                 Text(summary.coverageText).font(.footnote).foregroundStyle(.secondary)
             }
@@ -168,6 +169,7 @@ struct SummaryDetailView: View {
                 }
             }
         }
+        .canvas(grouped: true)
         .navigationTitle("AI 总结")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selected) { citation in

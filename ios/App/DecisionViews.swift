@@ -58,14 +58,14 @@ struct ProjectDecisionsSection: View {
                             .font(.caption.bold())
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(Color.orange.opacity(0.2), in: Capsule())
+                            .background(Color.warm.opacity(0.18), in: Capsule())
                     }
                 }
             }
             NavigationLink {
                 DecisionListView(session: session, capture: capture, project: project, drafts: false)
             } label: {
-                LabeledContent("正式决定", value: confirmed.isEmpty ? "暂无" : "\(confirmed.count) 条")
+                LabeledContent("正式决定", value: confirmed.isEmpty ? String(localized: "暂无") : String(localized: "\(confirmed.count) 条"))
             }
         }
         .task { await load() }
@@ -113,13 +113,15 @@ struct DecisionListView: View {
         .overlay {
             if decisions.isEmpty && errorMessage == nil {
                 ContentUnavailableView(
-                    drafts ? "没有待确认的决定" : "还没有正式决定",
+                    drafts ? String(localized: "没有待确认的决定") : String(localized: "还没有正式决定"),
                     systemImage: "checkmark.seal",
-                    description: Text(drafts ? "AI 在资料里发现明确的选项与倾向时，会在这里提出草稿。" : "确认的草稿会出现在这里。")
+                    description: Text(drafts ? String(localized: "AI 在资料里发现明确的选项与倾向时，会在这里提出草稿。") : String(localized: "确认的草稿会出现在这里。"))
                 )
             }
         }
-        .navigationTitle(drafts ? "待确认决定" : "正式决定")
+        .listStyle(.plain)
+        .canvas()
+        .navigationTitle(drafts ? String(localized: "待确认决定") : String(localized: "正式决定"))
         .task { await load() }
         .refreshable { await load() }
     }
@@ -135,7 +137,7 @@ struct DecisionListView: View {
                     if decision.status == "superseded" {
                         Text("已被后续决定替代").font(.caption).foregroundStyle(.secondary)
                     } else if decision.basisChanged && !decision.isDraft {
-                        Text("依据已变化").font(.caption).foregroundStyle(.orange)
+                        Text("依据已变化").font(.caption).foregroundStyle(.warm)
                     }
                 }
             }
@@ -199,7 +201,7 @@ struct DecisionDetailView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                     if decision.basisChanged {
-                        Text("依据已变化：引用的资料在起草后被修改或删除。").font(.footnote).foregroundStyle(.orange)
+                        Text("依据已变化：引用的资料在起草后被修改或删除。").font(.footnote).foregroundStyle(.warm)
                     }
                 }
             }
@@ -211,7 +213,7 @@ struct DecisionDetailView: View {
                 }
             } else {
                 Section("主题") { Text(decision.title).font(.headline) }
-                Section(decision.isDraft ? "建议选择" : "决定") { Text(decision.choice) }
+                Section(decision.isDraft ? String(localized: "建议选择") : String(localized: "决定")) { Text(decision.choice) }
                 if !decision.rationale.isEmpty {
                     Section("理由") {
                         CitedText(text: decision.rationale, sources: decision.sources) { selected = $0 }
@@ -232,7 +234,7 @@ struct DecisionDetailView: View {
                         } label: {
                             HStack {
                                 Text("[\(source.n)] \(source.title.isEmpty ? source.type.title : source.title)").lineLimit(1)
-                                if source.stale { Text("已变化").foregroundStyle(.orange) }
+                                if source.stale { Text("已变化").foregroundStyle(.warm) }
                             }
                             .font(.footnote)
                         }
@@ -254,11 +256,12 @@ struct DecisionDetailView: View {
             if let errorMessage { Text(errorMessage).foregroundStyle(.red) }
         }
         .disabled(isWorking)
-        .navigationTitle(decision.isDraft ? "决定草稿" : "正式决定")
+        .canvas(grouped: true)
+        .navigationTitle(decision.isDraft ? String(localized: "决定草稿") : String(localized: "正式决定"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if decision.status == "draft" || decision.status == "confirmed" {
-                Button(isEditing ? "完成编辑" : "编辑") { isEditing.toggle() }
+                Button(isEditing ? String(localized: "完成编辑") : String(localized: "编辑")) { isEditing.toggle() }
             }
         }
         .sheet(item: $selected) { citation in
