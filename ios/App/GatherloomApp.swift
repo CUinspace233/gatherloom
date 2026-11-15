@@ -51,16 +51,33 @@ private struct DrawerButton: ViewModifier {
     @Environment(\.openDrawer) private var openDrawer
 
     func body(content: Content) -> some View {
-        content.toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button("菜单", systemImage: "line.3.horizontal", action: openDrawer)
+        content
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("菜单", systemImage: "line.3.horizontal", action: openDrawer)
+                }
             }
-        }
+            .simultaneousGesture(openSwipe)
+    }
+
+    private var openSwipe: some Gesture {
+        DragGesture(minimumDistance: 20, coordinateSpace: .local)
+            .onEnded { value in
+                // Reserve the leading edge for the drawer, leaving row swipes
+                // and text selection elsewhere on the screen alone.
+                guard value.startLocation.x <= 44,
+                      value.translation.width > 20,
+                      value.translation.width > abs(value.translation.height) * 1.5,
+                      max(value.translation.width, value.predictedEndTranslation.width) > 80
+                else { return }
+                openDrawer()
+            }
     }
 }
 
 extension View {
-    /// Adds the leading button that opens the side drawer. For root screens only.
+    /// Adds the menu button and leading-edge swipe. For root screens only,
+    /// so detail screens keep the navigation stack's swipe-to-go-back gesture.
     func drawerButton() -> some View { modifier(DrawerButton()) }
 }
 
