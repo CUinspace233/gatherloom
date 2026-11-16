@@ -64,8 +64,15 @@ extension EnvironmentValues {
 }
 
 private struct DrawerButton: ViewModifier {
+    let swipeEnabled: Bool
     @Environment(\.openDrawer) private var openDrawer
     @Environment(\.drawerGesture) private var drawerGesture
+
+    private var gestureActions: DrawerGestureActions {
+        var actions = drawerGesture
+        actions.isEnabled = actions.isEnabled && swipeEnabled
+        return actions
+    }
 
     func body(content: Content) -> some View {
         content
@@ -75,14 +82,16 @@ private struct DrawerButton: ViewModifier {
                     Button("菜单", systemImage: "line.3.horizontal", action: openDrawer)
                 }
             }
-            .gesture(DrawerPanGesture(actions: drawerGesture, opensDrawer: true))
+            .gesture(DrawerPanGesture(actions: gestureActions, opensDrawer: true))
     }
 }
 
 extension View {
     /// Adds the menu button and full-width drawer pan. For root screens only,
     /// so detail screens keep the navigation stack's swipe-to-go-back gesture.
-    func drawerButton() -> some View { modifier(DrawerButton()) }
+    func drawerButton(swipeEnabled: Bool = true) -> some View {
+        modifier(DrawerButton(swipeEnabled: swipeEnabled))
+    }
 }
 
 /// The settled state stays unchanged during a drag, so cancellation can restore it.

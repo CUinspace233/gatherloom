@@ -16,6 +16,36 @@ enum Theme {
     }
 }
 
+/// Shared compact input row for capture and project questions.
+struct ComposerRow<Leading: View, Content: View>: View {
+    let canSend: Bool
+    let sendLabel: LocalizedStringKey
+    var sendIdentifier = "composer-send"
+    let action: () -> Void
+    @ViewBuilder let leading: () -> Leading
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: Theme.Space.s) {
+            leading()
+            content().padding(.vertical, Theme.Space.s)
+            Button(action: action) {
+                Image(systemName: "arrow.up")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.onAccent)
+                    .frame(width: 38, height: 38)
+                    .background(Color.accentColor, in: .circle)
+            }
+            .buttonStyle(.plain)
+            .disabled(!canSend)
+            .opacity(canSend ? 1 : 0.3)
+            .accessibilityLabel(sendLabel)
+            .accessibilityIdentifier(sendIdentifier)
+        }
+        .padding(6)
+    }
+}
+
 extension Color {
     /// The page background behind content. Slightly lifted from black in dark mode
     /// so the side drawer, which stays on the system background, reads as a lower layer.
@@ -39,6 +69,9 @@ extension Font {
 }
 
 extension View {
+    func composerSurface() -> some View {
+        glassEffect(.regular, in: .rect(cornerRadius: 25))
+    }
     /// Paints a page with the canvas colour, replacing a list or form's own background.
     func canvas(grouped: Bool = false) -> some View {
         scrollContentBackground(.hidden)
