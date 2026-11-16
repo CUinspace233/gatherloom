@@ -68,12 +68,14 @@ API 契约来自 FastAPI，可在本地 `/docs` 查看，或在 `server/` 运行
 
 ### 后台整理（Worker）
 
-资料保存后由 Worker 整理：分块（每块索引时拼上标题与备注）→ jieba 关键词索引 → 百炼 Embedding（完成后「已可检索」）→ 千问生成知识卡片（标题、摘要、要点、关键词）→ 卡片入索引（「整理完成」）。在另一个终端启动：
+资料保存后由 Worker 整理：网页正文提取（缺正文的链接且已配置 Firecrawl）→ 分块（每块索引时拼上标题与备注）→ jieba 关键词索引 → 百炼 Embedding（完成后「已可检索」）→ 千问生成知识卡片（标题、摘要、要点、关键词）→ 卡片入索引（「整理完成」）。在另一个终端启动：
 
 ```sh
 cd server
 uv run --locked --env-file .env python -m app.worker
 ```
+
+可选配置 `GATHERLOOM_FIRECRAWL_API_KEY`：本地放在 `server/.env`，线上放在 `deploy/.env.prod`。新链接缺少 Safari 正文时自动读取并保存快照；Scheduler 每 5 分钟还会自动补读旧链接（每轮最多入队 50 条）。Firecrawl 额度独立于模型预算，详情与启停方法见 [运维手册](docs/operations.md#网页正文读取firecrawl)。
 
 Worker 需要 `server/.env` 中的百炼与 DeepSeek key，缺少时拒绝启动。`uv run --locked --env-file .env python -m app.admin check-models` 会各调用一次 Embedding、light 与 heavy 模型，打印模型、用量与费用估算，用于检查配置。默认两个线程并发，同一账号同时只处理一条资料。任务按租约认领，Worker 崩溃或被杀后，租约过期（60 秒）即由其他 Worker 从检查点继续。可重试的错误（网络、限流、服务端错误）最多尝试 3 次。认证失败、余额不足、模型不可用或输出不合格不会自动重试。
 

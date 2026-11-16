@@ -175,22 +175,28 @@ struct ConversationView: View {
         HStack(alignment: .bottom, spacing: 8) {
             TextField("向这个项目提问", text: $draft, axis: .vertical)
                 .lineLimit(1...5)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .glassEffect(.regular, in: .rect(cornerRadius: 22))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 8)
+                .frame(minHeight: 44)
                 .disabled(isSending)
+                .accessibilityIdentifier("question-input")
             Button {
                 Task { await send() }
             } label: {
-                Image(systemName: "arrow.up").fontWeight(.semibold)
+                Image(systemName: "arrow.up")
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.onAccent)
+                    .frame(width: 44, height: 44)
+                    .background(Color.accentColor, in: .circle)
             }
-            .buttonStyle(.glassProminent)
-            .buttonBorderShape(.circle)
-            .controlSize(.large)
-            .foregroundStyle(.onAccent)
+            .buttonStyle(.plain)
             .disabled(trimmedDraft.isEmpty || isSending || isWaiting)
+            .opacity(trimmedDraft.isEmpty || isSending || isWaiting ? 0.3 : 1)
             .accessibilityLabel("发送")
+            .accessibilityIdentifier("question-send")
         }
+        .padding(6)
+        .glassEffect(.regular, in: .rect(cornerRadius: 28))
         .padding(.horizontal)
         .padding(.vertical, 8)
     }

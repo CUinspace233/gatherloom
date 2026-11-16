@@ -23,7 +23,7 @@ from psycopg.rows import dict_row
 from sqlalchemy import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
-from app import answering, ingestion, jobs, maintenance, quotas, reviews, tokenizer
+from app import answering, ingestion, jobs, maintenance, quotas, reviews, tokenizer, web
 from app.db import DATABASE_URL, SessionLocal
 from app.graphs import JobPipeline
 from app.providers import Models, build_models
@@ -116,11 +116,18 @@ def work(
     models: Models,
     sessions: sessionmaker[Session] = SessionLocal,
     url: str = DATABASE_URL,
+    firecrawl_api_key: str = "",
 ) -> None:
     with checkpointer(url) as saver:
         pipelines: dict[str, JobPipeline] = {
             jobs.INGESTION: ingestion.Pipeline(
-                sessions, saver, worker_id, models=models
+                sessions,
+                saver,
+                worker_id,
+                models=models,
+                extractor=web.Firecrawl(firecrawl_api_key)
+                if firecrawl_api_key
+                else None,
             ),
             jobs.ANSWER: answering.Pipeline(sessions, saver, worker_id, models=models),
             jobs.MAINTENANCE: maintenance.Pipeline(
@@ -187,6 +194,7 @@ def main() -> None:
                 f"{prefix}:{index}:{uuid4().hex[:8]}",
                 build_models(settings),
             ),
+            kwargs={"firecrawl_api_key": settings.firecrawl_api_key},
         )
         for index in range(concurrency)
     ]

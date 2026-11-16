@@ -140,9 +140,9 @@
 - [x] Run 表：provider、model、prompt_version、用量、带价格日期的费用估算、延迟、错误；每次调用（含失败与修复）一行。
 - [x] `LLMProvider`（DeepSeek、千问）与任务路由配置（ADR 0002）；Pydantic 校验 + 一次修复。
 - [x] `EmbeddingProvider`（百炼）与 index_version（ADR 0001）。
-- [ ] 正文兜底：服务端抓取（SSRF 防护：协议、私有/回环/链路本地/元数据地址、DNS 与每次重定向校验）+ 正文提取，100,000 字符上限。**顺延**：当前没有客户端正文的链接只索引标题、备注与 URL。
+- [x] 正文兜底：配置 Firecrawl 后，缺正文的 URL 在分块前提取，保存独立服务端快照；100,000 字符上限。Scheduler 每轮最多补读 50 条旧链接，失败保留已有索引，支持重试。未配置 key 时继续索引已有内容、标题、备注与 URL；本版不加入服务器直连抓取。
 - [ ] OCR 兜底：Tesseract 适配器（仅在无 `client_ocr` 时）。**顺延**：当前没有 OCR 的截图只索引备注。
-- [x] EntryIngestionGraph：分块 → 上下文 chunk 头 → jieba tsvector + Embedding（进入“已可检索”）→ 知识卡片（light，标题/摘要/要点/关键词/问题）→ 卡片索引 → 状态更新；节点幂等写入（ADR 0009）。提取兜底随上两项顺延。
+- [x] EntryIngestionGraph：网页提取（可选 Firecrawl）→ 分块 → 上下文 chunk 头 → jieba tsvector + Embedding（进入“已可检索”）→ 知识卡片（light，标题/摘要/要点/关键词/问题）→ 卡片索引 → 状态更新；节点幂等写入（ADR 0009）。OCR 兜底仍顺延。
 - [x] 卡片生成失败只记为部分失败，不影响原文可检索；卡片不产生 ProjectEvent。
 - [x] Artifact / Chunk 表（来源版本、加工类型、`unit` = chunk / card、`index_text` 与 `display_text`、位置、分词、上下文头与索引版本）。
 - [x] `GET /v1/entries/{id}/processing`、`POST /v1/entries/{id}/retry`（复用有效任务）。
@@ -151,7 +151,7 @@
 
 **出口检查**
 - [x] [T4]（入库部分）加工中重启 Worker 可恢复，发布结果不重复：节点间、事务中途、失去租约三种中断有自动化测试；本机 `kill -9` 实测（卡片步骤中断，重启后续做，未重做 Embedding）。
-- [ ] [T9] URL 抓取拒绝内部地址与恶意重定向。随服务端抓取顺延。
+- [ ] [T9] 服务器直连 URL 时拒绝内部地址与恶意重定向。当前仅访问固定 Firecrawl API；直连抓取尚未加入，此项保留为直连能力的前置检查。
 - [x] 失败可重试（API 测试与模拟器验证）。
 - [ ] 资料加入项目后可被检索命中：索引已就绪，检索接口在 S4 实现后验证。
 

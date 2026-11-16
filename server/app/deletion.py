@@ -166,7 +166,9 @@ def purge_entry(db: Session, owner_id: UUID, entry_id: UUID) -> list[UUID]:
     db.execute(
         update(EntryRevision)
         .where(EntryRevision.owner_id == owner_id, EntryRevision.entry_id == entry_id)
-        .values(text="", note="", client_ocr=None, client_extract=None)
+        .values(
+            text="", note="", client_ocr=None, client_extract=None, server_extract=None
+        )
     )
     files = list(
         db.scalars(

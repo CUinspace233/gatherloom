@@ -124,8 +124,25 @@ struct ProcessingState: Decodable, Hashable {
 
     var failedStepText: String? {
         switch failedStep {
+        case "extract": String(localized: "读取网页正文")
         case "index": String(localized: "建立检索索引")
         case "card": String(localized: "生成知识卡片")
+        default: nil
+        }
+    }
+
+    var errorText: String? {
+        switch errorCode {
+        case "web_auth": String(localized: "网页读取服务的密钥无效，请联系管理员。")
+        case "web_quota": String(localized: "网页读取服务的额度不足，请联系管理员。")
+        case "web_forbidden": String(localized: "网页读取服务拒绝了请求。")
+        case "web_timeout", "web_network", "web_provider_error", "web_rate_limit":
+            String(localized: "网页读取服务暂时不可用，请稍后重试。")
+        case "web_page_unavailable": String(localized: "网页暂时无法访问，可能需要登录或已失效。")
+        case "web_empty": String(localized: "没有读取到网页正文，可以从 Safari 打开网页后重新分享。")
+        case "web_too_long", "web_response_too_large": String(localized: "网页内容过长，未保存正文，请改为分享所需的内容。")
+        case "web_invalid_url", "web_request_rejected", "web_invalid_response":
+            String(localized: "无法读取这个链接的正文，可以从 Safari 打开网页后重新分享。")
         default: nil
         }
     }
