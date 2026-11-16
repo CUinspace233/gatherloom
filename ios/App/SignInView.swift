@@ -169,7 +169,8 @@ struct OutsideFieldTap: UIViewRepresentable {
             guard bounds.contains(touch.location(in: self)) else { return false }
             var view = touch.view
             while let hitView = view {
-                if hitView is UITextField || hitView is UITextView { return false }
+                if hitView is UITextField { return false }
+                if let textView = hitView as? UITextView, textView.isEditable { return false }
                 view = hitView.superview
             }
             return true

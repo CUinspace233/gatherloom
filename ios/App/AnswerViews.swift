@@ -100,6 +100,7 @@ struct ConversationView: View {
     let capture: CaptureQueue
     let project: Project
     @State var conversation: Conversation?
+    var autofocusInput = false
     @State private var messages: [ChatMessage] = []
     @State private var draft = ""
     @State private var pendingMessageID: UUID?
@@ -107,6 +108,7 @@ struct ConversationView: View {
     @State private var errorMessage: String?
     @State private var selectedCitation: Citation?
     @State private var hasLoadedMessages = false
+    @State private var hasAppliedInitialFocus = false
     @FocusState private var isDraftFocused: Bool
 
     private struct Ask: Encodable {
@@ -186,9 +188,17 @@ struct ConversationView: View {
             OutsideFieldTap(isEnabled: isDraftFocused) { isDraftFocused = false }
                 .allowsHitTesting(false)
         }
-        .navigationTitle(conversation.map { $0.title.isEmpty ? String(localized: "问答") : $0.title } ?? String(localized: "新问题"))
+        .navigationTitle(conversation.map { $0.title.isEmpty ? project.name : $0.title } ?? project.name)
         .navigationBarTitleDisplayMode(.inline)
         .task { await reload() }
+        .task {
+            guard autofocusInput, !hasAppliedInitialFocus else { return }
+            // Focus after the destination has mounted; never refocus on return.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            isDraftFocused = true
+            hasAppliedInitialFocus = true
+        }
         .task(id: isWaiting) { await poll() }
         .refreshable { await reload() }
         .sheet(item: $selectedCitation) { citation in
