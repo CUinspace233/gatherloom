@@ -14,6 +14,8 @@ struct Question: Decodable, Identifiable {
 
 private struct ProjectRow: View {
     let project: Project
+    let onOpen: () -> Void
+    let onAsk: () -> Void
 
     private var subtitle: String {
         let goal = project.goal.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -21,6 +23,27 @@ private struct ProjectRow: View {
     }
 
     var body: some View {
+        HStack(spacing: Theme.Space.s) {
+            Button(action: onOpen) {
+                projectLabel
+            }
+            .accessibilityIdentifier("project-open-\(project.id.uuidString)")
+            Button(action: onAsk) {
+                Image(systemName: "bubble.left.and.bubble.right")
+                    .font(.body)
+                    .frame(width: 38, height: 38)
+                    .background(Color.primary.opacity(0.06), in: .circle)
+                    .frame(width: 44, height: 44)
+                    .contentShape(.rect)
+            }
+            .accessibilityLabel(String(localized: "向「\(project.name)」提问"))
+            .accessibilityIdentifier("project-chat-\(project.id.uuidString)")
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, Theme.Space.m)
+    }
+
+    private var projectLabel: some View {
         HStack(spacing: Theme.Space.l) {
             Image(systemName: "folder")
                 .font(.subheadline)
@@ -33,7 +56,7 @@ private struct ProjectRow: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.vertical, Theme.Space.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(.rect)
     }
 }
@@ -58,6 +81,7 @@ struct ProjectsView: View {
     @State private var showsEditor = false
     @State private var openProjectID: UUID?
     @State private var selectedProject: Project?
+    @State private var chatProject: Project?
     @State private var isSearching = false
     @State private var query = ""
     /// Nil shows every project; otherwise the server returns only that status.
@@ -76,9 +100,21 @@ struct ProjectsView: View {
                             onOpenChange: { openProjectID = $0 ? project.id : nil },
                             onTap: { openProjectID = nil; selectedProject = project },
                             onDelete: { Task { await delete(project) } },
-                            showsCard: false
+                            showsCard: false,
+                            handlesContentTap: false
                         ) {
-                            ProjectRow(project: project)
+                            ProjectRow(project: project) {
+                                if openProjectID == project.id {
+                                    openProjectID = nil
+                                } else {
+                                    openProjectID = nil
+                                    selectedProject = project
+                                }
+                            } onAsk: {
+                                openProjectID = nil
+                                searchFocused = false
+                                chatProject = project
+                            }
                         }
                     }
                     if let nextCursor {
@@ -147,6 +183,9 @@ struct ProjectsView: View {
             }
             .navigationDestination(item: $selectedProject) { project in
                 ProjectDetailView(session: session, capture: capture, project: project, onSaved: save)
+            }
+            .navigationDestination(item: $chatProject) { project in
+                ConversationView(session: session, capture: capture, project: project, conversation: nil, autofocusInput: true)
             }
             .sheet(isPresented: $showsEditor) {
                 ProjectEditor(session: session, onSaved: save)
@@ -260,6 +299,7 @@ private struct ProjectDetailView: View {
     @State private var showsProjectEditor = false
     @State private var showsQuestionEditor = false
     @State private var selectedQuestion: Question?
+    @State private var showsNewConversation = false
 
     var body: some View {
         List {
@@ -305,7 +345,33 @@ private struct ProjectDetailView: View {
             }
         }
         .canvas(grouped: true)
+        .safeAreaInset(edge: .bottom) {
+            Button { showsNewConversation = true } label: {
+                HStack(spacing: Theme.Space.s) {
+                    Image(systemName: "bubble.left.and.bubble.right")
+                    Text("向这个项目提问…")
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal, Theme.Space.l)
+                .padding(.vertical, Theme.Space.m)
+                .frame(minHeight: 50)
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .composerSurface()
+            .padding(.horizontal, Theme.Space.l)
+            .padding(.bottom, Theme.Space.s)
+            .accessibilityLabel(String(localized: "向「\(project.name)」提问"))
+            .accessibilityIdentifier("project-ask")
+        }
         .navigationTitle(project.name)
+        .navigationDestination(isPresented: $showsNewConversation) {
+            ConversationView(session: session, capture: capture, project: project, conversation: nil, autofocusInput: true)
+        }
         .onAppear { capture.markRecent(project.id) }
         .toolbar {
             Button("编辑项目") { showsProjectEditor = true }.disabled(isLoading)

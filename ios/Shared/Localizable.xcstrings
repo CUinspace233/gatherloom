@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "向这个项目提问…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask this project…"
+          }
+        }
+      }
+    },
     "正在加载对话…": {
       "localizations": {
         "en": {

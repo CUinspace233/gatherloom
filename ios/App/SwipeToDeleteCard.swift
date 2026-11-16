@@ -12,6 +12,8 @@ struct SwipeToDeleteCard<Content: View>: View {
     let onDelete: () -> Void
     /// A plain row keeps the page background instead of a raised card.
     var showsCard = true
+    /// Interactive rows provide their own independent buttons.
+    var handlesContentTap = true
     @ViewBuilder let content: Content
 
     @State private var dragOffset: CGFloat = 0
@@ -28,24 +30,44 @@ struct SwipeToDeleteCard<Content: View>: View {
         ZStack(alignment: .trailing) {
             deleteButton
                 .opacity(offset < -8 ? 1 : 0)
-            content
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    showsCard ? Color(.secondarySystemGroupedBackground) : Color.canvas,
-                    in: .rect(cornerRadius: showsCard ? Theme.Radius.card : 0)
-                )
-                .contentShape(.rect)
-                .onTapGesture { isOpen ? onOpenChange(false) : onTap() }
-                .accessibilityAddTraits(.isButton)
+            tappableContent
                 .offset(x: offset)
         }
-        .gesture(swipe)
+        .gesture(CardSwipeGesture(
+            onChanged: { dragOffset = $0 },
+            onEnded: { translation, cancelled in
+                let finalOffset = (isOpen ? -revealWidth : 0) + translation
+                withAnimation(.snappy(duration: 0.25)) { dragOffset = 0 }
+                if !cancelled { onOpenChange(finalOffset < -buttonSize / 2) }
+            }
+        ))
         .animation(.snappy(duration: 0.25), value: isOpen)
         .animation(.snappy(duration: 0.25), value: isConfirming)
         .onChange(of: isOpen) { _, open in
             if !open { isConfirming = false }
         }
         .accessibilityAction(named: isConfirming ? String(localized: "确认删除") : String(localized: "删除")) { tapDelete() }
+    }
+
+    private var cardContent: some View {
+        content
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                showsCard ? Color(.secondarySystemGroupedBackground) : Color.canvas,
+                in: .rect(cornerRadius: showsCard ? Theme.Radius.card : 0)
+            )
+            .contentShape(.rect)
+    }
+
+    @ViewBuilder
+    private var tappableContent: some View {
+        if handlesContentTap {
+            cardContent
+                .onTapGesture { isOpen ? onOpenChange(false) : onTap() }
+                .accessibilityAddTraits(.isButton)
+        } else {
+            cardContent
+        }
     }
 
     private var deleteButton: some View {
@@ -65,28 +87,58 @@ struct SwipeToDeleteCard<Content: View>: View {
         .accessibilityLabel(isConfirming ? String(localized: "确认删除") : String(localized: "删除"))
     }
 
-    private var swipe: some Gesture {
-        DragGesture(minimumDistance: 20)
-            .onChanged { value in
-                // Leave vertical drags to the scroll view.
-                guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                dragOffset = value.translation.width
-            }
-            .onEnded { value in
-                let horizontal = abs(value.translation.width) > abs(value.translation.height)
-                let finalOffset = (isOpen ? -revealWidth : 0) + (horizontal ? value.translation.width : 0)
-                withAnimation(.snappy(duration: 0.25)) { dragOffset = 0 }
-                guard horizontal else { return }
-                onOpenChange(finalOffset < -buttonSize / 2)
-            }
-    }
-
     private func tapDelete() {
         if isConfirming {
             onDelete()
         } else {
             if !isOpen { onOpenChange(true) }
             isConfirming = true
+        }
+    }
+}
+
+/// Horizontal pans cancel nested button taps. Vertical pans belong to scrolling;
+/// a closed row stays stationary during right swipes while the drawer also pans.
+private struct CardSwipeGesture: UIGestureRecognizerRepresentable {
+    let onChanged: (CGFloat) -> Void
+    let onEnded: (CGFloat, Bool) -> Void
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
+        let pan = UIPanGestureRecognizer()
+        pan.maximumNumberOfTouches = 1
+        pan.cancelsTouchesInView = true
+        pan.delegate = context.coordinator
+        return pan
+    }
+
+    func updateUIGestureRecognizer(_ pan: UIPanGestureRecognizer, context: Context) {}
+
+    func handleUIGestureRecognizerAction(_ pan: UIPanGestureRecognizer, context: Context) {
+        let translation = pan.translation(in: pan.view?.window).x
+        switch pan.state {
+        case .began, .changed: onChanged(translation)
+        case .ended: onEnded(translation, false)
+        case .cancelled, .failed: onEnded(translation, true)
+        default: break
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = pan.velocity(in: pan.view?.window)
+            return abs(velocity.x) > abs(velocity.y) * 1.5
+        }
+
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+        ) -> Bool {
+            otherGestureRecognizer is UIPanGestureRecognizer
         }
     }
 }
