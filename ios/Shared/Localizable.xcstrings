@@ -1,6 +1,126 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "读取网页正文": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read webpage content"
+          }
+        }
+      }
+    },
+    "网页读取服务的密钥无效，请联系管理员。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The webpage service key is invalid. Contact the administrator."
+          }
+        }
+      }
+    },
+    "网页读取服务的额度不足，请联系管理员。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The webpage service has run out of credits. Contact the administrator."
+          }
+        }
+      }
+    },
+    "网页读取服务拒绝了请求。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The webpage service rejected the request."
+          }
+        }
+      }
+    },
+    "网页读取服务暂时不可用，请稍后重试。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The webpage service is temporarily unavailable. Try again later."
+          }
+        }
+      }
+    },
+    "网页暂时无法访问，可能需要登录或已失效。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The page is unavailable. It may require sign-in or no longer exist."
+          }
+        }
+      }
+    },
+    "没有读取到网页正文，可以从 Safari 打开网页后重新分享。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No page content was found. Open the page in Safari and share it again."
+          }
+        }
+      }
+    },
+    "网页内容过长，未保存正文，请改为分享所需的内容。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The page is too long to save. Share the relevant content instead."
+          }
+        }
+      }
+    },
+    "无法读取这个链接的正文，可以从 Safari 打开网页后重新分享。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read this link. Open the page in Safari and share it again."
+          }
+        }
+      }
+    },
+    "已保存的内容仍可检索，网页正文可以重试读取。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved content is still searchable. Retry reading the webpage."
+          }
+        }
+      }
+    },
+    "网页正文快照": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Webpage snapshot"
+          }
+        }
+      }
+    },
+    "启用网页读取时，缺少正文的网页链接会发送给 Firecrawl 提取正文，不会发送你的浏览器登录信息。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When webpage reading is enabled, links without page content are sent to Firecrawl for extraction. Your browser sign-in information is not sent."
+          }
+        }
+      }
+    },
     "%@ 至 %@": {
       "localizations": {
         "en": {

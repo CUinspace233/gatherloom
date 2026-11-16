@@ -10,7 +10,7 @@ from sqlalchemy import Select, and_, delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from app import deletion, events, quotas
+from app import deletion, events, quotas, web
 from app.auth import AUTH_ERROR, RATE_ERROR, Db, Owner
 from app.contracts import (
     AttachmentView,
@@ -138,7 +138,7 @@ def views(
     results = []
     for entry in entries:
         revision = revisions[entry.id]
-        extract = revision.client_extract or {}
+        extract = web.effective_extract(revision.client_extract, revision.server_extract)
         attachment = attachments.get(entry.id)
         card = cards.get(entry.id)
         fields: dict[str, Any] = {
@@ -381,6 +381,7 @@ def update_entry(entry_id: UUID, body: EntryUpdate, owner: Owner, db: Db) -> Ent
             content_fingerprint=fingerprint,
             client_ocr=current.client_ocr,
             client_extract=current.client_extract,
+            server_extract=current.server_extract,
         )
     )
     entry.current_revision = revision
@@ -509,7 +510,7 @@ def revision_detail(
     found = db.get(EntryRevision, (owner.id, entry.id, revision))
     if found is None:
         raise HTTPException(404, "revision not found")
-    extract = found.client_extract or {}
+    extract = web.effective_extract(found.client_extract, found.server_extract)
     attachment = db.scalar(
         select(Attachment.id).where(
             Attachment.owner_id == owner.id, Attachment.entry_id == entry.id

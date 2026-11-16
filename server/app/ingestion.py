@@ -6,18 +6,22 @@ through ``jobs.fence`` and is idempotent, because a node can run again after a
 crash between its commit and the checkpoint write.
 """
 
+from collections.abc import Callable
+from datetime import datetime
 from itertools import pairwise
 from typing import Any, ClassVar, TypedDict
 from uuid import UUID
 
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from sqlalchemy import delete, exists, func, select, update
 from sqlalchemy.dialects.postgresql import insert
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
-from app import cards, chunking, events, jobs, tokenizer
+from app import cards, chunking, events, jobs, tokenizer, web
 from app.graphs import Hook, JobPipeline
 from app.models import INDEX_VERSION, Artifact, Chunk, Entry, EntryRevision
+from app.providers import Models
 
 __all__ = ["Hook", "Pipeline", "delete_entry_chunks"]
 EMBED_BATCH = 25
@@ -50,7 +54,9 @@ def material(db: Session, claim: jobs.Claim) -> chunking.Material:
         text=revision.text,
         note=revision.note,
         source_url=entry.source_url,
-        client_extract=revision.client_extract,
+        client_extract=web.effective_extract(
+            revision.client_extract, revision.server_extract
+        ),
         client_ocr=revision.client_ocr,
     )
 
@@ -78,15 +84,32 @@ class Pipeline(JobPipeline):
 
     PROMPT_VERSIONS: ClassVar[dict[str, int]] = {cards.TASK: cards.PROMPT_VERSION}
 
+    def __init__(
+        self,
+        sessions: sessionmaker[Session],
+        checkpointer: BaseCheckpointSaver[Any],
+        worker_id: str,
+        *,
+        extractor: web.Firecrawl | None = None,
+        models: Models | None = None,
+        clock: Callable[[], datetime] = jobs.utcnow,
+        hook: Hook | None = None,
+    ) -> None:
+        self.extractor = extractor
+        super().__init__(
+            sessions, checkpointer, worker_id, models=models, clock=clock, hook=hook
+        )
+
     def initial_state(self, claim: jobs.Claim) -> dict[str, Any]:
         return dict(initial_state(claim))
 
     def build(self) -> StateGraph[Any]:
         graph = StateGraph(IngestionState)
         graph.add_node("load", self.load)
+        graph.add_node("extract", self.extract)
         graph.add_node("index_keywords", self.index_keywords)
         graph.add_node("finish", self.finish)
-        steps = ["load", "index_keywords"]
+        steps = ["load", "extract", "index_keywords"]
         if self.models is not None:
             graph.add_node("embed", self.embed)
             graph.add_node("card", self.card)
@@ -105,6 +128,45 @@ class Pipeline(JobPipeline):
         self.hook("load")
         with self.step("load"):
             pass
+        return {}
+
+    def extract(self, state: IngestionState) -> dict[str, Any]:
+        self.hook("extract")
+        if self.extractor is None:
+            return {}
+        assert self.claim is not None
+        claim = self.claim
+        with self.step("extract") as (db, job):
+            source = material(db, claim)
+            if source.type != "url" or web.has_body(source.client_extract):
+                return {}
+            # Mark before the external call, including on new submissions.
+            job.payload = {**(job.payload or {}), web.BACKFILL_MARKER: 1}
+            url = source.source_url
+        if not url:
+            raise jobs.Permanent("web_invalid_url")
+        snapshot = self.extractor.scrape(url)
+        self.hook("extract:received")
+        with self.step("extract") as (db, job):
+            revision = db.get_one(
+                EntryRevision, (claim.owner_id, claim.entry_id, claim.revision)
+            )
+            if not web.has_body(
+                web.effective_extract(revision.client_extract, revision.server_extract)
+            ):
+                revision.server_extract = snapshot
+                # Old metadata-only indexes/cards become obsolete only after a
+                # valid snapshot is saved. The snapshot and invalidation commit
+                # together, so replay can reuse it without another paid call.
+                db.execute(
+                    delete(Chunk).where(
+                        Chunk.owner_id == claim.owner_id,
+                        Chunk.entry_id == claim.entry_id,
+                        Chunk.revision == claim.revision,
+                    )
+                )
+                db.execute(delete(Artifact).where(*artifact_rows(claim)))
+                job.indexed_at = None
         return {}
 
     def index_keywords(self, state: IngestionState) -> dict[str, Any]:

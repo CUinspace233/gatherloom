@@ -53,8 +53,10 @@ def processing_status(status: str, indexed_at: datetime | None) -> ProcessingSta
     return cast(ProcessingStatus, status)
 
 
-def failed_step(stage: str | None) -> Literal["index", "card"]:
+def failed_step(stage: str | None) -> Literal["extract", "index", "card"]:
     """Which part failed: building the search index, or the knowledge card."""
+    if stage == "extract":
+        return "extract"
     return "index" if stage is None or stage in INDEX_STAGES else "card"
 
 

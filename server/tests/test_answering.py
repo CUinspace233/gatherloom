@@ -99,7 +99,10 @@ def answer_with(
     hooks: Hooks | None = None,
     worker: str = "answer",
 ) -> str:
-    current = claim(sessions, worker, clock.advance(timedelta(seconds=1)))
+    # Cold tokenizer/model setup may take longer than the simulated second.
+    # A freshly inserted job uses the database's real creation time.
+    clock.now = max(clock.advance(timedelta(seconds=1)), jobs.utcnow())
+    current = claim(sessions, worker, clock())
     assert current.kind == jobs.ANSWER
     pipeline = answering.Pipeline(
         sessions, saver, worker, models=api.models(), clock=clock, hook=hooks

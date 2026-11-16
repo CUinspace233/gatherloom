@@ -1,0 +1,44 @@
+purpose:
+  stands_in_for: Firecrawl v2 scrape API, using synthetic pages and credentials only.
+  unblocks: Verify Gatherloom HTTP serialization, error classification and ingestion without spending Firecrawl credits.
+assumptions:
+  - id: scrape-contract
+    status: supported
+    claim: The v2 scrape contract accepts a Bearer token, URL, markdown format, onlyMainContent, storeInCache and timeout, and returns markdown plus page metadata.
+    reason: The official endpoint reference documents these fields. The local stand-in enforces the subset Gatherloom sends; it is not a live provider check.
+    verification: On 2026-11-16 read the official endpoint reference and ran all 12 tests in tests/test_firecrawl_simulation.py against Postman CLI 1.82.0. Request events confirmed POST /v2/scrape. Success persisted the snapshot and created exact-offset keyword chunks. The errors exercised were 401, 402, 403, 429, 503, HTML 500, invalid JSON, empty/long content, target-page 403 and a client read timeout.
+    source: https://docs.firecrawl.dev/api-reference/endpoint/scrape; server/tests/test_firecrawl_simulation.py; postman/mocks/firecrawl/default.js
+    updated_at: "2026-11-16"
+  - id: successful-api-does-not-guarantee-successful-page
+    status: supported
+    claim: An HTTP 200 scrape response can contain a failed target-page status in data.metadata.statusCode.
+    reason: The official scrape guide distinguishes API success from page success; the caller validates both.
+    verification: On 2026-11-16 read the scrape guide and exercised an HTTP 200 API response with target status 403; the real client raised web_page_unavailable and did not publish a snapshot.
+    source: https://docs.firecrawl.dev/features/scrape; server/app/web.py; server/tests/test_firecrawl_simulation.py
+    updated_at: "2026-11-16"
+  - id: live-account-access
+    status: unknown
+    claim: The production deployment key can fetch all of the user's saved public URLs with useful extraction quality.
+    reason: Per-site extraction quality and production configuration are not established by a local stand-in or one public example. Published mock discovery was skipped because the Postman CLI was signed out.
+    verification: Initially only synthetic credentials were used. Later on 2026-11-16 a configured local key was found and a live scrape of https://example.com succeeded with a title and 959 characters of content. Production configuration and the user's saved pages have not been exercised.
+    source: server/.env.example; deploy/env.prod.example; docs/operations.md
+    updated_at: "2026-11-16"
+  - id: local-key-access
+    status: supported
+    claim: The locally configured Firecrawl key could authenticate and scrape https://example.com on 2026-11-16.
+    reason: The real production-endpoint client completed one live request and passed both API and target-page status validation. No key or page text was printed.
+    verification: Ran Firecrawl(load_settings().firecrawl_api_key).scrape('https://example.com') with server/.env loaded; result was provider=firecrawl, 959 text characters and a nonempty title. This is a single-page check, not a guarantee of future credits or other pages.
+    source: server/app/web.py; server/.env (private, untracked)
+    updated_at: "2026-11-16"
+  - id: provider-billing-exactly-once
+    status: unknown
+    claim: Retrying an ambiguous timeout or a process crash before the local snapshot commit avoids a second provider charge.
+    reason: No exactly-once billing guarantee is assumed. Persisted snapshots prevent re-fetch after commit; a call that succeeded before a crash or timeout may still be repeated.
+    verification: Database crash recovery tests verify snapshot reuse after commit. Provider-side charging after an ambiguous call was not tested.
+    source: server/tests/test_web.py; docs/decisions/0004-web-extraction-safari-preprocessing.md
+    updated_at: "2026-11-16"
+fingerprints:
+  - id: local-implementation
+    date: "2026-11-16"
+    commit: b3c8246a2e91b60a1ee201988154503d36e2c5eb with uncommitted Firecrawl integration changes
+    cli: Postman CLI 1.82.0

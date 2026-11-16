@@ -160,6 +160,7 @@ class EntryRevision(Base):
     content_fingerprint: Mapped[str] = mapped_column(String(64))
     client_ocr: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     client_extract: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    server_extract: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

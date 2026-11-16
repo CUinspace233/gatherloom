@@ -788,12 +788,19 @@ struct EntryDetailView: View {
             }
             Section("处理状态") {
                 Text(ProcessingState.text(for: processing?.status ?? entry.processing))
+                if let message = processing?.errorText {
+                    Text(message).foregroundStyle(.secondary)
+                }
                 if let processing, processing.canRetry {
                     if let step = processing.failedStepText {
                         LabeledContent("失败步骤", value: step)
                     }
                     if processing.searchable {
-                        Text("原文已可检索，其余步骤可以重试。").foregroundStyle(.secondary)
+                        if processing.failedStep == "extract" {
+                            Text("已保存的内容仍可检索，网页正文可以重试读取。").foregroundStyle(.secondary)
+                        } else {
+                            Text("原文已可检索，其余步骤可以重试。").foregroundStyle(.secondary)
+                        }
                     }
                     Button("重试") { Task { await retry() } }
                 }
@@ -866,7 +873,7 @@ struct EntryDetailView: View {
                 if !entry.text.isEmpty { Text(entry.text).readingText().textSelection(.enabled) }
             }
             if let text = entry.extractText, !text.isEmpty {
-                Section("分享时页面正文") {
+                Section("网页正文快照") {
                     Text(text).readingText().lineLimit(showsFullExtract ? nil : 20).textSelection(.enabled)
                     if text.count > 600 {
                         Button(showsFullExtract ? String(localized: "收起") : String(localized: "展开全文")) { showsFullExtract.toggle() }
@@ -907,7 +914,7 @@ struct EntryDetailView: View {
                 let state = try await session.request(ProcessingState.self, path, scope: capture.scope)
                 processing = state
                 if !state.isActive {
-                    if state.status != entry.processing { await reload() }
+                    await reload()
                     return
                 }
             } catch {

@@ -1,0 +1,10 @@
+version: 1
+name: firecrawl
+slug: firecrawl
+protocol: http
+origin: api.firecrawl.dev
+interceptRequests: true
+scenarios:
+  - name: default
+    path: ./default.js
+    default: true

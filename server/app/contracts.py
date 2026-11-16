@@ -242,7 +242,7 @@ class EntryView(BaseModel):
     note: str
     source_url: str | None
     title: str | None = Field(
-        description="Page title captured by the client, else the knowledge card title."
+        description="Page snapshot title (client or server), else the knowledge card title."
     )
     attachment: AttachmentView | None
     project_ids: list[UUID]
@@ -281,7 +281,7 @@ class ProcessingView(BaseModel):
     )
     searchable: bool
     stage: str | None = Field(description="Last step the worker reached.")
-    failed_step: Literal["index", "card"] | None
+    failed_step: Literal["extract", "index", "card"] | None
     error_code: str | None
     attempts: int
     can_retry: bool

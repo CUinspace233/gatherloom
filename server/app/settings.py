@@ -1,7 +1,4 @@
-"""Model configuration from GATHERLOOM_* environment variables (ADR 0001, 0002).
-
-Only the worker needs model keys; the API process never reads them.
-"""
+"""Provider configuration from GATHERLOOM_* environment variables."""
 
 import os
 from collections.abc import Mapping
@@ -29,6 +26,7 @@ class Settings:
     light: Route
     heavy: Route
     fallback: Route | None
+    firecrawl_api_key: str = ""
 
     def api_key(self, provider: str) -> str:
         return self.bailian_api_key if provider == "qwen" else self.deepseek_api_key
@@ -68,6 +66,7 @@ def route(env: Mapping[str, str], tier: str, provider: str, model: str) -> Route
 def load_settings(env: Mapping[str, str] = os.environ) -> Settings:
     fallback_provider = env.get("GATHERLOOM_LLM_FALLBACK_PROVIDER", "")
     return Settings(
+        firecrawl_api_key=env.get("GATHERLOOM_FIRECRAWL_API_KEY", "").strip(),
         bailian_api_key=env.get("GATHERLOOM_BAILIAN_API_KEY", ""),
         bailian_base_url=env.get(
             "GATHERLOOM_BAILIAN_BASE_URL",

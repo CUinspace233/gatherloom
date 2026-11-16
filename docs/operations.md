@@ -33,6 +33,7 @@
 ### 数据去向与删除
 - 你保存的内容存放在海外/港澳的服务器上。
 - 资料正文、网页正文和截图文字会发送给阿里云百炼（通义千问、向量模型）和 DeepSeek，用于整理、检索、问答、总结和回顾。截图图片本身不会发送给模型服务，文字识别在手机上完成。
+- 配置 Firecrawl 后，缺少正文的公开网页链接会发送给 Firecrawl 提取正文，保存为网页快照。已有 Safari 正文时直接复用，不发送网页 Cookie 或登录凭证。
 - 删除一条资料后，它会立即从列表、搜索和问答中消失，几分钟内从服务器上彻底清除，包括附件、卡片、引用片段、问答里的依据，以及后台任务的中间数据。
 - 引用过它的回答会被隐藏。总结、回顾和正式决定保留文字，但会标出「依据已变化」。
 - 每日备份最多保留 14 天。如果从备份恢复，已删除的资料会被再次删除。
@@ -103,6 +104,19 @@ dc exec api python -m app.admin reset-password <用户名>
 
 ### 调整额度
 修改 `deploy/.env.prod` 里的 `GATHERLOOM_DAILY_*` 后，执行 `dc up -d` 重启服务。设为 0 表示不限。
+
+### 网页正文读取（Firecrawl）
+
+在服务器的 `deploy/.env.prod` 添加 `GATHERLOOM_FIRECRAWL_API_KEY=你的key`；本地开发则放在 `server/.env`。这两个文件均被 Git 忽略。密钥只配置在服务端，无需放进 iOS 或发到聊天。
+
+更新代码并执行迁移后，用 `dc up -d --build worker scheduler` 重新创建容器以加载环境变量（单纯 `restart` 不会加载修改后的 env 文件）。本地分别使用 `uv run --locked --env-file .env python -m app.worker` 与 `uv run --locked --env-file .env python -m app.scheduler`。
+
+- 新链接在分块前自动提取正文；已有非空 Safari 正文或服务端快照时不重复读取。仅修改备注会复用原快照。
+- Scheduler 启动时及每 5 分钟扫描一次，每轮最多将 50 条未删除、缺正文的旧链接加入队列。正在加工的材料等待原任务结束后再检查；扫描可重复运行，不重复重置失败任务。
+- 读取成功后重建索引和知识卡片，后续问答引用已保存的正文快照。历史回答不会自动重新生成；正文补齐后可重新提问。
+- 超时、网络错误、限流与服务端错误最多尝试三次；鉴权、额度或内容错误不自动重试。资料详情显示失败原因，可手动重试。补读失败保留原有索引。
+- Firecrawl 用量在 Firecrawl 控制台查看，独立于 `GATHERLOOM_DAILY_BUDGET_CNY`。请求设置 `storeInCache=false`，不要求写入 Firecrawl 索引和缓存；这不等同于其企业版零数据保留承诺。
+- 未配置 key 时不调用 Firecrawl，也不扫描补读旧链接；原有保存、Safari 分享和索引能力继续可用。清空 key 并重新创建 Worker、Scheduler 可关闭自动抓取。
 
 花费按 `runs` 表里的估算成本计算：人民币原样计入，美元按 `GATHERLOOM_USD_CNY` 折算。查看各账号当天的花费：
 

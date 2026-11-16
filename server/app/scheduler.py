@@ -9,10 +9,11 @@ import logging
 import signal
 import threading
 
-from app import deletion
+from app import deletion, web
 from app.db import SessionLocal
 from app.jobs import utcnow
 from app.reviews import scan
+from app.settings import load_settings
 from app.worker import JsonFormatter
 
 log = logging.getLogger("gatherloom.scheduler")
@@ -22,6 +23,13 @@ INTERVAL_SECONDS = 300
 def tick() -> int:
     with SessionLocal.begin() as db:
         return scan(db, utcnow())
+
+
+def backfill_tick() -> int:
+    if not load_settings().firecrawl_api_key:
+        return 0
+    with SessionLocal.begin() as db:
+        return web.enqueue_missing(db, utcnow())
 
 
 def main() -> None:
@@ -39,6 +47,14 @@ def main() -> None:
                 log.info("weekly reviews queued", extra={"status": f"queued={queued}"})
         except Exception:
             log.exception("scan failed")
+        try:
+            queued_links = backfill_tick()
+            if queued_links:
+                log.info(
+                    "web backfill queued", extra={"status": f"queued={queued_links}"}
+                )
+        except Exception:
+            log.exception("web backfill scan failed")
         try:
             purged = deletion.purge_due(SessionLocal, utcnow())
             if purged.entries:

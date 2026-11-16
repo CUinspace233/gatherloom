@@ -1,0 +1,7 @@
+simulation: firecrawl
+routing: path
+mocks:
+  - name: firecrawl
+    routeKey: firecrawl
+    origin: [api.firecrawl.dev]
+    path: postman/mocks/firecrawl
