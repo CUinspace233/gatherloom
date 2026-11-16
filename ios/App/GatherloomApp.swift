@@ -34,6 +34,17 @@ private struct OpenHomeKey: EnvironmentKey {
     static let defaultValue: () -> Void = {}
 }
 
+private struct DrawerGestureActions {
+    var isEnabled = false
+    var onBegan: () -> Void = {}
+    var onChanged: (CGFloat) -> Void = { _ in }
+    var onEnded: (CGFloat, CGFloat, Bool) -> Void = { _, _, _ in }
+}
+
+private struct DrawerGestureKey: EnvironmentKey {
+    static let defaultValue = DrawerGestureActions()
+}
+
 extension EnvironmentValues {
     var openDrawer: () -> Void {
         get { self[OpenDrawerKey.self] }
@@ -45,40 +56,119 @@ extension EnvironmentValues {
         get { self[OpenHomeKey.self] }
         set { self[OpenHomeKey.self] = newValue }
     }
+
+    fileprivate var drawerGesture: DrawerGestureActions {
+        get { self[DrawerGestureKey.self] }
+        set { self[DrawerGestureKey.self] = newValue }
+    }
 }
 
 private struct DrawerButton: ViewModifier {
     @Environment(\.openDrawer) private var openDrawer
+    @Environment(\.drawerGesture) private var drawerGesture
 
     func body(content: Content) -> some View {
         content
+            .contentShape(.rect)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("菜单", systemImage: "line.3.horizontal", action: openDrawer)
                 }
             }
-            .simultaneousGesture(openSwipe)
-    }
-
-    private var openSwipe: some Gesture {
-        DragGesture(minimumDistance: 20, coordinateSpace: .local)
-            .onEnded { value in
-                // Reserve the leading edge for the drawer, leaving row swipes
-                // and text selection elsewhere on the screen alone.
-                guard value.startLocation.x <= 44,
-                      value.translation.width > 20,
-                      value.translation.width > abs(value.translation.height) * 1.5,
-                      max(value.translation.width, value.predictedEndTranslation.width) > 80
-                else { return }
-                openDrawer()
-            }
+            .gesture(DrawerPanGesture(actions: drawerGesture, opensDrawer: true))
     }
 }
 
 extension View {
-    /// Adds the menu button and leading-edge swipe. For root screens only,
+    /// Adds the menu button and full-width drawer pan. For root screens only,
     /// so detail screens keep the navigation stack's swipe-to-go-back gesture.
     func drawerButton() -> some View { modifier(DrawerButton()) }
+}
+
+/// The settled state stays unchanged during a drag, so cancellation can restore it.
+private struct DrawerPosition {
+    var isOpen = false
+    var translation: CGFloat?
+
+    func offset(width: CGFloat) -> CGFloat {
+        min(width, max(0, (isOpen ? width : 0) + (translation ?? 0)))
+    }
+
+    mutating func finish(width: CGFloat, velocity: CGFloat, cancelled: Bool) {
+        guard translation != nil else { return }
+        if !cancelled {
+            if abs(velocity) > 550 {
+                isOpen = velocity > 0
+            } else {
+                isOpen = offset(width: width) > width / 2
+            }
+        }
+        translation = nil
+    }
+}
+
+/// Rejects vertical and opposite-direction pans before they can claim scrolling
+/// or row swipe actions. Once accepted, the direction stays locked until release.
+private struct DrawerPanGesture: UIGestureRecognizerRepresentable {
+    let actions: DrawerGestureActions
+    let opensDrawer: Bool
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator(opensDrawer: opensDrawer)
+    }
+
+    func makeUIGestureRecognizer(context: Context) -> UIPanGestureRecognizer {
+        let pan = UIPanGestureRecognizer()
+        pan.maximumNumberOfTouches = 1
+        pan.delegate = context.coordinator
+        pan.isEnabled = actions.isEnabled
+        return pan
+    }
+
+    func updateUIGestureRecognizer(_ pan: UIPanGestureRecognizer, context: Context) {
+        pan.isEnabled = actions.isEnabled
+    }
+
+    func handleUIGestureRecognizerAction(_ pan: UIPanGestureRecognizer, context: Context) {
+        // Window coordinates stay stable while the content itself moves.
+        let translation = pan.translation(in: pan.view?.window).x
+        let velocity = pan.velocity(in: pan.view?.window).x
+        switch pan.state {
+        case .began:
+            actions.onBegan()
+            actions.onChanged(translation)
+        case .changed:
+            actions.onChanged(translation)
+        case .ended:
+            actions.onEnded(translation, velocity, false)
+        case .cancelled, .failed:
+            actions.onEnded(translation, velocity, true)
+        default:
+            break
+        }
+    }
+
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        let opensDrawer: Bool
+
+        init(opensDrawer: Bool) {
+            self.opensDrawer = opensDrawer
+        }
+
+        func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
+            guard let pan = gestureRecognizer as? UIPanGestureRecognizer else { return false }
+            let velocity = pan.velocity(in: pan.view?.window)
+            return abs(velocity.x) > abs(velocity.y) * 1.5
+                && (opensDrawer ? velocity.x > 0 : velocity.x < 0)
+        }
+
+        func gestureRecognizer(
+            _ gestureRecognizer: UIGestureRecognizer,
+            shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer
+        ) -> Bool {
+            true
+        }
+    }
 }
 
 /// The signed-in app: a capture home screen, with everything else behind a side drawer.
@@ -87,7 +177,8 @@ private struct SignedInShell: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var capture: CaptureQueue
     @State private var section = AppSection.home
-    @State private var isDrawerOpen = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var drawer = DrawerPosition()
     @State private var showsSettings = false
     @State private var projectToOpen: Project?
 
@@ -99,6 +190,8 @@ private struct SignedInShell: View {
     var body: some View {
         GeometryReader { proxy in
             let width = min(proxy.size.width * 0.82, 340)
+            let offset = drawer.offset(width: width)
+            let progress = offset / max(width, 1)
             ZStack(alignment: .leading) {
                 DrawerView(
                     session: session,
@@ -109,32 +202,41 @@ private struct SignedInShell: View {
                         projectToOpen = project
                         go(to: .projects)
                     },
-                    onSettings: { showsSettings = true }
+                    onSettings: { setDrawer(false); showsSettings = true }
                 )
                 .frame(width: width)
-                .accessibilityHidden(!isDrawerOpen)
+                .allowsHitTesting(drawer.isOpen)
+                .accessibilityHidden(!drawer.isOpen)
                 content
+                    .allowsHitTesting(!drawer.isOpen)
+                    .accessibilityHidden(drawer.isOpen)
                     .overlay {
-                        if isDrawerOpen {
-                            RoundedRectangle(cornerRadius: 44)
-                                .fill(Color.primary.opacity(0.06))
-                                .strokeBorder(Color.primary.opacity(0.14))
-                                .ignoresSafeArea()
-                                .contentShape(.rect)
-                                .onTapGesture { setDrawer(false) }
-                                .gesture(DragGesture(minimumDistance: 20).onEnded { value in
-                                    if value.translation.width < -40 { setDrawer(false) }
-                                })
-                                .accessibilityLabel("关闭菜单")
-                                .accessibilityAddTraits(.isButton)
-                        }
+                        RoundedRectangle(cornerRadius: 44)
+                            .fill(Color.primary.opacity(0.06))
+                            .strokeBorder(Color.primary.opacity(0.14))
+                            .ignoresSafeArea()
+                            .contentShape(.rect)
+                            .opacity(progress)
+                            .allowsHitTesting(drawer.isOpen)
+                            .onTapGesture { setDrawer(false) }
+                            .accessibilityHidden(!drawer.isOpen)
+                            .accessibilityLabel("关闭菜单")
+                            .accessibilityAddTraits(.isButton)
                     }
-                    .offset(x: isDrawerOpen ? width : 0)
+                    .offset(x: offset)
             }
+            .environment(\.drawerGesture, gestureActions(width: width, opensDrawer: true))
+            .gesture(DrawerPanGesture(
+                actions: gestureActions(width: width, opensDrawer: false),
+                opensDrawer: false
+            ))
         }
         .environment(\.openDrawer) { setDrawer(true) }
         .environment(\.openHome) { go(to: .home) }
-        .onChange(of: scenePhase, initial: true) { _, _ in updateSync() }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            if phase != .active { drawer.translation = nil }
+            updateSync()
+        }
         .onChange(of: session.isSigningOut) { _, _ in updateSync() }
         .onDisappear { capture.setActive(false) }
         .sheet(isPresented: $showsSettings) {
@@ -175,10 +277,39 @@ private struct SignedInShell: View {
     }
 
     private func setDrawer(_ open: Bool) {
-        if open {
-            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        if open { dismissKeyboard() }
+        withAnimation(drawerAnimation) {
+            drawer.isOpen = open
+            drawer.translation = nil
         }
-        withAnimation(.snappy(duration: 0.3)) { isDrawerOpen = open }
+    }
+
+    private var drawerAnimation: Animation {
+        reduceMotion ? .easeOut(duration: 0.2) : .snappy(duration: 0.3)
+    }
+
+    private func gestureActions(width: CGFloat, opensDrawer: Bool) -> DrawerGestureActions {
+        DrawerGestureActions(
+            isEnabled: scenePhase == .active && !showsSettings && drawer.isOpen != opensDrawer,
+            onBegan: dismissKeyboard,
+            onChanged: { translation in
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { drawer.translation = translation }
+            },
+            onEnded: { translation, velocity, cancelled in
+                guard drawer.translation != nil else { return }
+                // Include the final movement before choosing where to settle.
+                drawer.translation = translation
+                withAnimation(drawerAnimation) {
+                    drawer.finish(width: width, velocity: velocity, cancelled: cancelled)
+                }
+            }
+        )
+    }
+
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
     }
 
     private func updateSync() {
