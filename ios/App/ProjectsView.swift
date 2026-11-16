@@ -110,7 +110,8 @@ struct ProjectsView: View {
             .canvas()
             .navigationTitle("项目")
             .navigationBarTitleDisplayMode(.inline)
-            .drawerButton()
+            // A right swipe first closes the revealed delete action.
+            .drawerButton(swipeEnabled: openProjectID == nil)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
@@ -128,10 +129,17 @@ struct ProjectsView: View {
                 }
             }
             .onChange(of: statusFilter) { _, _ in
+                openProjectID = nil
                 projects = []
                 nextCursor = nil
                 Task { await load() }
             }
+            .onChange(of: visibleProjects.map(\.id)) { _, ids in
+                if let openProjectID, !ids.contains(openProjectID) {
+                    self.openProjectID = nil
+                }
+            }
+            .onDisappear { openProjectID = nil }
             .onChange(of: projectToOpen, initial: true) { _, project in
                 guard let project else { return }
                 selectedProject = project

@@ -126,7 +126,7 @@ struct CaptureView: View {
                         .padding(.top, Theme.Space.m)
                     Divider().padding(.horizontal, Theme.Space.l).padding(.top, Theme.Space.s)
                 }
-                HStack(alignment: .bottom, spacing: Theme.Space.s) {
+                ComposerRow(canSend: canSave, sendLabel: "保存记录", action: save) {
                     Menu {
                         Button(isLoadingPhoto ? String(localized: "正在读取图片") : String(localized: "选择截图"), systemImage: "photo") {
                             showsPhotoPicker = true
@@ -142,33 +142,20 @@ struct CaptureView: View {
                             .background(Color.primary.opacity(0.08), in: .circle)
                     }
                     .accessibilityLabel("更多选项")
+                } content: {
                     if image == nil {
                         TextField("记下想法，或粘贴链接", text: $text, axis: .vertical)
                             .lineLimit(1...8)
                             .focused($focusedField, equals: .text)
                             .accessibilityIdentifier("capture-text")
-                            .padding(.vertical, Theme.Space.s)
                     } else {
                         Text("已选截图")
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.vertical, Theme.Space.s)
                     }
-                    Button(action: save) {
-                        Image(systemName: "arrow.up")
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.onAccent)
-                            .frame(width: 38, height: 38)
-                            .background(Color.accentColor, in: .circle)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!canSave)
-                    .opacity(canSave ? 1 : 0.3)
-                    .accessibilityLabel("保存记录")
                 }
-                .padding(6)
             }
-            .glassEffect(.regular, in: .rect(cornerRadius: 25))
+            .composerSurface()
         }
         .padding(.horizontal, Theme.Space.l)
         .padding(.bottom, Theme.Space.s)

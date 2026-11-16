@@ -1,6 +1,26 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "正在加载对话…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading conversation…"
+          }
+        }
+      }
+    },
+    "无法加载对话": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not load conversation"
+          }
+        }
+      }
+    },
     "读取网页正文": {
       "localizations": {
         "en": {

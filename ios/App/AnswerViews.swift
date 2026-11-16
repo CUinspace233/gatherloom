@@ -106,7 +106,8 @@ struct ConversationView: View {
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var selectedCitation: Citation?
-    @State private var pollGeneration = 0
+    @State private var hasLoadedMessages = false
+    @FocusState private var isDraftFocused: Bool
 
     private struct Ask: Encodable {
         let clientMessageId: UUID
@@ -127,7 +128,22 @@ struct ConversationView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
-                    if messages.isEmpty && !isSending {
+                    if messages.isEmpty, conversation != nil, !hasLoadedMessages {
+                        if let errorMessage {
+                            ContentUnavailableView {
+                                Label("无法加载对话", systemImage: "exclamationmark.bubble")
+                            } description: {
+                                Text(errorMessage)
+                            } actions: {
+                                Button("重试") { Task { await reload() } }
+                            }
+                        } else {
+                            ProgressView("正在加载对话…")
+                                .accessibilityIdentifier("conversation-loading")
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 40)
+                        }
+                    } else if messages.isEmpty && !isSending {
                         ContentUnavailableView(
                             "向「\(project.name)」提问", systemImage: "text.bubble",
                             description: Text("只根据这个项目里的资料回答，并标注来源。")
@@ -148,23 +164,32 @@ struct ConversationView: View {
                             Text("正在查找资料并回答…").foregroundStyle(.secondary)
                         }
                     }
-                    if let errorMessage {
+                    if let errorMessage, hasLoadedMessages || conversation == nil || !messages.isEmpty {
                         Text(errorMessage).foregroundStyle(.red).font(.footnote)
                     }
                     Color.clear.frame(height: 1).id("bottom")
                 }
                 .padding()
             }
-            .onChange(of: messages.count) { _, _ in
-                withAnimation { proxy.scrollTo("bottom") }
+            .scrollDismissesKeyboard(.interactively)
+            .onChange(of: messages.count) { oldCount, _ in
+                if oldCount == 0 {
+                    proxy.scrollTo("bottom")
+                } else {
+                    withAnimation { proxy.scrollTo("bottom") }
+                }
             }
         }
         .safeAreaInset(edge: .bottom) { composer }
         .canvas()
+        .background {
+            OutsideFieldTap(isEnabled: isDraftFocused) { isDraftFocused = false }
+                .allowsHitTesting(false)
+        }
         .navigationTitle(conversation.map { $0.title.isEmpty ? String(localized: "问答") : $0.title } ?? String(localized: "新问题"))
         .navigationBarTitleDisplayMode(.inline)
         .task { await reload() }
-        .task(id: pollGeneration) { await poll() }
+        .task(id: isWaiting) { await poll() }
         .refreshable { await reload() }
         .sheet(item: $selectedCitation) { citation in
             CitationSheet(session: session, capture: capture, citation: citation)
@@ -172,33 +197,23 @@ struct ConversationView: View {
     }
 
     private var composer: some View {
-        HStack(alignment: .bottom, spacing: 8) {
+        ComposerRow(
+            canSend: !trimmedDraft.isEmpty && !isSending && !isWaiting,
+            sendLabel: "发送", sendIdentifier: "question-send",
+            action: { Task { await send() } }
+        ) {
+            EmptyView()
+        } content: {
             TextField("向这个项目提问", text: $draft, axis: .vertical)
                 .lineLimit(1...5)
+                .focused($isDraftFocused)
                 .padding(.horizontal, 8)
-                .padding(.vertical, 8)
-                .frame(minHeight: 44)
                 .disabled(isSending)
                 .accessibilityIdentifier("question-input")
-            Button {
-                Task { await send() }
-            } label: {
-                Image(systemName: "arrow.up")
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.onAccent)
-                    .frame(width: 44, height: 44)
-                    .background(Color.accentColor, in: .circle)
-            }
-            .buttonStyle(.plain)
-            .disabled(trimmedDraft.isEmpty || isSending || isWaiting)
-            .opacity(trimmedDraft.isEmpty || isSending || isWaiting ? 0.3 : 1)
-            .accessibilityLabel("发送")
-            .accessibilityIdentifier("question-send")
         }
-        .padding(6)
-        .glassEffect(.regular, in: .rect(cornerRadius: 28))
-        .padding(.horizontal)
-        .padding(.vertical, 8)
+        .composerSurface()
+        .padding(.horizontal, Theme.Space.l)
+        .padding(.bottom, Theme.Space.s)
     }
 
     private func answer(to question: ChatMessage) -> ChatMessage? {
@@ -207,11 +222,15 @@ struct ConversationView: View {
 
     private func reload() async {
         guard let conversation else { return }
+        errorMessage = nil
         do {
-            messages = try await session.request(
+            let loaded = try await session.request(
                 [ChatMessage].self, "v1/conversations/\(conversation.id.uuidString)/messages",
                 scope: capture.scope
             )
+            guard !Task.isCancelled else { return }
+            messages = loaded
+            hasLoadedMessages = true
         } catch {
             if !(error is CancellationError) { errorMessage = error.localizedDescription }
         }
@@ -238,6 +257,7 @@ struct ConversationView: View {
                     Conversation.self, "v1/projects/\(project.id.uuidString)/conversations",
                     method: "POST", body: NewConversation(), scope: capture.scope
                 )
+                hasLoadedMessages = true
             }
             guard let conversation else { return }
             // Reused if this send fails, so a retry cannot ask twice.
@@ -252,7 +272,6 @@ struct ConversationView: View {
             if !messages.contains(where: { $0.id == accepted.message.id }) {
                 messages.append(accepted.message)
             }
-            pollGeneration += 1
         } catch {
             errorMessage = String(localized: "提问没有发送成功，可以再试一次。\(error.localizedDescription)")
         }
@@ -263,7 +282,6 @@ struct ConversationView: View {
         do {
             _ = try await session.send("v1/runs/\(run.id.uuidString)/retry", method: "POST", scope: capture.scope)
             await reload()
-            pollGeneration += 1
         } catch {
             errorMessage = error.localizedDescription
         }
